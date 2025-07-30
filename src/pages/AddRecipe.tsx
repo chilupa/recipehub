@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   IonContent,
   IonHeader,
@@ -16,11 +16,11 @@ import {
   IonGrid,
   IonRow,
   IonCol,
-  IonToast
-} from '@ionic/react';
-import { add, remove } from 'ionicons/icons';
-import { useRecipes } from '../contexts/RecipeContext';
-import { useHistory } from 'react-router-dom';
+  IonToast,
+} from "@ionic/react";
+import { add, remove } from "ionicons/icons";
+import { useRecipes } from "../contexts/RecipeContext";
+import { useHistory } from "react-router-dom";
 
 const AddRecipe: React.FC = () => {
   const { addRecipe } = useRecipes();
@@ -28,30 +28,31 @@ const AddRecipe: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
 
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    ingredients: [''],
-    instructions: [''],
+    title: "",
+    description: "",
+    ingredients: [""],
+    instructions: [""],
     prepTime: 0,
     cookTime: 0,
     servings: 1,
-    tags: []
+    tags: [] as string[],
   });
+  const [servingsInput, setServingsInput] = useState("1");
 
-  const [newTag, setNewTag] = useState('');
+  const [newTag, setNewTag] = useState("");
 
   const resetForm = () => {
     setFormData({
-      title: '',
-      description: '',
-      ingredients: [''],
-      instructions: [''],
+      title: "",
+      description: "",
+      ingredients: [""],
+      instructions: [""],
       prepTime: 0,
       cookTime: 0,
       servings: 1,
-      tags: []
+      tags: [] as string[],
     });
-    setNewTag('');
+    setNewTag("");
   };
 
   const handleSubmit = async () => {
@@ -62,26 +63,26 @@ const AddRecipe: React.FC = () => {
 
     const cleanedData = {
       ...formData,
-      ingredients: formData.ingredients.filter(i => i.trim()),
-      instructions: formData.instructions.filter(i => i.trim())
+      ingredients: formData.ingredients.filter((i) => i.trim()),
+      instructions: formData.instructions.filter((i) => i.trim()),
     };
 
     await addRecipe(cleanedData);
     resetForm();
-    history.push('/recipes');
+    history.push("/recipes");
   };
 
   const addIngredient = () => {
     setFormData({
       ...formData,
-      ingredients: [...formData.ingredients, '']
+      ingredients: [...formData.ingredients, ""],
     });
   };
 
   const removeIngredient = (index: number) => {
     setFormData({
       ...formData,
-      ingredients: formData.ingredients.filter((_, i) => i !== index)
+      ingredients: formData.ingredients.filter((_, i) => i !== index),
     });
   };
 
@@ -94,14 +95,14 @@ const AddRecipe: React.FC = () => {
   const addInstruction = () => {
     setFormData({
       ...formData,
-      instructions: [...formData.instructions, '']
+      instructions: [...formData.instructions, ""],
     });
   };
 
   const removeInstruction = (index: number) => {
     setFormData({
       ...formData,
-      instructions: formData.instructions.filter((_, i) => i !== index)
+      instructions: formData.instructions.filter((_, i) => i !== index),
     });
   };
 
@@ -112,19 +113,23 @@ const AddRecipe: React.FC = () => {
   };
 
   const addTag = () => {
-    if (newTag.trim() && !formData.tags.includes(newTag.trim()) && formData.tags.length < 5) {
+    if (
+      newTag.trim() &&
+      !formData.tags.includes(newTag.trim()) &&
+      formData.tags.length < 5
+    ) {
       setFormData({
         ...formData,
-        tags: [...formData.tags, newTag.trim()]
+        tags: [...formData.tags, newTag.trim()],
       });
-      setNewTag('');
+      setNewTag("");
     }
   };
 
   const removeTag = (tag: string) => {
     setFormData({
       ...formData,
-      tags: formData.tags.filter(t => t !== tag)
+      tags: formData.tags.filter((t) => t !== tag),
     });
   };
 
@@ -141,7 +146,9 @@ const AddRecipe: React.FC = () => {
             <IonLabel position="stacked">Recipe Title *</IonLabel>
             <IonInput
               value={formData.title}
-              onIonInput={(e) => setFormData({ ...formData, title: e.detail.value! })}
+              onIonInput={(e) =>
+                setFormData({ ...formData, title: e.detail.value! })
+              }
               placeholder="Enter recipe title"
             />
           </IonItem>
@@ -150,7 +157,9 @@ const AddRecipe: React.FC = () => {
             <IonLabel position="stacked">Description *</IonLabel>
             <IonTextarea
               value={formData.description}
-              onIonInput={(e) => setFormData({ ...formData, description: e.detail.value! })}
+              onIonInput={(e) =>
+                setFormData({ ...formData, description: e.detail.value! })
+              }
               placeholder="Brief description of your recipe"
               rows={3}
             />
@@ -161,7 +170,12 @@ const AddRecipe: React.FC = () => {
             <IonInput
               type="number"
               value={formData.prepTime}
-              onIonInput={(e) => setFormData({ ...formData, prepTime: parseInt(e.detail.value!) || 0 })}
+              onIonInput={(e) =>
+                setFormData({
+                  ...formData,
+                  prepTime: parseInt(e.detail.value!) || 0,
+                })
+              }
               placeholder="15"
             />
           </IonItem>
@@ -171,7 +185,12 @@ const AddRecipe: React.FC = () => {
             <IonInput
               type="number"
               value={formData.cookTime}
-              onIonInput={(e) => setFormData({ ...formData, cookTime: parseInt(e.detail.value!) || 0 })}
+              onIonInput={(e) =>
+                setFormData({
+                  ...formData,
+                  cookTime: parseInt(e.detail.value!) || 0,
+                })
+              }
               placeholder="30"
             />
           </IonItem>
@@ -180,13 +199,19 @@ const AddRecipe: React.FC = () => {
             <IonLabel position="stacked">Servings</IonLabel>
             <IonInput
               type="number"
-              value={formData.servings}
-              onIonInput={(e) => setFormData({ ...formData, servings: parseInt(e.detail.value!) || 1 })}
-              placeholder="4"
+              value={servingsInput}
+              onIonInput={(e) => setServingsInput(e.detail.value!)}
+              onIonBlur={() => {
+                const value = parseInt(servingsInput) || 1;
+                const finalValue = value < 1 ? 1 : value;
+                setFormData({ ...formData, servings: finalValue });
+                setServingsInput(finalValue.toString());
+              }}
+              min="1"
             />
           </IonItem>
 
-          <div style={{ margin: '20px 0' }}>
+          <div style={{ margin: "20px 0" }}>
             <h3>Ingredients</h3>
             {formData.ingredients.map((ingredient, index) => (
               <IonItem key={index}>
@@ -211,7 +236,7 @@ const AddRecipe: React.FC = () => {
             </IonButton>
           </div>
 
-          <div style={{ margin: '20px 0' }}>
+          <div style={{ margin: "20px 0" }}>
             <h3>Instructions</h3>
             {formData.instructions.map((instruction, index) => (
               <IonItem key={index}>
@@ -237,7 +262,7 @@ const AddRecipe: React.FC = () => {
             </IonButton>
           </div>
 
-          <div style={{ margin: '20px 0' }}>
+          <div style={{ margin: "20px 0" }}>
             <h3>Tags ({formData.tags.length}/5)</h3>
             <IonItem>
               <IonInput
@@ -245,11 +270,13 @@ const AddRecipe: React.FC = () => {
                 onIonInput={(e) => setNewTag(e.detail.value!)}
                 placeholder="Add a tag"
                 disabled={formData.tags.length >= 5}
-                onKeyPress={(e) => e.key === 'Enter' && addTag()}
+                onKeyPress={(e) => e.key === "Enter" && addTag()}
               />
-              <IonButton onClick={addTag} disabled={formData.tags.length >= 5}>Add</IonButton>
+              <IonButton onClick={addTag} disabled={formData.tags.length >= 5}>
+                Add
+              </IonButton>
             </IonItem>
-            <div style={{ margin: '10px 0' }}>
+            <div style={{ margin: "10px 0" }}>
               {formData.tags.map((tag) => (
                 <IonChip key={tag} color="primary">
                   <IonLabel>{tag}</IonLabel>
@@ -259,7 +286,11 @@ const AddRecipe: React.FC = () => {
             </div>
           </div>
 
-          <IonButton expand="block" onClick={handleSubmit} style={{ margin: '20px 0' }}>
+          <IonButton
+            expand="block"
+            onClick={handleSubmit}
+            style={{ margin: "20px 0" }}
+          >
             Save Recipe
           </IonButton>
         </IonList>

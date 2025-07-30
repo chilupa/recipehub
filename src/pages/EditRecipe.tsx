@@ -38,10 +38,11 @@ const EditRecipe: React.FC = () => {
     prepTime: 0,
     cookTime: 0,
     servings: 1,
-    tags: [],
+    tags: [] as string[],
   });
 
   const [newTag, setNewTag] = useState("");
+  const [servingsInput, setServingsInput] = useState('1');
 
   useEffect(() => {
     const recipe = recipes.find((r) => r.id === id);
@@ -56,6 +57,7 @@ const EditRecipe: React.FC = () => {
         servings: recipe.servings,
         tags: recipe.tags,
       });
+      setServingsInput(recipe.servings.toString());
     }
   }, [id, recipes]);
 
@@ -205,14 +207,16 @@ const EditRecipe: React.FC = () => {
             <IonLabel position="stacked">Servings</IonLabel>
             <IonInput
               type="number"
-              value={formData.servings}
-              onIonInput={(e) =>
-                setFormData({
-                  ...formData,
-                  servings: parseInt(e.detail.value!) || 1,
-                })
-              }
+              value={servingsInput}
+              onIonInput={(e) => setServingsInput(e.detail.value!)}
+              onIonBlur={() => {
+                const value = parseInt(servingsInput) || 1;
+                const finalValue = value < 1 ? 1 : value;
+                setFormData({ ...formData, servings: finalValue });
+                setServingsInput(finalValue.toString());
+              }}
               placeholder="4"
+              min="1"
             />
           </IonItem>
 
