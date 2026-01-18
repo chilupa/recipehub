@@ -119,8 +119,8 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <UserAvatar name={recipe.author} size={20} />
-            <IonText color="medium" style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <UserAvatar color="tertiary" name={recipe.author} size={20} />
+            <IonText color="dark" style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <span style={{
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -148,7 +148,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
               <IonIcon icon={recipe.isLiked ? heart : heartOutline} slot="start" />
               {formatLikes(recipe.likes)}
             </IonButton>
-            <IonButton
+            {/* <IonButton
               fill="clear"
               color="medium"
               size="small"
@@ -160,7 +160,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
               style={{ margin: '0', minHeight: '32px' }}
             >
               <IonIcon icon={share} />
-            </IonButton>
+            </IonButton> */}
           </div>
         </div>
       </div>

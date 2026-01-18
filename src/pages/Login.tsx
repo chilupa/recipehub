@@ -6,29 +6,29 @@ import {
   IonLabel,
   IonInput,
   IonButton,
-  IonText
+  IonText,
+  useIonRouter
 } from '@ionic/react';
-import { useAuth } from '../hooks/useAuth';
+
 import AppHeader from '../components/AppHeader';
+import { useHistory } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login: React.FC = () => {
   const { login } = useAuth();
+  const ionRouter = useIonRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
 
   const handleLogin = () => {
-    console.log('Login clicked', { name, email });
-    if (name.trim() && email.trim()) {
-      console.log('Calling login function');
-      login(name.trim(), email.trim());
-    } else {
-      console.log('Name or email is empty');
-    }
+    if (!name.trim()) return;
+  login(name.trim());
+    ionRouter.push('/recipes', 'root', 'replace');
   };
 
   return (
     <IonPage>
-      <AppHeader title="Welcome to RecipeHub" />
+      <AppHeader />
       <IonContent className="ion-padding">
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <IonText color="medium">
@@ -46,7 +46,7 @@ const Login: React.FC = () => {
           />
         </IonItem>
 
-        <IonItem>
+        {/* <IonItem>
           <IonLabel position="stacked">Email</IonLabel>
           <IonInput
             type="email"
@@ -54,12 +54,12 @@ const Login: React.FC = () => {
             onIonInput={(e) => setEmail(e.detail.value!)}
             placeholder="Enter your email"
           />
-        </IonItem>
+        </IonItem> */}
 
         <IonButton 
           expand="block" 
           onClick={handleLogin}
-          disabled={!name.trim() || !email.trim()}
+          disabled={!name.trim()}
           style={{ margin: '20px 0' }}
         >
           Start Cooking

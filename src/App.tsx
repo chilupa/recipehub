@@ -10,7 +10,7 @@ import {
   setupIonicReact
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { home, add, heart } from 'ionicons/icons';
+
 import RecipeList from './pages/RecipeList';
 import AddRecipe from './pages/AddRecipe';
 import EditRecipe from './pages/EditRecipe';
@@ -50,72 +50,57 @@ import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Login from './pages/Login';
+import Tabs from './components/Tabs';
 
 setupIonicReact();
 
-const App: React.FC = () => {
-  const { user, loading } = useSupabaseAuth();
-
-  if (loading) {
-    return (
-      <IonApp>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          Loading...
-        </div>
-      </IonApp>
-    );
-  }
-
-  if (!user) {
-    return (
-      <IonApp>
-        <SupabaseLogin />
-      </IonApp>
-    );
-  }
+const AppRoutes: React.FC = () => {
+  const { user } = useAuth();
 
   return (
-  <IonApp>
-    <RecipeProvider>
-      <IonReactRouter>
-        <IonTabs>
+    <IonReactRouter>
+      {!user ? (
         <IonRouterOutlet>
-          <Route exact path="/recipes">
-            <RecipeList />
-          </Route>
-          <Route exact path="/favorites">
-            <Favorites />
-          </Route>
-          <Route exact path="/add">
-            <AddRecipe />
-          </Route>
-          <Route exact path="/edit/:id">
-            <EditRecipe />
-          </Route>
-          <Route exact path="/recipe/:id">
-            <RecipeDetail />
-          </Route>
-          <Route exact path="/profile">
-            <Profile />
-          </Route>
+          <Route exact path="/login" component={Login} />
           <Route exact path="/">
-            <Redirect to="/recipes" />
+            <Redirect to="/login" />
+          </Route>
+          <Route>
+            <Redirect to="/login" />
           </Route>
         </IonRouterOutlet>
-        <IonTabBar slot="bottom">
-          <IonTabButton tab="recipes" href="/recipes">
-            <IonIcon aria-hidden="true" icon={home} />
-            <IonLabel>Recipes</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="favorites" href="/favorites">
-            <IonIcon aria-hidden="true" icon={heart} />
-            <IonLabel>Favorites</IonLabel>
-          </IonTabButton>
-        </IonTabBar>
+      ) : (
+        <IonTabs>
+          <IonRouterOutlet>
+            <Route exact path="/recipes" component={RecipeList} />
+            <Route exact path="/favorites" component={Favorites} />
+            <Route exact path="/add" component={AddRecipe} />
+            <Route exact path="/edit/:id" component={EditRecipe} />
+            <Route exact path="/recipe/:id" component={RecipeDetail} />
+            <Route exact path="/profile" component={Profile} />
+            <Route exact path="/">
+              <Redirect to="/recipes" />
+            </Route>
+          </IonRouterOutlet>
+
+          <Tabs />
         </IonTabs>
-      </IonReactRouter>
-    </RecipeProvider>
-  </IonApp>
+      )}
+    </IonReactRouter>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <IonApp>
+      <AuthProvider>
+        <RecipeProvider>
+          <AppRoutes />
+        </RecipeProvider>
+      </AuthProvider>
+    </IonApp>
   );
 };
 

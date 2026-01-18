@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import {
   IonContent,
   IonPage,
@@ -7,23 +7,33 @@ import {
   IonInput,
   IonButton,
   IonToast,
-  IonText
+  IonText,
+  useIonRouter
 } from '@ionic/react';
-import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
-import { supabase } from '../lib/supabase';
+
 import AppHeader from '../components/AppHeader';
 import UserAvatar from '../components/UserAvatar';
+import { useAuth } from '../contexts/AuthContext';
 
 const Profile: React.FC = () => {
-  const { user, signOut } = useSupabaseAuth();
+  const { user, logout } = useAuth();
+  const ionRouter = useIonRouter();
   const [name, setName] = useState('');
   const [originalName, setOriginalName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showToast, setShowToast] = useState({ show: false, message: '', color: 'success' });
+  const [showToast, setShowToast] = useState({ show: false, message: '', color: 'secondary' });
 
   const hasChanges = () => {
     return name.trim() !== originalName.trim();
   };
+
+  const handleLogout = () => {
+    // e.preventDefault();
+    logout();
+
+  ionRouter.push('/login', 'root', 'replace');
+
+  }
 
   useEffect(() => {
     if (user) {
@@ -31,25 +41,17 @@ const Profile: React.FC = () => {
     }
   }, [user]);
 
-  const loadProfile = async () => {
+  const loadProfile = () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('id', user?.id)
-        .single();
-      
-      if (data) {
-        const profileName = data.name || '';
-        setName(profileName);
-        setOriginalName(profileName);
-      }
+      const profileName = user?.name || '';
+      setName(profileName);
+      setOriginalName(profileName);
     } catch (error) {
-      console.log('No profile found, will create one');
+      console.log('Error loading profile');
     }
   };
 
-  const saveProfile = async () => {
+  const saveProfile = () => {
     if (!user || !name.trim()) {
       setShowToast({ show: true, message: 'Please enter your name', color: 'warning' });
       return;
@@ -57,32 +59,27 @@ const Profile: React.FC = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          name: name.trim(),
-          email: user.email,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-
+      const updatedUser = {
+        ...user,
+        name: name.trim()
+      };
+      localStorage.setItem('recipe-logger-user', JSON.stringify(updatedUser));
+      setOriginalName(name.trim());
       setShowToast({ show: true, message: 'Profile updated successfully!', color: 'success' });
     } catch (error: any) {
-      setShowToast({ show: true, message: error.message, color: 'danger' });
+      setShowToast({ show: true, message: 'Error updating profile', color: 'danger' });
     }
     setLoading(false);
   };
 
   return (
     <IonPage>
-      <AppHeader title="Profile" showBackButton={true} />
+      <AppHeader />
       <IonContent className="ion-padding">
         <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center' }}>
           <div style={{ marginBottom: '40px' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
-              <UserAvatar name={name || user?.email || 'User'} size={80} />
+            <div style={{ display: 'flex', justifyContent: 'center', borderRadius: '50%' }}>
+              <UserAvatar color="secondary" name={name || user?.email || 'User'} size={80} />
             </div>
             <IonText color="medium">
               <p style={{ marginTop: '10px' }}>{user?.email}</p>
@@ -107,7 +104,13 @@ const Profile: React.FC = () => {
             {loading ? 'Saving...' : 'Save Profile'}
           </IonButton>
 
-
+          {/* <IonButton 
+            expand="block" 
+            color="danger"
+            onClick={handleLogout}
+          >
+            Logout
+          </IonButton> */}
 
           <IonToast
             isOpen={showToast.show}

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 interface User {
   id: string;
   name: string;
-  email: string;
+  email?: string;
 }
 
 export const useAuth = () => {
@@ -19,12 +19,11 @@ export const useAuth = () => {
     setIsLoading(false);
   }, []);
 
-  const login = (name: string, email: string) => {
+  const login = (name: string, email?: string) => {
     console.log('Login function called with:', { name, email });
     const newUser: User = {
       id: Date.now().toString(),
       name,
-      email
     };
     console.log('Setting user:', newUser);
     localStorage.setItem('recipe-logger-user', JSON.stringify(newUser));

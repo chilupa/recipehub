@@ -14,6 +14,7 @@ export interface Recipe {
   likes: number;
   isLiked: boolean;
   author: string;
+  userId: string;
 }
 
 export interface NewRecipe {

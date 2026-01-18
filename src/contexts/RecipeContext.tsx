@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Recipe, NewRecipe } from '../types/Recipe';
-import { supabase } from '../lib/supabase';
-import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { useAuth } from './AuthContext';
+
 
 interface RecipeContextType {
   recipes: Recipe[];
@@ -15,63 +15,27 @@ interface RecipeContextType {
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
 
 export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useSupabaseAuth();
+  const { user } = useAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [userName, setUserName] = useState<string>('');
 
   useEffect(() => {
     if (user) {
-      loadUserProfile();
       loadRecipes();
+    } else {
+      setRecipes([]);
     }
   }, [user]);
 
-  const loadUserProfile = async () => {
+  const loadRecipes = () => {
     try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('id', user?.id)
-        .single();
-      
-      if (data?.name) {
-        setUserName(data.name);
-      }
-    } catch (error) {
-      console.log('No profile found');
-    }
-  };
-
-  const loadRecipes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('recipes')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      const formattedRecipes = data?.map((recipe: any) => ({
-        id: recipe.id,
-        title: recipe.title,
-        description: recipe.description,
-        ingredients: recipe.ingredients,
-        instructions: recipe.instructions,
-        prepTime: recipe.prep_time,
-        cookTime: recipe.cook_time,
-        servings: recipe.servings,
-        tags: recipe.tags,
-        createdAt: recipe.created_at,
-        updatedAt: recipe.updated_at,
-        likes: recipe.likes || 0,
-        isLiked: recipe.is_liked || false,
-        author: recipe.author || userName || user?.email || 'You'
-      })) || [];
-      
-      setRecipes(formattedRecipes);
+      const stored = localStorage.getItem('recipe-logger-recipes');
+      const allRecipes = stored ? JSON.parse(stored) : [];
+      // Filter recipes for current user
+      const userRecipes = allRecipes.filter((r: Recipe) => r.userId === user?.id);
+      setRecipes(userRecipes);
     } catch (error) {
       console.error('Error loading recipes:', error);
+      setRecipes([]);
     }
   };
 
@@ -79,45 +43,30 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!user) return;
     
     try {
-      const { data, error } = await supabase
-        .from('recipes')
-        .insert([{
-          title: newRecipe.title,
-          description: newRecipe.description,
-          ingredients: newRecipe.ingredients,
-          instructions: newRecipe.instructions,
-          prep_time: newRecipe.prepTime,
-          cook_time: newRecipe.cookTime,
-          servings: newRecipe.servings,
-          tags: newRecipe.tags,
-          user_id: user.id,
-          author: userName || user.email || 'You',
-          likes: 0,
-          is_liked: false
-        }])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      const formattedRecipe: Recipe = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        ingredients: data.ingredients,
-        instructions: data.instructions,
-        prepTime: data.prep_time,
-        cookTime: data.cook_time,
-        servings: data.servings,
-        tags: data.tags,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
-        likes: data.likes,
-        isLiked: data.is_liked,
-        author: data.author
+      const recipe: Recipe = {
+        id: Date.now().toString(),
+        title: newRecipe.title,
+        description: newRecipe.description,
+        ingredients: newRecipe.ingredients,
+        instructions: newRecipe.instructions,
+        prepTime: newRecipe.prepTime,
+        cookTime: newRecipe.cookTime,
+        servings: newRecipe.servings,
+        tags: newRecipe.tags,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        likes: 0,
+        isLiked: false,
+        author: user.name || user.email || 'You',
+        userId: user.id
       };
       
-      setRecipes(prev => [formattedRecipe, ...prev]);
+      const stored = localStorage.getItem('recipe-logger-recipes');
+      const allRecipes = stored ? JSON.parse(stored) : [];
+      allRecipes.push(recipe);
+      localStorage.setItem('recipe-logger-recipes', JSON.stringify(allRecipes));
+      
+      setRecipes(prev => [recipe, ...prev]);
     } catch (error) {
       console.error('Error adding recipe:', error);
     }
@@ -127,23 +76,16 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!user) return;
     
     try {
-      const { error } = await supabase
-        .from('recipes')
-        .update({
-          title: updates.title,
-          description: updates.description,
-          ingredients: updates.ingredients,
-          instructions: updates.instructions,
-          prep_time: updates.prepTime,
-          cook_time: updates.cookTime,
-          servings: updates.servings,
-          tags: updates.tags,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .eq('user_id', user.id);
+      const stored = localStorage.getItem('recipe-logger-recipes');
+      const allRecipes = stored ? JSON.parse(stored) : [];
       
-      if (error) throw error;
+      const updatedRecipes = allRecipes.map((recipe: Recipe) =>
+        recipe.id === id
+          ? { ...recipe, ...updates, updatedAt: new Date().toISOString(), userId: user.id }
+          : recipe
+      );
+      
+      localStorage.setItem('recipe-logger-recipes', JSON.stringify(updatedRecipes));
       
       setRecipes(prev => prev.map(recipe =>
         recipe.id === id
@@ -159,13 +101,11 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!user) return;
     
     try {
-      const { error } = await supabase
-        .from('recipes')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
+      const stored = localStorage.getItem('recipe-logger-recipes');
+      const allRecipes = stored ? JSON.parse(stored) : [];
       
-      if (error) throw error;
+      const filteredRecipes = allRecipes.filter((recipe: Recipe) => recipe.id !== id);
+      localStorage.setItem('recipe-logger-recipes', JSON.stringify(filteredRecipes));
       
       setRecipes(prev => prev.filter(recipe => recipe.id !== id));
     } catch (error) {
@@ -181,16 +121,16 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const newLikeCount = newLikedState ? recipe.likes + 1 : recipe.likes - 1;
     
     try {
-      const { error } = await supabase
-        .from('recipes')
-        .update({
-          likes: newLikeCount,
-          is_liked: newLikedState
-        })
-        .eq('id', id)
-        .eq('user_id', user.id);
+      const stored = localStorage.getItem('recipe-logger-recipes');
+      const allRecipes = stored ? JSON.parse(stored) : [];
       
-      if (error) throw error;
+      const updatedRecipes = allRecipes.map((r: Recipe) =>
+        r.id === id
+          ? { ...r, isLiked: newLikedState, likes: newLikeCount }
+          : r
+      );
+      
+      localStorage.setItem('recipe-logger-recipes', JSON.stringify(updatedRecipes));
       
       setRecipes(prev => prev.map(r =>
         r.id === id

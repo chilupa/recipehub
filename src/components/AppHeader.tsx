@@ -13,7 +13,8 @@ import {
   IonLabel,
 } from "@ionic/react";
 import { menu, person, settings, logOut } from "ionicons/icons";
-import { useSupabaseAuth } from "../hooks/useSupabaseAuth";
+import { useAuth } from "../hooks/useAuth";
+import { useHistory } from "react-router-dom";
 
 interface AppHeaderProps {
   title?: string;
@@ -28,21 +29,28 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   backHref = "/recipes",
   showMenu = true,
 }) => {
-  const { signOut } = useSupabaseAuth();
+  const { logout, user } = useAuth();
+  const history = useHistory();
   const [menuOpen, setMenuOpen] = useState<{
     isOpen: boolean;
     event: Event | undefined;
   }>({ isOpen: false, event: undefined });
+
+  const handleLogout = () => {
+    setMenuOpen({ isOpen: false, event: undefined });
+    logout();
+    history.push("/");
+  };
   return (
     <IonHeader>
-      <IonToolbar>
+      <IonToolbar color="primary">
         {showBackButton && (
           <IonButtons slot="start">
             <IonBackButton defaultHref={backHref} />
           </IonButtons>
         )}
         <IonTitle>{title}</IonTitle>
-        {showMenu && (
+        {/* {showMenu && user && (
           <IonButtons slot="end">
             <IonButton
               fill="clear"
@@ -54,7 +62,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               <IonIcon icon={menu} />
             </IonButton>
           </IonButtons>
-        )}
+        )} */}
       </IonToolbar>
 
       <IonPopover
@@ -75,21 +83,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           <IonItem
             button
             detail={false}
-            onClick={() => {
-              setMenuOpen({ isOpen: false, event: undefined });
-            }}
-          >
-            <IonIcon icon={settings} slot="start" />
-            <IonLabel>Settings</IonLabel>
-          </IonItem>
-          <IonItem
-            button
-            detail={false}
             color="danger"
-            onClick={() => {
-              setMenuOpen({ isOpen: false, event: undefined });
-              signOut();
-            }}
+            onClick={handleLogout}
           >
             <IonIcon icon={logOut} slot="start" />
             <IonLabel>Sign Out</IonLabel>

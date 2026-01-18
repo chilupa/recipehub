@@ -7,8 +7,6 @@ interface UserAvatarProps {
   color?: string;
 }
 
-
-
 const getInitials = (name: string): string => {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 };
@@ -25,7 +23,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = 20, color = 'prima
         justifyContent: 'center',
         fontSize: `${size * 0.45}px`,
         fontWeight: 'bold',
-        color: 'white'
+        color: "var(--ion-color-dark)",
       }}>
         {getInitials(name)}
       </div>
