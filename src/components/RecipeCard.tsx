@@ -89,7 +89,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
         <div style={{ display: 'flex', gap: '4px', marginBottom: '8px', overflow: 'hidden' }}>
           <IonChip color="primary" style={{ height: '24px', fontSize: '12px' }}>
             <IonIcon icon={time} style={{ fontSize: '14px' }} />
-            <IonLabel>{recipe.prepTime + recipe.cookTime}min</IonLabel>
+            <IonLabel>{recipe.prepTime + recipe.cookTime + " "} min</IonLabel>
           </IonChip>
           <IonChip color="secondary" style={{ height: '24px', fontSize: '12px' }}>
             <IonIcon icon={people} style={{ fontSize: '14px' }} />

@@ -63,7 +63,7 @@ const RecipeDetail: React.FC = () => {
           >
             <IonChip color="primary">
               <IonIcon icon={time} />
-              <IonLabel>{recipe.prepTime + recipe.cookTime} min</IonLabel>
+              <IonLabel>{recipe.prepTime + recipe.cookTime + " "} min</IonLabel>
             </IonChip>
             <IonChip color="secondary">
               <IonIcon icon={people} />
