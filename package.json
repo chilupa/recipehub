@@ -10,14 +10,16 @@
     "test.e2e": "cypress run",
     "test.unit": "vitest",
     "lint": "eslint",
-      "android:add": "npx cap add android",
+    "android:add": "npx cap add android",
+    "ios:add": "npx cap add ios",
     "android:build": "npm run build && npx cap copy android",
     "android:sync": "npx cap sync android",
+    "ios:build": "npm run build && npx cap copy ios",
+    "ios:sync": "npx cap sync ios",
     "android:apk": "npm run build && npx cap copy android && cd android && ./gradlew assembleDebug"
-  
   },
   "dependencies": {
-     "@capacitor/android": "^8.0.0",
+    "@capacitor/android": "^8.0.0",
     "@capacitor/app": "8.0.0",
     "@capacitor/core": "8.0.0",
     "@capacitor/haptics": "8.0.0",
