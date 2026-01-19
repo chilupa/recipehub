@@ -17,8 +17,6 @@ import EditRecipe from './pages/EditRecipe';
 import RecipeDetail from './pages/RecipeDetail';
 import Favorites from './pages/Favorites';
 import Profile from './pages/Profile';
-import SupabaseLogin from './pages/SupabaseLogin';
-import { useSupabaseAuth } from './hooks/useSupabaseAuth';
 import { RecipeProvider } from './contexts/RecipeContext';
 
 /* Core CSS required for Ionic components to work properly */

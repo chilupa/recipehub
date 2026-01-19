@@ -16,8 +16,6 @@ import { useParams } from "react-router-dom";
 import AppHeader from "../components/AppHeader";
 import UserAvatar from "../components/UserAvatar";
 
-
-
 const formatLikes = (count: number): string => {
   if (count >= 1000000) return `${(count / 1000000).toFixed(1)}m`;
   if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
@@ -85,7 +83,7 @@ const RecipeDetail: React.FC = () => {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <UserAvatar name={recipe.author} size={32} />
+              <UserAvatar color="tertiary" name={recipe.author} size={32} />
               <IonText color="medium">{recipe.author}</IonText>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -100,14 +98,14 @@ const RecipeDetail: React.FC = () => {
                 />
                 {formatLikes(recipe.likes)}
               </IonButton>
-              <IonButton
+              {/* <IonButton
                 fill="clear"
                 color="medium"
                 onClick={() => shareRecipe(recipe)}
               >
                 <IonIcon icon={share} slot="start" />
                 Share
-              </IonButton>
+              </IonButton> */}
             </div>
           </div>
         </div>
@@ -135,7 +133,7 @@ const RecipeDetail: React.FC = () => {
                 <div
                   style={{
                     display: "flex",
-                    alignItems: "flex-start",
+                    alignItems: "center",
                     gap: "12px",
                     width: "100%",
                   }}
@@ -145,7 +143,7 @@ const RecipeDetail: React.FC = () => {
                       minWidth: "24px",
                       height: "24px",
                       borderRadius: "50%",
-                      backgroundColor: "var(--ion-color-primary)",
+                      backgroundColor: "var(--ion-color-secondary)",
                       color: "white",
                       display: "flex",
                       alignItems: "center",

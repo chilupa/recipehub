@@ -1,25 +1,29 @@
 /* For information on how to create your own theme, please see:
 http://ionicframework.com/docs/theming/ */
 
-:root{
-    	--ion-color-primary: #C2410C;
-	--ion-color-primary-rgb: 194,65,12;
-	--ion-color-primary-contrast: #ffffff;
-	--ion-color-primary-contrast-rgb: 255,255,255;
-	--ion-color-primary-shade: #ab390b;
-	--ion-color-primary-tint: #c85424;
+:root {
+  --ion-font-family:
+    "Roboto", "Google Sans", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
 
-	--ion-color-secondary: #4D7C0F;
-	--ion-color-secondary-rgb: 77,124,15;
-	--ion-color-secondary-contrast: #ffffff;
-	--ion-color-secondary-contrast-rgb: 255,255,255;
-	--ion-color-secondary-shade: #446d0d;
-	--ion-color-secondary-tint: #5f8927;
+  --ion-color-primary: #c2410c;
+  --ion-color-primary-rgb: 194, 65, 12;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #ab390b;
+  --ion-color-primary-tint: #c85424;
 
-	--ion-color-tertiary: #F59E0B;
-	--ion-color-tertiary-rgb: 245,158,11;
-	--ion-color-tertiary-contrast: #000000;
-	--ion-color-tertiary-contrast-rgb: 0,0,0;
-	--ion-color-tertiary-shade: #d88b0a;
-	--ion-color-tertiary-tint: #f6a823;
+  --ion-color-secondary: #4d7c0f;
+  --ion-color-secondary-rgb: 77, 124, 15;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #446d0d;
+  --ion-color-secondary-tint: #5f8927;
+
+  --ion-color-tertiary: #f59e0b;
+  --ion-color-tertiary-rgb: 245, 158, 11;
+  --ion-color-tertiary-contrast: #000000;
+  --ion-color-tertiary-contrast-rgb: 0, 0, 0;
+  --ion-color-tertiary-shade: #d88b0a;
+  --ion-color-tertiary-tint: #f6a823;
 }

@@ -14,9 +14,11 @@ import {
 import AppHeader from '../components/AppHeader';
 import UserAvatar from '../components/UserAvatar';
 import { useAuth } from '../contexts/AuthContext';
+import { useRecipes } from '../contexts/RecipeContext';
 
 const Profile: React.FC = () => {
   const { user, logout } = useAuth();
+  const { recipes } = useRecipes();
   const ionRouter = useIonRouter();
   const [name, setName] = useState('');
   const [originalName, setOriginalName] = useState('');
@@ -64,8 +66,28 @@ const Profile: React.FC = () => {
         name: name.trim()
       };
       localStorage.setItem('recipe-logger-user', JSON.stringify(updatedUser));
+      
+      // Update all recipes with the new author name
+      const allRecipesStr = localStorage.getItem('recipe-logger-recipes');
+      if (allRecipesStr) {
+        const allRecipes = JSON.parse(allRecipesStr);
+        const updatedRecipes = allRecipes.map((recipe: any) =>
+          recipe.userId === user.id
+            ? { ...recipe, author: name.trim() }
+            : recipe
+        );
+        localStorage.setItem('recipe-logger-recipes', JSON.stringify(updatedRecipes));
+      }
+      
+      // Dispatch custom event to notify other parts of the app
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'recipe-logger-user',
+        newValue: JSON.stringify(updatedUser),
+        oldValue: JSON.stringify(user)
+      }));
+      
       setOriginalName(name.trim());
-      setShowToast({ show: true, message: 'Profile updated successfully!', color: 'success' });
+      setShowToast({ show: true, message: 'Profile updated successfully!', color: 'secondary' });
     } catch (error: any) {
       setShowToast({ show: true, message: 'Error updating profile', color: 'danger' });
     }

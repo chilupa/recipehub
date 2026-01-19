@@ -49,7 +49,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             <IonBackButton defaultHref={backHref} />
           </IonButtons>
         )}
-        <IonTitle>{title}</IonTitle>
+        {!showBackButton && (
+          <IonTitle style={{ textAlign: "center" }}>{title}</IonTitle>
+        )}
         {/* {showMenu && user && (
           <IonButtons slot="end">
             <IonButton
@@ -80,12 +82,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             <IonIcon icon={person} slot="start" />
             <IonLabel>Profile</IonLabel>
           </IonItem>
-          <IonItem
-            button
-            detail={false}
-            color="danger"
-            onClick={handleLogout}
-          >
+          <IonItem button detail={false} color="danger" onClick={handleLogout}>
             <IonIcon icon={logOut} slot="start" />
             <IonLabel>Sign Out</IonLabel>
           </IonItem>
