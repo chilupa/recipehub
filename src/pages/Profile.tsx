@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useId } from 'react';
+import React, { useState, useEffect, useId } from "react";
 import {
   IonContent,
   IonPage,
@@ -8,22 +8,26 @@ import {
   IonButton,
   IonToast,
   IonText,
-  useIonRouter
-} from '@ionic/react';
+  useIonRouter,
+} from "@ionic/react";
 
-import AppHeader from '../components/AppHeader';
-import UserAvatar from '../components/UserAvatar';
-import { useAuth } from '../contexts/AuthContext';
-import { useRecipes } from '../contexts/RecipeContext';
+import AppHeader from "../components/AppHeader";
+import UserAvatar from "../components/UserAvatar";
+import { useAuth } from "../contexts/AuthContext";
+import { useRecipes } from "../contexts/RecipeContext";
 
 const Profile: React.FC = () => {
   const { user, logout } = useAuth();
   const { recipes } = useRecipes();
   const ionRouter = useIonRouter();
-  const [name, setName] = useState('');
-  const [originalName, setOriginalName] = useState('');
+  const [name, setName] = useState("");
+  const [originalName, setOriginalName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showToast, setShowToast] = useState({ show: false, message: '', color: 'secondary' });
+  const [showToast, setShowToast] = useState({
+    show: false,
+    message: "",
+    color: "secondary",
+  });
 
   const hasChanges = () => {
     return name.trim() !== originalName.trim();
@@ -33,9 +37,8 @@ const Profile: React.FC = () => {
     // e.preventDefault();
     logout();
 
-  ionRouter.push('/login', 'root', 'replace');
-
-  }
+    ionRouter.push("/login", "root", "replace");
+  };
 
   useEffect(() => {
     if (user) {
@@ -45,17 +48,21 @@ const Profile: React.FC = () => {
 
   const loadProfile = () => {
     try {
-      const profileName = user?.name || '';
+      const profileName = user?.name || "";
       setName(profileName);
       setOriginalName(profileName);
     } catch (error) {
-      console.log('Error loading profile');
+      console.log("Error loading profile");
     }
   };
 
   const saveProfile = () => {
     if (!user || !name.trim()) {
-      setShowToast({ show: true, message: 'Please enter your name', color: 'warning' });
+      setShowToast({
+        show: true,
+        message: "Please enter your name",
+        color: "warning",
+      });
       return;
     }
 
@@ -63,33 +70,46 @@ const Profile: React.FC = () => {
     try {
       const updatedUser = {
         ...user,
-        name: name.trim()
+        name: name.trim(),
       };
-      localStorage.setItem('recipe-logger-user', JSON.stringify(updatedUser));
-      
+      localStorage.setItem("recipe-logger-user", JSON.stringify(updatedUser));
+
       // Update all recipes with the new author name
-      const allRecipesStr = localStorage.getItem('recipe-logger-recipes');
+      const allRecipesStr = localStorage.getItem("recipe-logger-recipes");
       if (allRecipesStr) {
         const allRecipes = JSON.parse(allRecipesStr);
         const updatedRecipes = allRecipes.map((recipe: any) =>
           recipe.userId === user.id
             ? { ...recipe, author: name.trim() }
-            : recipe
+            : recipe,
         );
-        localStorage.setItem('recipe-logger-recipes', JSON.stringify(updatedRecipes));
+        localStorage.setItem(
+          "recipe-logger-recipes",
+          JSON.stringify(updatedRecipes),
+        );
       }
-      
+
       // Dispatch custom event to notify other parts of the app
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'recipe-logger-user',
-        newValue: JSON.stringify(updatedUser),
-        oldValue: JSON.stringify(user)
-      }));
-      
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "recipe-logger-user",
+          newValue: JSON.stringify(updatedUser),
+          oldValue: JSON.stringify(user),
+        }),
+      );
+
       setOriginalName(name.trim());
-      setShowToast({ show: true, message: 'Profile updated successfully!', color: 'secondary' });
+      setShowToast({
+        show: true,
+        message: "Profile updated successfully!",
+        color: "secondary",
+      });
     } catch (error: any) {
-      setShowToast({ show: true, message: 'Error updating profile', color: 'danger' });
+      setShowToast({
+        show: true,
+        message: "Error updating profile",
+        color: "danger",
+      });
     }
     setLoading(false);
   };
@@ -98,13 +118,25 @@ const Profile: React.FC = () => {
     <IonPage>
       <AppHeader />
       <IonContent className="ion-padding">
-        <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ marginBottom: '40px' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', borderRadius: '50%' }}>
-              <UserAvatar color="secondary" name={name || user?.email || 'User'} size={80} />
+        <div
+          style={{ maxWidth: "400px", margin: "0 auto", textAlign: "center" }}
+        >
+          <div style={{ marginBottom: "40px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                borderRadius: "50%",
+              }}
+            >
+              <UserAvatar
+                color="secondary"
+                name={name || user?.email || "User"}
+                size={80}
+              />
             </div>
             <IonText color="medium">
-              <p style={{ marginTop: '10px' }}>{user?.email}</p>
+              <p style={{ marginTop: "10px" }}>{user?.email}</p>
             </IonText>
           </div>
 
@@ -117,13 +149,13 @@ const Profile: React.FC = () => {
             />
           </IonItem>
 
-          <IonButton 
-            expand="block" 
+          <IonButton
+            expand="block"
             onClick={saveProfile}
             disabled={loading || !hasChanges()}
-            style={{ margin: '20px 0' }}
+            style={{ margin: "20px 0" }}
           >
-            {loading ? 'Saving...' : 'Save Profile'}
+            {loading ? "Saving..." : "Save Profile"}
           </IonButton>
 
           {/* <IonButton 
