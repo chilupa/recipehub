@@ -202,7 +202,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
                 icon={recipe.isLiked ? heart : heartOutline}
                 slot="start"
               />
-              {formatLikes(recipe.likes)}
+              {recipe.likes > 0 && formatLikes(recipe.likes)}
             </IonButton>
             {/* <IonButton
               fill="clear"
