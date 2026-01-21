@@ -8,7 +8,7 @@ const Tabs = () => {
         <IonIcon aria-hidden="true" icon={home} />
         <IonLabel>Recipes</IonLabel>
       </IonTabButton>
-      <IonTabButton tab="favorites" href="/favorites" >
+      <IonTabButton tab="favorites" href="/favorites">
         <IonIcon aria-hidden="true" icon={heart} />
         <IonLabel>Favorites</IonLabel>
       </IonTabButton>

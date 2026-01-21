@@ -117,30 +117,19 @@ const Profile: React.FC = () => {
   return (
     <IonPage>
       <AppHeader />
-      <IonContent className="ion-padding">
+      <IonContent class="ion-padding">
         <div
-          style={{ maxWidth: "400px", margin: "0 auto", textAlign: "center" }}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "12px",
+          }}
         >
-          <div style={{ marginBottom: "40px" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                borderRadius: "50%",
-              }}
-            >
-              <UserAvatar
-                color="secondary"
-                name={name || user?.email || "User"}
-                size={80}
-              />
-            </div>
-            <IonText color="medium">
-              <p style={{ marginTop: "10px" }}>{user?.email}</p>
-            </IonText>
-          </div>
+          <UserAvatar name={name || user?.email || "User"} size={80} />
 
-          <IonItem>
+          <IonItem style={{ width: "100%" }}>
             <IonLabel position="stacked">Your Name</IonLabel>
             <IonInput
               value={name}
@@ -150,15 +139,16 @@ const Profile: React.FC = () => {
           </IonItem>
 
           <IonButton
+            style={{ width: "100%" }}
             expand="block"
             onClick={saveProfile}
             disabled={loading || !hasChanges()}
-            style={{ margin: "20px 0" }}
           >
             {loading ? "Saving..." : "Save Profile"}
           </IonButton>
+        </div>
 
-          {/* <IonButton 
+        {/* <IonButton 
             expand="block" 
             color="danger"
             onClick={handleLogout}
@@ -166,14 +156,13 @@ const Profile: React.FC = () => {
             Logout
           </IonButton> */}
 
-          <IonToast
-            isOpen={showToast.show}
-            onDidDismiss={() => setShowToast({ ...showToast, show: false })}
-            message={showToast.message}
-            duration={3000}
-            color={showToast.color}
-          />
-        </div>
+        <IonToast
+          isOpen={showToast.show}
+          onDidDismiss={() => setShowToast({ ...showToast, show: false })}
+          message={showToast.message}
+          duration={3000}
+          color={showToast.color}
+        />
       </IonContent>
     </IonPage>
   );

@@ -83,8 +83,10 @@ const RecipeDetail: React.FC = () => {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <UserAvatar color="tertiary" name={recipe.author} size={32} />
-              <IonText color="medium">{recipe.author}</IonText>
+              <UserAvatar color="tertiary" name={recipe.author} />
+              <IonText color="medium">
+                <p>{recipe.author}</p>
+              </IonText>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <IonButton
@@ -96,7 +98,7 @@ const RecipeDetail: React.FC = () => {
                   icon={recipe.isLiked ? heart : heartOutline}
                   slot="start"
                 />
-                {formatLikes(recipe.likes)}
+                {recipe.likes > 0 && formatLikes(recipe.likes)}
               </IonButton>
               {/* <IonButton
                 fill="clear"
@@ -110,59 +112,63 @@ const RecipeDetail: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ marginBottom: "24px" }}>
-          <h2 style={{ margin: "0 0 12px 0", fontSize: "20px" }}>
-            Ingredients
-          </h2>
-          <IonList>
-            {recipe.ingredients.map((ingredient, index) => (
-              <IonItem key={index}>
-                <IonLabel>{ingredient}</IonLabel>
-              </IonItem>
-            ))}
-          </IonList>
-        </div>
+        {recipe.ingredients.length > 0 && (
+          <div style={{ marginBottom: "24px" }}>
+            <h2 style={{ margin: "0 0 12px 0", fontSize: "20px" }}>
+              Ingredients
+            </h2>
+            <IonList>
+              {recipe.ingredients.map((ingredient, index) => (
+                <IonItem key={index}>
+                  <IonLabel>{ingredient}</IonLabel>
+                </IonItem>
+              ))}
+            </IonList>
+          </div>
+        )}
 
-        <div>
-          <h2 style={{ margin: "0 0 12px 0", fontSize: "20px" }}>
-            Instructions
-          </h2>
-          <IonList>
-            {recipe.instructions.map((instruction, index) => (
-              <IonItem key={index}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    width: "100%",
-                  }}
-                >
+        {recipe.instructions.length > 0 && (
+          <div>
+            <h2 style={{ margin: "0 0 12px 0", fontSize: "20px" }}>
+              Instructions
+            </h2>
+            <IonList>
+              {recipe.instructions.map((instruction, index) => (
+                <IonItem key={index}>
                   <div
                     style={{
-                      minWidth: "24px",
-                      height: "24px",
-                      borderRadius: "50%",
-                      backgroundColor: "var(--ion-color-secondary)",
-                      color: "white",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "12px",
-                      fontWeight: "bold",
-                      marginTop: "2px",
+                      gap: "12px",
+                      width: "100%",
                     }}
                   >
-                    {index + 1}
+                    <div
+                      style={{
+                        minWidth: "24px",
+                        height: "24px",
+                        borderRadius: "50%",
+                        backgroundColor: "var(--ion-color-secondary)",
+                        color: "white",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        marginTop: "2px",
+                      }}
+                    >
+                      {index + 1}
+                    </div>
+                    <IonLabel style={{ whiteSpace: "normal" }}>
+                      {instruction}
+                    </IonLabel>
                   </div>
-                  <IonLabel style={{ whiteSpace: "normal" }}>
-                    {instruction}
-                  </IonLabel>
-                </div>
-              </IonItem>
-            ))}
-          </IonList>
-        </div>
+                </IonItem>
+              ))}
+            </IonList>
+          </div>
+        )}
       </IonContent>
     </IonPage>
   );

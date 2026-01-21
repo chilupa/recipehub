@@ -53,12 +53,8 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   showMenu = false,
 }) => {
   return (
-    <IonCard
-      button
-      routerLink={`/recipe/${recipe.id}`}
-      style={{ margin: "8px 0" }}
-    >
-      <div style={{ padding: "12px 16px 8px 16px" }}>
+    <IonCard button routerLink={`/recipe/${recipe.id}`}>
+      <div style={{ padding: "12px" }}>
         <div
           style={{
             display: "flex",

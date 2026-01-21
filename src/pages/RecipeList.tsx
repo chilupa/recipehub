@@ -2,10 +2,6 @@ import React, { useState } from "react";
 import {
   IonContent,
   IonPage,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonText,
   IonAlert,
   IonPopover,
   IonList,
@@ -13,12 +9,13 @@ import {
   IonIcon,
   IonLabel,
   IonFab,
-  IonFabButton
+  IonFabButton,
 } from "@ionic/react";
 import { create, trash, add } from "ionicons/icons";
 import { useRecipes } from "../contexts/RecipeContext";
 import RecipeCard from "../components/RecipeCard";
 import AppHeader from "../components/AppHeader";
+import NoData from "../components/NoData";
 
 const RecipeList: React.FC = () => {
   const { recipes, toggleLike, shareRecipe, deleteRecipe } = useRecipes();
@@ -33,36 +30,31 @@ const RecipeList: React.FC = () => {
     recipeId: string;
   }>({ isOpen: false, event: undefined, recipeId: "" });
 
-
   return (
     <IonPage>
       <AppHeader />
-      <IonContent fullscreen className="ion-padding">
+      <IonContent fullscreen>
         {recipes.length === 0 ? (
-          <div style={{ textAlign: "center", marginTop: "50px" }}>
-            <IonText color="medium">
-              <h2>No recipes yet!</h2>
-              <p>Tap the + button to add your first recipe.</p>
-            </IonText>
-          </div>
+          <NoData
+            title="No recipes yet!"
+            description="Tap the + button to add your first recipe."
+          />
         ) : (
-          <IonGrid style={{ marginBottom: "40px" }}>
-            <IonRow>
-              {recipes.map((recipe) => (
-                <IonCol size="12" sizeMd="6" key={recipe.id}>
-                  <RecipeCard
-                    recipe={recipe}
-                    onLike={toggleLike}
-                    onShare={shareRecipe}
-                    onMenuClick={(event, recipeId) =>
-                      setPopoverOpen({ isOpen: true, event, recipeId })
-                    }
-                    showMenu={true}
-                  />
-                </IonCol>
-              ))}
-            </IonRow>
-          </IonGrid>
+          <>
+            {recipes.map((recipe) => (
+              <div key={recipe.id}>
+                <RecipeCard
+                  recipe={recipe}
+                  onLike={toggleLike}
+                  onShare={shareRecipe}
+                  onMenuClick={(event, recipeId) =>
+                    setPopoverOpen({ isOpen: true, event, recipeId })
+                  }
+                  showMenu={true}
+                />
+              </div>
+            ))}
+          </>
         )}
 
         <IonPopover
@@ -94,7 +86,7 @@ const RecipeList: React.FC = () => {
               color="danger"
               onClick={() => {
                 const recipe = recipes.find(
-                  (r) => r.id === popoverOpen.recipeId
+                  (r) => r.id === popoverOpen.recipeId,
                 );
                 setDeleteAlert({
                   isOpen: true,
@@ -138,7 +130,7 @@ const RecipeList: React.FC = () => {
         />
 
         <IonFab vertical="bottom" horizontal="end" slot="fixed">
-          <IonFabButton routerLink="/add">
+          <IonFabButton routerLink="/add" color="secondary">
             <IonIcon icon={add} />
           </IonFabButton>
         </IonFab>
