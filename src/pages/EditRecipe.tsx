@@ -42,7 +42,7 @@ const EditRecipe: React.FC = () => {
   });
 
   const [newTag, setNewTag] = useState("");
-  const [servingsInput, setServingsInput] = useState('1');
+  const [servingsInput, setServingsInput] = useState("1");
 
   useEffect(() => {
     const recipe = recipes.find((r) => r.id === id);
@@ -62,7 +62,7 @@ const EditRecipe: React.FC = () => {
   }, [id, recipes]);
 
   const handleSubmit = () => {
-    if (!formData.title || !formData.description) {
+    if (!formData.title) {
       setShowToast(true);
       return;
     }
@@ -148,7 +148,7 @@ const EditRecipe: React.FC = () => {
           <IonTitle>Edit Recipe</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen className="ion-padding">
+      <IonContent fullscreen>
         <IonList>
           <IonItem>
             <IonLabel position="stacked">Recipe Title *</IonLabel>
@@ -162,7 +162,7 @@ const EditRecipe: React.FC = () => {
           </IonItem>
 
           <IonItem>
-            <IonLabel position="stacked">Description *</IonLabel>
+            <IonLabel position="stacked">Description</IonLabel>
             <IonTextarea
               value={formData.description}
               onIonInput={(e) =>
@@ -181,7 +181,7 @@ const EditRecipe: React.FC = () => {
               onIonInput={(e) =>
                 setFormData({
                   ...formData,
-                  prepTime: parseInt(e.detail.value!) || 0,
+                  prepTime: parseInt(e.detail.value!),
                 })
               }
               placeholder="15"
@@ -196,7 +196,7 @@ const EditRecipe: React.FC = () => {
               onIonInput={(e) =>
                 setFormData({
                   ...formData,
-                  cookTime: parseInt(e.detail.value!) || 0,
+                  cookTime: parseInt(e.detail.value!),
                 })
               }
               placeholder="30"
@@ -210,7 +210,7 @@ const EditRecipe: React.FC = () => {
               value={servingsInput}
               onIonInput={(e) => setServingsInput(e.detail.value!)}
               onIonBlur={() => {
-                const value = parseInt(servingsInput) || 1;
+                const value = parseInt(servingsInput);
                 const finalValue = value < 1 ? 1 : value;
                 setFormData({ ...formData, servings: finalValue });
                 setServingsInput(finalValue.toString());
@@ -220,8 +220,8 @@ const EditRecipe: React.FC = () => {
             />
           </IonItem>
 
+          <h3 style={{ marginLeft: "12px" }}>Ingredients</h3>
           <div style={{ margin: "20px 0" }}>
-            <h3>Ingredients</h3>
             {formData.ingredients.map((ingredient, index) => (
               <IonItem key={index}>
                 <IonInput
@@ -244,9 +244,8 @@ const EditRecipe: React.FC = () => {
               Add Ingredient
             </IonButton>
           </div>
-
+          <h3 style={{ marginLeft: "12px" }}>Instructions</h3>
           <div style={{ margin: "20px 0" }}>
-            <h3>Instructions</h3>
             {formData.instructions.map((instruction, index) => (
               <IonItem key={index}>
                 <IonTextarea
@@ -270,9 +269,10 @@ const EditRecipe: React.FC = () => {
               Add Step
             </IonButton>
           </div>
-
+          <h3 style={{ marginLeft: "12px" }}>
+            Tags ({formData.tags.length}/5)
+          </h3>
           <div style={{ margin: "20px 0" }}>
-            <h3>Tags ({formData.tags.length}/5)</h3>
             <IonItem>
               <IonInput
                 value={newTag}
@@ -298,7 +298,8 @@ const EditRecipe: React.FC = () => {
           <IonButton
             expand="block"
             onClick={handleSubmit}
-            style={{ margin: "20px 0" }}
+            style={{ padding: "12px" }}
+            disabled={!formData.title.trim()}
           >
             Update Recipe
           </IonButton>
@@ -307,7 +308,7 @@ const EditRecipe: React.FC = () => {
         <IonToast
           isOpen={showToast}
           onDidDismiss={() => setShowToast(false)}
-          message="Please fill in title and description"
+          message="Please fill in title"
           duration={2000}
           color="warning"
         />

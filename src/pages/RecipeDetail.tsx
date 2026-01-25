@@ -47,7 +47,7 @@ const RecipeDetail: React.FC = () => {
           <h1 style={{ margin: "0 0 8px 0", fontSize: "24px" }}>
             {recipe.title}
           </h1>
-          <p style={{ margin: "0 0 16px 0", color: "var(--ion-color-medium)" }}>
+          <p style={{ color: "var(--ion-color-medium)" }}>
             {recipe.description}
           </p>
 

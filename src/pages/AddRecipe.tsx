@@ -56,7 +56,7 @@ const AddRecipe: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.title || !formData.description) {
+    if (!formData.title) {
       setShowToast(true);
       return;
     }
@@ -269,10 +269,29 @@ const AddRecipe: React.FC = () => {
             <IonItem>
               <IonInput
                 value={newTag}
-                onIonInput={(e) => setNewTag(e.detail.value!)}
+                onIonInput={(e) => {
+                  const inputValue = e.detail.value!;
+                  // Check if last character is comma or space
+                  if (inputValue && [",", " "].includes(inputValue.slice(-1))) {
+                    const tag = inputValue.slice(0, -1).trim();
+                    if (
+                      tag &&
+                      !formData.tags.includes(tag) &&
+                      formData.tags.length < 5
+                    ) {
+                      setFormData({
+                        ...formData,
+                        tags: [...formData.tags, tag],
+                      });
+                    }
+                    setNewTag("");
+                  } else {
+                    setNewTag(inputValue);
+                  }
+                }}
                 placeholder="Add a tag"
                 disabled={formData.tags.length >= 5}
-                onKeyPress={(e) => e.key === "Enter" && addTag()}
+                // No Enter key handling; only add tag on comma or space
               />
               <IonButton onClick={addTag} disabled={formData.tags.length >= 5}>
                 Add
@@ -292,6 +311,7 @@ const AddRecipe: React.FC = () => {
             expand="block"
             onClick={handleSubmit}
             style={{ padding: "12px" }}
+            disabled={!formData.title.trim()}
           >
             Save Recipe
           </IonButton>
@@ -300,7 +320,7 @@ const AddRecipe: React.FC = () => {
         <IonToast
           isOpen={showToast}
           onDidDismiss={() => setShowToast(false)}
-          message="Please fill in title and description"
+          message="Please fill in title."
           duration={2000}
           color="warning"
         />

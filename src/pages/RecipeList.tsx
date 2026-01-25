@@ -16,6 +16,7 @@ import { useRecipes } from "../contexts/RecipeContext";
 import RecipeCard from "../components/RecipeCard";
 import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
+import { mockRecipes } from "../mocks";
 
 const RecipeList: React.FC = () => {
   const { recipes, toggleLike, shareRecipe, deleteRecipe } = useRecipes();

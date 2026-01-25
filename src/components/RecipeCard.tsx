@@ -64,22 +64,26 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
           }}
         >
           <div>
-            <h3
+            <h4
               style={{
                 color: "var(--ion-color-dark)",
                 margin: "0 0 4px 0",
-                fontSize: "18px",
-                fontWeight: "600",
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
               }}
             >
               {recipe.title}
-            </h3>
+            </h4>
             <p
               style={{
-                margin: "0",
-                fontSize: "14px",
+                marginTop: "8px",
                 color: "var(--ion-color-medium)",
-                lineHeight: "1.3",
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: "vertical",
               }}
             >
               {recipe.description}

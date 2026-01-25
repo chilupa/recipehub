@@ -1,11 +1,12 @@
 import { Recipe } from "../types/Recipe";
 
-const mockRecipes: Recipe[] = [
+export const mockRecipes: Recipe[] = [
   {
     userId: "",
-    title: "Creamy Mushroom Risotto",
+    title:
+      "Creamy Mushroom RisotRich and creamy arborio rice with mixed mushrooms and fresh herbsRich and creamy arborio rice with mixed mushrooms and fresh herbsRich and creamy arborio rice with mixed mushrooms and fresh herbsRich and creamy arborio rice with mixed mushrooms and fresh herbsRich and creamy arborio rice with mixed mushrooms and fresh herbsRich and creamy arborio rice with mixed mushrooms and fresh herbsRich and creamy arborio rice with mixed mushrooms and fresh herbsRich and creamy arborio rice with mixed mushrooms and fresh herbsRich and creamy arborio rice with mixed mushrooms and fresh herbsto",
     description:
-      "Rich and creamy arborio rice with mixed mushrooms and fresh herbs",
+      "Rich and creamy arborio rice with miRich and creamy arborio rice with mixed mushrooms and fresh herbsRich and creamy arborio rice with mixed mushrooms and fresh herbsRich and creamy arborio rice with mixed mushrooms and fresh herbsRich and creamy arborio rice with mixed mushrooms and fresh herbsRich and creamy arborio rice with mixed mushrooms and fresh herbsxed mushrooms and fresh herbs",
     ingredients: [
       "1 1/2 cups arborio rice",
       "4 cups vegetable broth",
