@@ -5,79 +5,338 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { App } from "@capacitor/app";
+import { Browser } from "@capacitor/browser";
+import { Capacitor } from "@capacitor/core";
+import type { PluginListenerHandle } from "@capacitor/core";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import {
+  completeSupabaseOAuthFromUrl,
+  getOAuthRedirectUrl,
+  looksLikeOAuthCallbackUrl,
+} from "../lib/oauthRedirect";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email?: string;
+  avatarUrl?: string;
 }
 
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
-  login: (name: string, email?: string) => void;
-  logout: () => void;
+  authError: string | null;
+  loginWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
+  updateUser: (updates: Partial<User>) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = "recipe-logger-user";
+const useMockAuth = import.meta.env.VITE_USE_MOCK_AUTH === "true";
+const MOCK_USER_STORAGE_KEY = "recipehub-mock-user";
+const defaultMockUser: User = {
+  id: "mock-user",
+  name: "Demo Chef",
+  email: "demo@example.com",
+  avatarUrl: undefined,
+};
+
+const loadMockUser = (): User | null => {
+  try {
+    const raw = localStorage.getItem(MOCK_USER_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as User;
+  } catch {
+    return null;
+  }
+};
+
+const saveMockUser = (u: User) => {
+  try {
+    localStorage.setItem(MOCK_USER_STORAGE_KEY, JSON.stringify(u));
+  } catch {
+    // ignore
+  }
+};
+
+function mapAuthUser(
+  supabaseUser: SupabaseUser | null,
+  profile: { display_name?: string | null; avatar_url?: string | null } | null,
+): User | null {
+  if (!supabaseUser) return null;
+  const name =
+    profile?.display_name?.trim() ||
+    supabaseUser.user_metadata?.full_name?.trim() ||
+    supabaseUser.user_metadata?.name?.trim() ||
+    supabaseUser.email?.split("@")[0] ||
+    "Chef";
+  return {
+    id: supabaseUser.id,
+    name,
+    email: supabaseUser.email ?? undefined,
+    avatarUrl: profile?.avatar_url ?? supabaseUser.user_metadata?.avatar_url ?? undefined,
+  };
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch {
-        localStorage.removeItem(STORAGE_KEY);
-      }
-    }
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try {
-          setUser(JSON.parse(e.newValue));
-        } catch {
-          console.error("Error parsing stored user");
-        }
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
-
-  const login = (name: string, email?: string) => {
-    const newUser: User = {
-      id: Date.now().toString(),
-      name,
-      ...(email ? { email } : {}),
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
-    setUser(newUser);
+  const fetchProfile = async (userId: string) => {
+    if (useMockAuth) return null;
+    const { data } = await supabase
+      .from("profiles")
+      .select("display_name, avatar_url")
+      .eq("id", userId)
+      .single();
+    return data;
   };
 
-  const logout = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem("recipe-logger-recipes");
+  const upsertProfile = async (supabaseUser: SupabaseUser) => {
+    if (useMockAuth) return;
+    const displayName =
+      supabaseUser.user_metadata?.full_name?.trim() ||
+      supabaseUser.user_metadata?.name?.trim() ||
+      supabaseUser.email?.split("@")[0] ||
+      null;
+    const avatarUrl =
+      supabaseUser.user_metadata?.avatar_url?.trim() || null;
+    await supabase.from("profiles").upsert(
+      {
+        id: supabaseUser.id,
+        display_name: displayName,
+        avatar_url: avatarUrl,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" }
+    );
+  };
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (useMockAuth) {
+      const mock = loadMockUser() ?? defaultMockUser;
+      if (mounted) {
+        setUser(mock);
+        setIsLoading(false);
+      }
+      return () => {
+        mounted = false;
+      };
+    }
+
+    const init = async () => {
+      try {
+        if (isSupabaseConfigured()) {
+          try {
+            if (typeof window !== "undefined") {
+              const href = window.location.href;
+              if (looksLikeOAuthCallbackUrl(href)) {
+                await completeSupabaseOAuthFromUrl(supabase, href);
+                window.history.replaceState(
+                  {},
+                  document.title,
+                  window.location.pathname || "/"
+                );
+              }
+            }
+            if (Capacitor.isNativePlatform()) {
+              const launch = await App.getLaunchUrl();
+              if (launch?.url && looksLikeOAuthCallbackUrl(launch.url)) {
+                await completeSupabaseOAuthFromUrl(supabase, launch.url);
+                await Browser.close().catch(() => undefined);
+              }
+            }
+          } catch {
+            // OAuth callback parse failed; continue with getSession
+          }
+        }
+
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!mounted) return;
+        if (session?.user) {
+          // Show home immediately from JWT metadata; hydrate profile in background.
+          setUser(mapAuthUser(session.user, null));
+          void (async () => {
+            try {
+              await upsertProfile(session.user);
+              const profileAfter = await fetchProfile(session.user.id);
+              if (!mounted) return;
+              setUser(mapAuthUser(session.user, profileAfter));
+            } catch {
+              // keep metadata-based user if profiles/RLS fail
+            }
+          })();
+        } else {
+          setUser(null);
+        }
+      } catch (e) {
+        if (mounted) setUser(null);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
+
+    init();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      if (event === "SIGNED_OUT") {
+        setUser(null);
+        return;
+      }
+      if (session?.user) {
+        setUser(mapAuthUser(session.user, null));
+        setAuthError(null);
+        void (async () => {
+          try {
+            await upsertProfile(session.user);
+            const profile = await fetchProfile(session.user.id);
+            if (!mounted) return;
+            setUser(mapAuthUser(session.user, profile));
+          } catch {
+            // keep metadata-based user
+          }
+        })();
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (useMockAuth || !isSupabaseConfigured()) return;
+    if (!Capacitor.isNativePlatform()) return;
+
+    let cancelled = false;
+    let listener: PluginListenerHandle | undefined;
+
+    void (async () => {
+      listener = await App.addListener("appUrlOpen", async ({ url }) => {
+        if (!looksLikeOAuthCallbackUrl(url)) return;
+        try {
+          await completeSupabaseOAuthFromUrl(supabase, url);
+        } catch {
+          // user can retry sign-in
+        } finally {
+          await Browser.close().catch(() => undefined);
+        }
+      });
+      if (cancelled) {
+        void listener.remove();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      void listener?.remove();
+    };
+  }, []);
+
+  const loginWithGoogle = async () => {
+    if (useMockAuth) {
+      setIsLoading(true);
+      const mock = loadMockUser() ?? defaultMockUser;
+      saveMockUser(mock);
+      setUser(mock);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setAuthError(null);
+    try {
+      const redirectTo = getOAuthRedirectUrl();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          skipBrowserRedirect: Capacitor.isNativePlatform(),
+        },
+      });
+      if (error) throw error;
+      if (Capacitor.isNativePlatform() && data?.url) {
+        await Browser.open({ url: data.url });
+      } else if (!Capacitor.isNativePlatform() && data?.url) {
+        window.location.assign(data.url);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Google sign-in failed.";
+      setAuthError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    if (useMockAuth) {
+      try {
+        localStorage.removeItem(MOCK_USER_STORAGE_KEY);
+      } catch {
+        // ignore
+      }
+      setUser(null);
+      return;
+    }
+
+    // Clear UI first so we don’t stay on tabs while sign-out network runs.
     setUser(null);
+    await supabase.auth.signOut();
+  };
+
+  const updateUser = async (updates: Partial<User>) => {
+    if (!user) return;
+    setUser((prev) => (prev ? { ...prev, ...updates } : null));
+
+    if (useMockAuth) {
+      const updated = { ...user, ...updates };
+      saveMockUser(updated);
+      return;
+    }
+
+    const { id } = user;
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        display_name: updates.name,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+    if (error) throw error;
   };
 
   const value = useMemo(
-    () => ({ user, isLoading, login, logout }),
-    [user, isLoading],
+    () => ({
+      user,
+      isLoading,
+      authError,
+      loginWithGoogle,
+      logout,
+      updateUser,
+    }),
+    [user, isLoading, authError]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {

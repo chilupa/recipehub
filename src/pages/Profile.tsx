@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useId } from "react";
+import React, { useState, useEffect } from "react";
 import {
   IonContent,
   IonPage,
@@ -8,8 +8,11 @@ import {
   IonButton,
   IonToast,
   IonText,
+  IonList,
   useIonRouter,
 } from "@ionic/react";
+import { logOutOutline, bookOutline } from "ionicons/icons";
+import { IonIcon } from "@ionic/react";
 
 import AppHeader from "../components/AppHeader";
 import UserAvatar from "../components/UserAvatar";
@@ -17,8 +20,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { useRecipes } from "../contexts/RecipeContext";
 
 const Profile: React.FC = () => {
-  const { user, logout } = useAuth();
-  const { recipes } = useRecipes();
+  const { user, logout, updateUser } = useAuth();
+  const { recipes, recipesLoading } = useRecipes();
   const ionRouter = useIonRouter();
   const [name, setName] = useState("");
   const [originalName, setOriginalName] = useState("");
@@ -34,29 +37,19 @@ const Profile: React.FC = () => {
   };
 
   const handleLogout = () => {
-    // e.preventDefault();
     logout();
-
     ionRouter.push("/login", "root", "replace");
   };
 
   useEffect(() => {
     if (user) {
-      loadProfile();
+      const profileName = user.name || "";
+      setName(profileName);
+      setOriginalName(profileName);
     }
   }, [user]);
 
-  const loadProfile = () => {
-    try {
-      const profileName = user?.name || "";
-      setName(profileName);
-      setOriginalName(profileName);
-    } catch (error) {
-      console.log("Error loading profile");
-    }
-  };
-
-  const saveProfile = () => {
+  const saveProfile = async () => {
     if (!user || !name.trim()) {
       setShowToast({
         show: true,
@@ -68,43 +61,23 @@ const Profile: React.FC = () => {
 
     setLoading(true);
     try {
-      const updatedUser = {
-        ...user,
-        name: name.trim(),
-      };
-      localStorage.setItem("recipe-logger-user", JSON.stringify(updatedUser));
+      const nextName = name.trim();
+      await updateUser({ name: nextName });
 
-      // Update all recipes with the new author name
-      const allRecipesStr = localStorage.getItem("recipe-logger-recipes");
-      if (allRecipesStr) {
-        const allRecipes = JSON.parse(allRecipesStr);
-        const updatedRecipes = allRecipes.map((recipe: any) =>
-          recipe.userId === user.id
-            ? { ...recipe, author: name.trim() }
-            : recipe,
-        );
-        localStorage.setItem(
-          "recipe-logger-recipes",
-          JSON.stringify(updatedRecipes),
-        );
-      }
-
-      // Dispatch custom event to notify other parts of the app
+      // Notify RecipeContext to update already-loaded authors.
       window.dispatchEvent(
-        new StorageEvent("storage", {
-          key: "recipe-logger-user",
-          newValue: JSON.stringify(updatedUser),
-          oldValue: JSON.stringify(user),
+        new CustomEvent("profile:updated", {
+          detail: { userId: user.id, displayName: nextName },
         }),
       );
 
       setOriginalName(name.trim());
       setShowToast({
         show: true,
-        message: "Profile updated successfully!",
-        color: "secondary",
+        message: "Profile updated",
+        color: "success",
       });
-    } catch (error: any) {
+    } catch {
       setShowToast({
         show: true,
         message: "Error updating profile",
@@ -114,51 +87,88 @@ const Profile: React.FC = () => {
     setLoading(false);
   };
 
+  const displayName = name || user?.name || user?.email || "User";
+
   return (
     <IonPage>
-      <AppHeader />
-      <IonContent class="ion-padding">
+      <AppHeader  />
+      <IonContent className="ion-padding">
+        {/* Profile card */}
         <div
           style={{
+            marginTop: 8,
+            marginBottom: 24,
+            padding: "24px 20px",
+            borderRadius: 12,
+            background: "var(--ion-color-light)",
             display: "flex",
             flexDirection: "column",
-            justifyContent: "center",
             alignItems: "center",
-            gap: "12px",
+            gap: 16,
           }}
         >
-          <UserAvatar name={name || user?.email || "User"} size={80} />
-
-          <IonItem style={{ width: "100%" }}>
-            <IonLabel position="stacked">Your Name</IonLabel>
-            <IonInput
-              value={name}
-              onIonInput={(e) => setName(e.detail.value!)}
-              placeholder="Enter your name"
-            />
-          </IonItem>
-
+          <UserAvatar name={displayName} size={88} color="primary" />
+            <IonItem
+              lines="none"
+              style={{
+                width: "100%",
+                "--background": "transparent",
+                "--padding-start": 0,
+                "--inner-padding-end": 0,
+              }}
+            >
+              <IonLabel position="stacked">Name</IonLabel>
+              <IonInput
+                value={name}
+                onIonInput={(e) => setName(e.detail.value ?? "")}
+                placeholder="Enter your name"
+                clearOnEdit={false}
+              />
+            </IonItem>
+            {user?.email && (
+              <IonText color="medium" style={{ fontSize: 14, width: "100%" }}>
+                {user.email}
+              </IonText>
+            )}
           <IonButton
-            style={{ width: "100%" }}
             expand="block"
             onClick={saveProfile}
             disabled={loading || !hasChanges()}
+            style={{ width: "100%", marginTop: 8 }}
           >
-            {loading ? "Saving..." : "Save Profile"}
+            {loading ? "Saving…" : "Save profile"}
           </IonButton>
         </div>
 
-        {/* <IonButton 
-            expand="block" 
-            color="danger"
+        {/* Stats */}
+        <IonList lines="none" style={{ marginBottom: 24 }}>
+          <IonItem>
+            <IonIcon icon={bookOutline} slot="start" color="primary" />
+            <IonLabel>
+              <strong>{recipesLoading ? "…" : recipes.length}</strong>{" "}
+              {recipesLoading
+                ? "recipes"
+                : `recipe${recipes.length !== 1 ? "s" : ""}`}
+            </IonLabel>
+          </IonItem>
+        </IonList>
+
+        {/* Sign out */}
+        <IonList lines="none">
+          <IonItem
+            button
+            detail={false}
             onClick={handleLogout}
+            style={{ "--background": "transparent" }}
           >
-            Logout
-          </IonButton> */}
+            <IonIcon icon={logOutOutline} slot="start" color="danger" />
+            <IonLabel color="danger">Sign out</IonLabel>
+          </IonItem>
+        </IonList>
 
         <IonToast
           isOpen={showToast.show}
-          onDidDismiss={() => setShowToast({ ...showToast, show: false })}
+          onDidDismiss={() => setShowToast((s) => ({ ...s, show: false }))}
           message={showToast.message}
           duration={3000}
           color={showToast.color}

@@ -10,16 +10,22 @@ import {
   IonLabel,
   IonFab,
   IonFabButton,
+  IonToast,
+  IonSpinner,
+  IonText,
 } from "@ionic/react";
 import { create, trash, add } from "ionicons/icons";
 import { useRecipes } from "../contexts/RecipeContext";
+import { useAuth } from "../contexts/AuthContext";
 import RecipeCard from "../components/RecipeCard";
 import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
-import { mockRecipes } from "../mocks";
 
 const RecipeList: React.FC = () => {
-  const { recipes, toggleLike, shareRecipe, deleteRecipe } = useRecipes();
+  const { user } = useAuth();
+  const { recipes, recipesLoading, toggleFavorite, shareRecipe, deleteRecipe } =
+    useRecipes();
+  const [toast, setToast] = useState({ show: false, message: "" });
   const [deleteAlert, setDeleteAlert] = useState<{
     isOpen: boolean;
     recipeId: string;
@@ -35,27 +41,50 @@ const RecipeList: React.FC = () => {
     <IonPage>
       <AppHeader />
       <IonContent fullscreen>
-        {recipes.length === 0 ? (
+        {recipesLoading ? (
+          <div
+            className="ion-padding"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              paddingTop: 48,
+            }}
+          >
+            <IonSpinner name="crescent" />
+            <IonText color="medium">
+              <p style={{ marginTop: 12, textAlign: "center" }}>
+                Loading recipes…
+              </p>
+            </IonText>
+          </div>
+        ) : recipes.length === 0 ? (
           <NoData
             title="No recipes yet!"
             description="Tap the + button to add your first recipe."
           />
         ) : (
-          <>
+          <div style={{ paddingBottom: "80px" }}>
             {recipes.map((recipe) => (
-              <div key={recipe.id}>
+              <div key={recipe.id} style={{ marginBottom: "12px" }}>
                 <RecipeCard
                   recipe={recipe}
-                  onLike={toggleLike}
+                  onFavorite={async (recipeId) => {
+                    try {
+                      await toggleFavorite(recipeId);
+                    } catch {
+                      setToast({ show: true, message: "Could not update favorite." });
+                    }
+                  }}
                   onShare={shareRecipe}
                   onMenuClick={(event, recipeId) =>
                     setPopoverOpen({ isOpen: true, event, recipeId })
                   }
-                  showMenu={true}
+                  showMenu={recipe.userId === user?.id}
                 />
               </div>
             ))}
-          </>
+          </div>
         )}
 
         <IonPopover
@@ -69,7 +98,7 @@ const RecipeList: React.FC = () => {
             <IonItem
               button
               detail={false}
-              routerLink={`/edit/${popoverOpen.recipeId}`}
+              routerLink={`/recipes/edit/${popoverOpen.recipeId}`}
               onClick={() =>
                 setPopoverOpen({
                   isOpen: false,
@@ -89,10 +118,13 @@ const RecipeList: React.FC = () => {
                 const recipe = recipes.find(
                   (r) => r.id === popoverOpen.recipeId,
                 );
+                const name = recipe?.title?.trim() || "this recipe";
+                const shortName =
+                  name.length > 50 ? `${name.slice(0, 47)}…` : name;
                 setDeleteAlert({
                   isOpen: true,
                   recipeId: popoverOpen.recipeId,
-                  recipeName: recipe?.title || "",
+                  recipeName: shortName,
                 });
                 setPopoverOpen({
                   isOpen: false,
@@ -113,7 +145,7 @@ const RecipeList: React.FC = () => {
             setDeleteAlert({ isOpen: false, recipeId: "", recipeName: "" })
           }
           header="Delete Recipe"
-          message={`Are you sure you want to delete "${deleteAlert.recipeName}"?`}
+          message={`Are you sure you want to delete "${deleteAlert.recipeName || "this recipe"}"?`}
           buttons={[
             {
               text: "Cancel",
@@ -122,16 +154,33 @@ const RecipeList: React.FC = () => {
             {
               text: "Delete",
               role: "destructive",
-              handler: () => {
-                deleteRecipe(deleteAlert.recipeId);
-                setDeleteAlert({ isOpen: false, recipeId: "", recipeName: "" });
+              handler: async () => {
+                try {
+                  await deleteRecipe(deleteAlert.recipeId);
+                } catch {
+                  setToast({ show: true, message: "Could not delete recipe." });
+                } finally {
+                  setDeleteAlert({
+                    isOpen: false,
+                    recipeId: "",
+                    recipeName: "",
+                  });
+                }
               },
             },
           ]}
         />
 
+        <IonToast
+          isOpen={toast.show}
+          onDidDismiss={() => setToast((t) => ({ ...t, show: false }))}
+          message={toast.message}
+          duration={2500}
+          color="danger"
+        />
+
         <IonFab vertical="bottom" horizontal="end" slot="fixed">
-          <IonFabButton routerLink="/add" color="secondary">
+          <IonFabButton routerLink="/recipes/add" color="secondary">
             <IonIcon icon={add} />
           </IonFabButton>
         </IonFab>

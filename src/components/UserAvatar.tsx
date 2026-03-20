@@ -21,6 +21,10 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   size = 20,
   color = "primary",
 }) => {
+  const isCssVar = !color.startsWith("#");
+  const textColor = isCssVar
+    ? `var(--ion-color-${color}-contrast, var(--ion-color-dark))`
+    : "#fff";
   return (
     <IonAvatar
       style={{
@@ -33,15 +37,13 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
           width: "100%",
           height: "100%",
           borderRadius: "50%",
-          backgroundColor: color.startsWith("#")
-            ? color
-            : `var(--ion-color-${color})`,
+          backgroundColor: isCssVar ? `var(--ion-color-${color})` : color,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           fontSize: `${size * 0.45}px`,
           fontWeight: "bold",
-          color: "var(--ion-color-dark)",
+          color: textColor,
         }}
       >
         {getInitials(name)}

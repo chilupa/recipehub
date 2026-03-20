@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   IonContent,
   IonPage,
@@ -6,6 +6,8 @@ import {
   IonRow,
   IonCol,
   IonText,
+  IonToast,
+  IonSpinner,
 } from "@ionic/react";
 import { useRecipes } from "../contexts/RecipeContext";
 import RecipeCard from "../components/RecipeCard";
@@ -13,17 +15,35 @@ import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
 
 const Favorites: React.FC = () => {
-  const { recipes, toggleLike, shareRecipe } = useRecipes();
+  const { recipes, recipesLoading, toggleFavorite, shareRecipe } = useRecipes();
   const favoriteRecipes = recipes.filter((recipe) => recipe.isLiked);
+  const [toast, setToast] = useState({ show: false, message: "" });
 
   return (
     <IonPage>
       <AppHeader title="RecipeHub" />
       <IonContent fullscreen>
-        {favoriteRecipes.length === 0 ? (
+        {recipesLoading ? (
+          <div
+            className="ion-padding"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              paddingTop: 48,
+            }}
+          >
+            <IonSpinner name="crescent" />
+            <IonText color="medium">
+              <p style={{ marginTop: 12, textAlign: "center" }}>
+                Loading favorites…
+              </p>
+            </IonText>
+          </div>
+        ) : favoriteRecipes.length === 0 ? (
           <NoData
             title="No favorites yet!"
-            description="Like some recipes to see them here."
+            description="Save some recipes to see them here."
           />
         ) : (
           <IonGrid className="ion-no-padding">
@@ -32,7 +52,13 @@ const Favorites: React.FC = () => {
                 <IonCol size="12" key={recipe.id}>
                   <RecipeCard
                     recipe={recipe}
-                    onLike={toggleLike}
+                    onFavorite={async (recipeId) => {
+                      try {
+                        await toggleFavorite(recipeId);
+                      } catch {
+                        setToast({ show: true, message: "Could not update favorite." });
+                      }
+                    }}
                     onShare={shareRecipe}
                     showMenu={false}
                   />
@@ -42,6 +68,14 @@ const Favorites: React.FC = () => {
           </IonGrid>
         )}
       </IonContent>
+
+      <IonToast
+        isOpen={toast.show}
+        onDidDismiss={() => setToast((t) => ({ ...t, show: false }))}
+        message={toast.message}
+        duration={2500}
+        color="danger"
+      />
     </IonPage>
   );
 };

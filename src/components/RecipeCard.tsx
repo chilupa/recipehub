@@ -20,13 +20,13 @@ import UserAvatar from "./UserAvatar";
 
 interface RecipeCardProps {
   recipe: Recipe;
-  onLike: (id: string) => void;
+  onFavorite: (id: string) => Promise<void>;
   onShare: (recipe: Recipe) => void;
   onMenuClick?: (event: Event, recipeId: string) => void;
   showMenu?: boolean;
 }
 
-const formatLikes = (count: number): string => {
+const formatFavorites = (count: number): string => {
   if (count >= 1000000) return `${(count / 1000000).toFixed(1)}m`;
   if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
   return count.toString();
@@ -47,13 +47,13 @@ const formatTimeAgo = (dateString: string): string => {
 
 const RecipeCard: React.FC<RecipeCardProps> = ({
   recipe,
-  onLike,
+  onFavorite,
   onShare,
   onMenuClick,
   showMenu = false,
 }) => {
   return (
-    <IonCard button routerLink={`/recipe/${recipe.id}`}>
+    <IonCard button routerLink={`/recipes/recipe/${recipe.id}`}>
       <div style={{ padding: "12px" }}>
         <div
           style={{
@@ -61,9 +61,15 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
             justifyContent: "space-between",
             alignItems: "flex-start",
             marginBottom: "8px",
+            gap: "8px",
           }}
         >
-          <div>
+          <div
+            style={{
+              minWidth: 0,
+              flex: 1,
+            }}
+          >
             <h4
               style={{
                 color: "var(--ion-color-dark)",
@@ -72,22 +78,26 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
+                wordBreak: "break-word",
               }}
             >
               {recipe.title}
             </h4>
-            <p
-              style={{
-                marginTop: "8px",
-                color: "var(--ion-color-medium)",
-                overflow: "hidden",
-                display: "-webkit-box",
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: "vertical",
-              }}
-            >
-              {recipe.description}
-            </p>
+            {recipe.description ? (
+              <p
+                style={{
+                  margin: "8px 0 0 0",
+                  color: "var(--ion-color-medium)",
+                  overflow: "hidden",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: "vertical",
+                  wordBreak: "break-word",
+                }}
+              >
+                {recipe.description}
+              </p>
+            ) : null}
           </div>
           {showMenu && onMenuClick && (
             <IonButton
@@ -117,7 +127,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
         >
           <IonChip color="primary" style={{ height: "24px", fontSize: "12px" }}>
             <IonIcon icon={time} style={{ fontSize: "14px" }} />
-            <IonLabel>{recipe.prepTime + recipe.cookTime + " "} min</IonLabel>
+            <IonLabel>{(recipe.prepTime ?? 0) + (recipe.cookTime ?? 0)} min</IonLabel>
           </IonChip>
           <IonChip
             color="secondary"
@@ -194,7 +204,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                onLike(recipe.id);
+                onFavorite(recipe.id).catch(() => {});
               }}
               style={{ margin: "0", minHeight: "32px" }}
             >
@@ -202,7 +212,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
                 icon={recipe.isLiked ? heart : heartOutline}
                 slot="start"
               />
-              {recipe.likes > 0 && formatLikes(recipe.likes)}
+              {recipe.likes > 0 && formatFavorites(recipe.likes)}
             </IonButton>
             {/* <IonButton
               fill="clear"

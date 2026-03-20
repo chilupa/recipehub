@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import {
   IonApp,
@@ -7,6 +8,10 @@ import {
   IonTabBar,
   IonTabButton,
   IonTabs,
+  IonContent,
+  IonPage,
+  IonSpinner,
+  IonText,
   setupIonicReact
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
@@ -51,15 +56,29 @@ import './theme/variables.css';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
 import Tabs from './components/Tabs';
+import Intro, { hasSeenIntro } from './pages/Intro';
 
 setupIonicReact();
 
 const AppRoutes: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
 
   return (
     <IonReactRouter>
-      {!user ? (
+      {isLoading ? (
+        <IonPage>
+          <IonContent fullscreen className="ion-padding">
+            <IonText color="medium">
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <IonSpinner name="crescent" />
+              </div>
+              <p style={{ textAlign: "center", marginTop: 12 }}>
+                Loading…
+              </p>
+            </IonText>
+          </IonContent>
+        </IonPage>
+      ) : !user ? (
         <IonRouterOutlet>
           <Route exact path="/login" component={Login} />
           <Route exact path="/">
@@ -72,13 +91,20 @@ const AppRoutes: React.FC = () => {
       ) : (
         <IonTabs>
           <IonRouterOutlet>
-            <Route exact path="/recipes" component={RecipeList} />
-            <Route exact path="/favorites" component={Favorites} />
-            <Route exact path="/add" component={AddRecipe} />
-            <Route exact path="/edit/:id" component={EditRecipe} />
-            <Route exact path="/recipe/:id" component={RecipeDetail} />
-            <Route exact path="/profile" component={Profile} />
+            <Route exact path="/:tab(recipes)" component={RecipeList} />
+            <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
+            <Route exact path="/:tab(recipes)/add" component={AddRecipe} />
+            <Route path="/:tab(recipes)/edit/:id" component={EditRecipe} />
+            <Route exact path="/:tab(favorites)" component={Favorites} />
+            <Route exact path="/:tab(profile)" component={Profile} />
+            <Route exact path="/login">
+              <Redirect to="/recipes" />
+            </Route>
             <Route exact path="/">
+              <Redirect to="/recipes" />
+            </Route>
+            {/* Fallback for any unmatched route (e.g. deep link to /login) */}
+            <Route>
               <Redirect to="/recipes" />
             </Route>
           </IonRouterOutlet>
@@ -91,8 +117,22 @@ const AppRoutes: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  const [showIntro, setShowIntro] = useState(() => !hasSeenIntro());
+
+  const handleIntroComplete = () => {
+    setShowIntro(false);
+  };
+
+  if (showIntro) {
+    return (
+      <IonApp key="intro">
+        <Intro onComplete={handleIntroComplete} />
+      </IonApp>
+    );
+  }
+
   return (
-    <IonApp>
+    <IonApp key="main">
       <AuthProvider>
         <RecipeProvider>
           <AppRoutes />

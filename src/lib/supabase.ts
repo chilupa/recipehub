@@ -1,13 +1,12 @@
-// Supabase client is no longer needed - using localStorage instead
-// This file has been disabled for the local-only version
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-// import { createClient } from '@supabase/supabase-js'
-//
-// const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-// const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-//
-// if (!supabaseUrl || !supabaseAnonKey) {
-//   throw new Error('Missing Supabase environment variables')
-// }
-//
-// export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? "";
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
+
+const configured = Boolean(supabaseUrl && supabaseAnonKey);
+
+export const supabase: SupabaseClient = configured
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : (createClient("http://localhost", "public-anon-key") as SupabaseClient);
+
+export const isSupabaseConfigured = (): boolean => configured;

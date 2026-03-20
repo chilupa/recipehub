@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   IonContent,
   IonPage,
@@ -9,24 +9,72 @@ import {
   IonText,
   IonList,
   IonItem,
+  IonInput,
+  IonToast,
 } from "@ionic/react";
-import { heart, heartOutline, share, time, people } from "ionicons/icons";
+import {
+  heart,
+  heartOutline,
+  time,
+  people,
+  createOutline,
+  add,
+  close,
+} from "ionicons/icons";
 import { useRecipes } from "../contexts/RecipeContext";
+import { useAuth } from "../contexts/AuthContext";
 import { useParams } from "react-router-dom";
 import AppHeader from "../components/AppHeader";
 import UserAvatar from "../components/UserAvatar";
 
-const formatLikes = (count: number): string => {
+const MAX_TAGS = 5;
+const formatFavorites = (count: number): string => {
   if (count >= 1000000) return `${(count / 1000000).toFixed(1)}m`;
   if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
   return count.toString();
 };
 
 const RecipeDetail: React.FC = () => {
-  const { recipes, toggleLike, shareRecipe } = useRecipes();
+  const { user } = useAuth();
+  const { recipes, toggleFavorite, updateRecipe } = useRecipes();
   const { id } = useParams<{ id: string }>();
+  const [newTag, setNewTag] = useState("");
+  const [toast, setToast] = useState({ show: false, message: "" });
 
   const recipe = recipes.find((r) => r.id === id);
+  const tags = recipe?.tags ?? [];
+
+  const handleAddTag = async () => {
+    if (!recipe || !id) return;
+    const tag = newTag.trim();
+    if (!tag) return;
+    if (tags.includes(tag)) {
+      setToast({ show: true, message: "Tag already added" });
+      return;
+    }
+    if (tags.length >= MAX_TAGS) {
+      setToast({ show: true, message: `Max ${MAX_TAGS} tags` });
+      return;
+    }
+    try {
+      await updateRecipe(id, { tags: [...tags, tag] });
+    } catch {
+      setToast({ show: true, message: "Could not add tag." });
+      return;
+    }
+    setNewTag("");
+  };
+
+  const handleRemoveTag = async (tagToRemove: string) => {
+    if (!recipe || !id) return;
+    try {
+      await updateRecipe(id, {
+        tags: tags.filter((t) => t !== tagToRemove),
+      });
+    } catch {
+      setToast({ show: true, message: "Could not remove tag." });
+    }
+  };
 
   if (!recipe) {
     return (
@@ -39,40 +87,75 @@ const RecipeDetail: React.FC = () => {
     );
   }
 
+  const totalMinutes = (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
+
   return (
     <IonPage>
       <AppHeader showBackButton={true} />
       <IonContent className="ion-padding">
         <div style={{ marginBottom: "20px" }}>
-          <h1 style={{ margin: "0 0 8px 0", fontSize: "24px" }}>
-            {recipe.title}
-          </h1>
-          <p style={{ color: "var(--ion-color-medium)" }}>
-            {recipe.description}
-          </p>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: "8px",
+            }}
+          >
+            <h1
+              style={{
+                margin: "0 0 8px 0",
+                fontSize: "24px",
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
+              {recipe.title}
+            </h1>
+            {recipe.userId === user?.id && (
+              <IonButton
+                fill="clear"
+                size="small"
+                routerLink={`/recipes/edit/${recipe.id}`}
+                style={{ margin: "-8px -8px 0 0", minHeight: "36px" }}
+              >
+                <IonIcon icon={createOutline} slot="icon-only" />
+              </IonButton>
+            )}
+          </div>
+          {recipe.description ? (
+            <p style={{ color: "var(--ion-color-medium)", margin: "0 0 12px 0" }}>
+              {recipe.description}
+            </p>
+          ) : null}
 
           <div
             style={{
               display: "flex",
-              gap: "2px",
+              gap: "8px",
               marginBottom: "16px",
               flexWrap: "wrap",
             }}
           >
             <IonChip color="primary">
               <IonIcon icon={time} />
-              <IonLabel>{recipe.prepTime + recipe.cookTime + " "} min</IonLabel>
+              <IonLabel>{totalMinutes} min</IonLabel>
             </IonChip>
             <IonChip color="secondary">
               <IonIcon icon={people} />
               <IonLabel>{recipe.servings} servings</IonLabel>
             </IonChip>
-            {recipe.tags.map((tag, index) => (
-              <IonChip key={index} color="tertiary">
-                <IonLabel>{tag}</IonLabel>
-              </IonChip>
-            ))}
           </div>
+
+       
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
+              {tags.map((tag) => (
+                <IonChip key={tag} color="tertiary">
+                  <IonLabel>{tag}</IonLabel>
+                </IonChip>
+              ))}
+            </div>
+
 
           <div
             style={{
@@ -85,29 +168,27 @@ const RecipeDetail: React.FC = () => {
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <UserAvatar color="tertiary" name={recipe.author} />
               <IonText color="medium">
-                <p>{recipe.author}</p>
+                <p style={{ margin: 0 }}>{recipe.author}</p>
               </IonText>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <IonButton
                 fill="clear"
                 color={recipe.isLiked ? "danger" : "medium"}
-                onClick={() => toggleLike(recipe.id)}
+                onClick={async () => {
+                  try {
+                    await toggleFavorite(recipe.id);
+                  } catch {
+                    setToast({ show: true, message: "Could not update favorite." });
+                  }
+                }}
               >
                 <IonIcon
                   icon={recipe.isLiked ? heart : heartOutline}
                   slot="start"
                 />
-                {recipe.likes > 0 && formatLikes(recipe.likes)}
+                {recipe.likes > 0 && formatFavorites(recipe.likes)}
               </IonButton>
-              {/* <IonButton
-                fill="clear"
-                color="medium"
-                onClick={() => shareRecipe(recipe)}
-              >
-                <IonIcon icon={share} slot="start" />
-                Share
-              </IonButton> */}
             </div>
           </div>
         </div>
@@ -169,6 +250,13 @@ const RecipeDetail: React.FC = () => {
             </IonList>
           </div>
         )}
+
+        <IonToast
+          isOpen={toast.show}
+          onDidDismiss={() => setToast((t) => ({ ...t, show: false }))}
+          message={toast.message}
+          duration={2000}
+        />
       </IonContent>
     </IonPage>
   );

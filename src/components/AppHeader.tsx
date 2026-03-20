@@ -13,7 +13,7 @@ import {
   IonLabel,
 } from "@ionic/react";
 import { menu, person, settings, logOut } from "ionicons/icons";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../contexts/AuthContext";
 import { useHistory } from "react-router-dom";
 
 interface AppHeaderProps {
@@ -36,10 +36,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     event: Event | undefined;
   }>({ isOpen: false, event: undefined });
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setMenuOpen({ isOpen: false, event: undefined });
-    logout();
-    history.push("/");
+    await logout();
+    history.push("/login");
   };
   return (
     <IonHeader>

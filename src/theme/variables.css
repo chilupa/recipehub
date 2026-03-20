@@ -1,29 +1,32 @@
 /* For information on how to create your own theme, please see:
-http://ionicframework.com/docs/theming/ */
+   http://ionicframework.com/docs/theming/ */
 
 :root {
   --ion-font-family:
     "Roboto", "Google Sans", system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, sans-serif;
 
-  --ion-color-primary: #c2410c;
-  --ion-color-primary-rgb: 194, 65, 12;
+  /* Primary — warm tomato/clay (buttons, header, main actions) */
+  --ion-color-primary: #b8451a;
+  --ion-color-primary-rgb: 184, 69, 26;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #ab390b;
-  --ion-color-primary-tint: #c85424;
+  --ion-color-primary-shade: #a23d17;
+  --ion-color-primary-tint: #bf582e;
 
-  --ion-color-secondary: #4d7c0f;
-  --ion-color-secondary-rgb: 77, 124, 15;
+  /* Secondary — sage green (tags, chips, secondary actions, “fresh”) */
+  --ion-color-secondary: #5c7c3e;
+  --ion-color-secondary-rgb: 92, 124, 62;
   --ion-color-secondary-contrast: #ffffff;
   --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #446d0d;
-  --ion-color-secondary-tint: #5f8927;
+  --ion-color-secondary-shade: #516d37;
+  --ion-color-secondary-tint: #6c8951;
 
-  --ion-color-tertiary: #f59e0b;
-  --ion-color-tertiary-rgb: 245, 158, 11;
+  /* Tertiary — honey/amber (time, likes, highlights) */
+  --ion-color-tertiary: #c4942e;
+  --ion-color-tertiary-rgb: 196, 148, 46;
   --ion-color-tertiary-contrast: #000000;
   --ion-color-tertiary-contrast-rgb: 0, 0, 0;
-  --ion-color-tertiary-shade: #d88b0a;
-  --ion-color-tertiary-tint: #f6a823;
+  --ion-color-tertiary-shade: #ac8229;
+  --ion-color-tertiary-tint: #ca9f43;
 }
