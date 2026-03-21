@@ -87,3 +87,44 @@ drop trigger if exists recipes_updated_at on public.recipes;
 create trigger recipes_updated_at
   before update on public.recipes
   for each row execute function public.set_updated_at();
+
+-- In-app notifications (e.g. someone favorited your recipe)
+create table if not exists public.notifications (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid not null references auth.users on delete cascade,
+  actor_id uuid not null references auth.users on delete cascade,
+  recipe_id uuid not null references public.recipes on delete cascade,
+  type text not null default 'favorite',
+  read boolean not null default false,
+  created_at timestamptz not null default now(),
+  constraint notifications_no_self_notify check (user_id <> actor_id)
+);
+
+create index if not exists notifications_user_id_created_at_idx
+  on public.notifications (user_id, created_at desc);
+
+alter table public.notifications enable row level security;
+
+-- Recipients see only their notifications
+create policy "Users can view own notifications"
+  on public.notifications for select
+  using (auth.uid() = user_id);
+
+-- Mark as read
+create policy "Users can update own notifications"
+  on public.notifications for update
+  using (auth.uid() = user_id);
+
+-- Favoriter creates a row for the recipe owner (validated against recipes)
+create policy "Users can notify recipe owner on favorite"
+  on public.notifications for insert
+  with check (
+    auth.uid() = actor_id
+    and type = 'favorite'
+    and exists (
+      select 1 from public.recipes r
+      where r.id = recipe_id and r.user_id = user_id
+    )
+  );
+
+-- Enable Realtime for this table: Supabase Dashboard → Database → Publications → supabase_realtime → add `notifications`.

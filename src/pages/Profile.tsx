@@ -21,7 +21,7 @@ import { useRecipes } from "../contexts/RecipeContext";
 
 const Profile: React.FC = () => {
   const { user, logout, updateUser } = useAuth();
-  const { recipes, recipesLoading } = useRecipes();
+  const { recipesTotalCount, recipesLoading } = useRecipes();
   const ionRouter = useIonRouter();
   const [name, setName] = useState("");
   const [originalName, setOriginalName] = useState("");
@@ -145,10 +145,14 @@ const Profile: React.FC = () => {
           <IonItem>
             <IonIcon icon={bookOutline} slot="start" color="primary" />
             <IonLabel>
-              <strong>{recipesLoading ? "…" : recipes.length}</strong>{" "}
-              {recipesLoading
+              <strong>
+                {recipesLoading || recipesTotalCount === null
+                  ? "…"
+                  : recipesTotalCount}
+              </strong>{" "}
+              {recipesLoading || recipesTotalCount === null
                 ? "recipes"
-                : `recipe${recipes.length !== 1 ? "s" : ""}`}
+                : `recipe${recipesTotalCount !== 1 ? "s" : ""}`}
             </IonLabel>
           </IonItem>
         </IonList>

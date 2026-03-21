@@ -22,7 +22,9 @@ import EditRecipe from './pages/EditRecipe';
 import RecipeDetail from './pages/RecipeDetail';
 import Favorites from './pages/Favorites';
 import Profile from './pages/Profile';
+import Activity from './pages/Activity';
 import { RecipeProvider } from './contexts/RecipeContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -96,6 +98,7 @@ const AppRoutes: React.FC = () => {
             <Route exact path="/:tab(recipes)/add" component={AddRecipe} />
             <Route path="/:tab(recipes)/edit/:id" component={EditRecipe} />
             <Route exact path="/:tab(favorites)" component={Favorites} />
+            <Route exact path="/:tab(activity)" component={Activity} />
             <Route exact path="/:tab(profile)" component={Profile} />
             <Route exact path="/login">
               <Redirect to="/recipes" />
@@ -135,7 +138,9 @@ const App: React.FC = () => {
     <IonApp key="main">
       <AuthProvider>
         <RecipeProvider>
-          <AppRoutes />
+          <NotificationProvider>
+            <AppRoutes />
+          </NotificationProvider>
         </RecipeProvider>
       </AuthProvider>
     </IonApp>

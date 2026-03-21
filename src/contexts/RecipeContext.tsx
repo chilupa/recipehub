@@ -10,11 +10,29 @@ import React, {
 import { Recipe, NewRecipe } from "../types/Recipe";
 import { useAuth } from "./AuthContext";
 import { supabase } from "../lib/supabase";
+import {
+  type RecipeRow,
+  rowToRecipe,
+  enrichRecipeRows,
+  fetchRecipeById,
+  fetchFavoriteRecipesList,
+  fetchVisibleRecipeCount,
+} from "../lib/recipeSupabase";
 
 interface RecipeContextType {
   recipes: Recipe[];
-  /** True while the first fetch for the signed-in user is in flight (avoids empty-state flash). */
+  /** True while the first page for the signed-in user is loading. */
   recipesLoading: boolean;
+  /** More pages available for the main list (infinite scroll). */
+  hasMoreRecipes: boolean;
+  loadMoreRecipes: () => Promise<void>;
+  /** Fetch a recipe by id and merge into `recipes` if missing (detail / edit deep links). */
+  ensureRecipeLoaded: (id: string) => Promise<boolean>;
+  favoriteRecipes: Recipe[];
+  favoritesLoading: boolean;
+  refreshFavorites: (options?: { withSpinner?: boolean }) => Promise<void>;
+  /** Total recipes visible under RLS (for profile); null until first load. */
+  recipesTotalCount: number | null;
   addRecipe: (recipe: NewRecipe) => Promise<void>;
   updateRecipe: (id: string, updates: Partial<Recipe>) => Promise<void>;
   deleteRecipe: (id: string) => Promise<void>;
@@ -27,6 +45,7 @@ const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA === "true";
 const MOCK_RECIPES_KEY = "recipe-logger-recipes";
 const MAX_TAGS = 5;
+const PAGE_SIZE = 10;
 
 const readAllMockRecipes = (): Recipe[] => {
   try {
@@ -46,7 +65,11 @@ const writeAllMockRecipes = (all: Recipe[]) => {
   }
 };
 
-const seedMockRecipesForUser = (u: { id: string; name?: string; email?: string }) => {
+const seedMockRecipesForUser = (u: {
+  id: string;
+  name?: string;
+  email?: string;
+}) => {
   const now = new Date().toISOString();
   const author = u.name || u.email || "You";
 
@@ -89,44 +112,11 @@ const seedMockRecipesForUser = (u: { id: string; name?: string; email?: string }
   ];
 };
 
-type RecipeRow = {
-  id: string;
-  user_id: string;
-  title: string;
-  description: string | null;
-  ingredients: string[];
-  instructions: string[];
-  prep_time: number;
-  cook_time: number;
-  servings: number;
-  tags: string[];
-  created_at: string;
-  updated_at: string;
-};
-
-function rowToRecipe(
-  row: RecipeRow,
-  author: string,
-  likes: number,
-  isLiked: boolean
-): Recipe {
-  return {
-    id: row.id,
-    userId: row.user_id,
-    title: row.title,
-    description: row.description ?? "",
-    ingredients: Array.isArray(row.ingredients) ? row.ingredients : [],
-    instructions: Array.isArray(row.instructions) ? row.instructions : [],
-    prepTime: row.prep_time ?? 0,
-    cookTime: row.cook_time ?? 0,
-    servings: row.servings ?? 0,
-    tags: Array.isArray(row.tags) ? row.tags : [],
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    likes,
-    isLiked,
-    author,
-  };
+function upsertRecipeSorted(prev: Recipe[], updated: Recipe): Recipe[] {
+  const others = prev.filter((r) => r.id !== updated.id);
+  return [...others, updated].sort((a, b) =>
+    (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+  );
 }
 
 export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -135,114 +125,126 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
   const { user } = useAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [recipesLoading, setRecipesLoading] = useState(false);
+  const [hasMoreRecipes, setHasMoreRecipes] = useState(false);
+  const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [recipesTotalCount, setRecipesTotalCount] = useState<number | null>(
+    null,
+  );
+
   const loadGenerationRef = useRef(0);
+  const loadingMoreRef = useRef(false);
+  const recipesRef = useRef<Recipe[]>([]);
+  recipesRef.current = recipes;
+
+  const loadFavorites = useCallback(
+    async (options?: { withSpinner?: boolean }) => {
+      const withSpinner = options?.withSpinner !== false;
+      if (!user) {
+        setFavoriteRecipes([]);
+        return;
+      }
+      if (useMockData) {
+        const favs = readAllMockRecipes()
+          .filter((r) => r.isLiked)
+          .slice()
+          .sort((a, b) =>
+            (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+          );
+        setFavoriteRecipes(favs);
+        return;
+      }
+      if (withSpinner) setFavoritesLoading(true);
+      try {
+        const list = await fetchFavoriteRecipesList(user.id);
+        setFavoriteRecipes(list);
+      } catch (e) {
+        console.error("Error loading favorites:", e);
+        setFavoriteRecipes([]);
+      } finally {
+        if (withSpinner) setFavoritesLoading(false);
+      }
+    },
+    [user?.id],
+  );
 
   const loadRecipes = useCallback(async () => {
     const gen = ++loadGenerationRef.current;
 
     if (!user) {
       setRecipes([]);
+      setHasMoreRecipes(false);
       setRecipesLoading(false);
+      setRecipesTotalCount(null);
+      setFavoriteRecipes([]);
       return;
     }
 
     setRecipesLoading(true);
+    loadingMoreRef.current = false;
 
     try {
       if (useMockData) {
         const all = readAllMockRecipes();
         let userRecipes = all.filter((r) => r.userId === user.id);
 
-        // Seed once per user if localStorage is empty.
         if (userRecipes.length === 0) {
           userRecipes = seedMockRecipesForUser(user);
           writeAllMockRecipes([...(all ?? []), ...userRecipes]);
         }
 
-        // Sort newest first for a nice default ordering.
-        userRecipes = userRecipes
+        const sorted = userRecipes
           .slice()
-          .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+          .sort((a, b) =>
+            (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+          );
         if (gen !== loadGenerationRef.current) return;
-        setRecipes(userRecipes);
+
+        const first = sorted.slice(0, PAGE_SIZE);
+        setRecipes(first);
+        setHasMoreRecipes(sorted.length > PAGE_SIZE);
+        setRecipesTotalCount(sorted.length);
         return;
       }
 
       try {
-        const { data: rows, error: recipesError } = await supabase
-          .from("recipes")
-          .select("*")
-          .order("created_at", { ascending: false });
+        const [countRes, pageRes] = await Promise.all([
+          fetchVisibleRecipeCount(),
+          supabase
+            .from("recipes")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .range(0, PAGE_SIZE - 1),
+        ]);
 
         if (gen !== loadGenerationRef.current) return;
 
-        if (recipesError) {
-          console.error("Error loading recipes:", recipesError);
+        setRecipesTotalCount(countRes);
+
+        if (pageRes.error) {
+          console.error("Error loading recipes:", pageRes.error);
           setRecipes([]);
+          setHasMoreRecipes(false);
           return;
         }
 
-        const recipeList = (rows ?? []) as RecipeRow[];
+        const recipeList = (pageRes.data ?? []) as RecipeRow[];
         if (recipeList.length === 0) {
           setRecipes([]);
+          setHasMoreRecipes(false);
           return;
         }
 
-        const userIds = [...new Set(recipeList.map((r) => r.user_id))];
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("id, display_name")
-          .in("id", userIds);
-
+        const list = await enrichRecipeRows(recipeList, user.id);
         if (gen !== loadGenerationRef.current) return;
 
-        const profileMap = new Map(
-          (profiles ?? []).map((p) => [p.id, p.display_name ?? "Chef"])
-        );
-
-        const recipeIds = recipeList.map((r) => r.id);
-
-        // Only fetch favorites relevant to the current recipes list.
-        // This keeps the query fast as the favorites table grows.
-        const { data: favRows } = await supabase
-          .from("favorites")
-          .select("recipe_id")
-          .in("recipe_id", recipeIds);
-
-        const { data: userFavRows } = await supabase
-          .from("favorites")
-          .select("recipe_id")
-          .eq("user_id", user.id)
-          .in("recipe_id", recipeIds);
-
-        if (gen !== loadGenerationRef.current) return;
-
-        const favoriteCounts = new Map<string, number>();
-        const userFavoriteIds = new Set<string>();
-        (favRows ?? []).forEach((f: { recipe_id: string }) => {
-          favoriteCounts.set(
-            f.recipe_id,
-            (favoriteCounts.get(f.recipe_id) ?? 0) + 1,
-          );
-        });
-        (userFavRows ?? []).forEach((f: { recipe_id: string }) => {
-          userFavoriteIds.add(f.recipe_id);
-        });
-
-        const list = recipeList.map((row) =>
-          rowToRecipe(
-            row,
-            profileMap.get(row.user_id) ?? "Chef",
-            favoriteCounts.get(row.id) ?? 0,
-            userFavoriteIds.has(row.id)
-          )
-        );
-        if (gen !== loadGenerationRef.current) return;
         setRecipes(list);
+        setHasMoreRecipes(recipeList.length === PAGE_SIZE);
       } catch (error) {
         console.error("Error loading recipes:", error);
         if (gen !== loadGenerationRef.current) return;
         setRecipes([]);
+        setHasMoreRecipes(false);
       }
     } finally {
       if (gen === loadGenerationRef.current) {
@@ -251,7 +253,93 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [user?.id]);
 
-  /** Before first paint with a signed-in user, avoid treating empty `recipes` as “no data yet”. */
+  const loadMoreRecipes = useCallback(async () => {
+    if (!user || !hasMoreRecipes || loadingMoreRef.current) return;
+
+    if (useMockData) {
+      loadingMoreRef.current = true;
+      try {
+        const all = readAllMockRecipes().filter((r) => r.userId === user.id);
+        const sorted = all
+          .slice()
+          .sort((a, b) =>
+            (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+          );
+        const offset = recipesRef.current.length;
+        const next = sorted.slice(offset, offset + PAGE_SIZE);
+        setRecipes((prev) => [...prev, ...next]);
+        setHasMoreRecipes(offset + next.length < sorted.length);
+      } finally {
+        loadingMoreRef.current = false;
+      }
+      return;
+    }
+
+    loadingMoreRef.current = true;
+    const offset = recipesRef.current.length;
+
+    try {
+      const { data: rows, error } = await supabase
+        .from("recipes")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1);
+
+      if (error) {
+        console.error("Error loading more recipes:", error);
+        return;
+      }
+
+      const recipeList = (rows ?? []) as RecipeRow[];
+      if (recipeList.length === 0) {
+        setHasMoreRecipes(false);
+        return;
+      }
+
+      const list = await enrichRecipeRows(recipeList, user.id);
+      setRecipes((prev) => {
+        const seen = new Set(prev.map((r) => r.id));
+        const merged = [...prev];
+        for (const r of list) {
+          if (!seen.has(r.id)) {
+            seen.add(r.id);
+            merged.push(r);
+          }
+        }
+        return merged;
+      });
+      setHasMoreRecipes(recipeList.length === PAGE_SIZE);
+    } catch (e) {
+      console.error("Error loading more recipes:", e);
+    } finally {
+      loadingMoreRef.current = false;
+    }
+  }, [user?.id, hasMoreRecipes]);
+
+  const ensureRecipeLoaded = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (!user) return false;
+      if (recipesRef.current.some((r) => r.id === id)) return true;
+
+      if (useMockData) {
+        const r = readAllMockRecipes().find((x) => x.id === id);
+        if (r) {
+          setRecipes((prev) => upsertRecipeSorted(prev, r));
+          return true;
+        }
+        return false;
+      }
+
+      const r = await fetchRecipeById(id, user.id);
+      if (r) {
+        setRecipes((prev) => upsertRecipeSorted(prev, r));
+        return true;
+      }
+      return false;
+    },
+    [user?.id],
+  );
+
   useLayoutEffect(() => {
     if (user?.id) {
       setRecipesLoading(true);
@@ -262,20 +350,30 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
     loadRecipes();
   }, [loadRecipes]);
 
-  // Keep already-loaded recipe authors in sync when the user updates their profile.
+  useEffect(() => {
+    if (!user) {
+      setFavoriteRecipes([]);
+      return;
+    }
+    void loadFavorites();
+  }, [user?.id, loadFavorites]);
+
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ userId: string; displayName: string }>).detail;
+      const detail = (e as CustomEvent<{ userId: string; displayName: string }>)
+        .detail;
       if (!detail?.userId) return;
-      setRecipes((prev) =>
-        prev.map((r) =>
-          r.userId === detail.userId ? { ...r, author: detail.displayName } : r,
-        ),
-      );
+      const upd = (r: Recipe) =>
+        r.userId === detail.userId
+          ? { ...r, author: detail.displayName }
+          : r;
+      setRecipes((prev) => prev.map(upd));
+      setFavoriteRecipes((prev) => prev.map(upd));
     };
 
     window.addEventListener("profile:updated", handler as EventListener);
-    return () => window.removeEventListener("profile:updated", handler as EventListener);
+    return () =>
+      window.removeEventListener("profile:updated", handler as EventListener);
   }, []);
 
   const addRecipe = async (newRecipe: NewRecipe) => {
@@ -303,6 +401,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
 
       writeAllMockRecipes([recipe, ...all]);
       setRecipes((prev) => [recipe, ...prev]);
+      setRecipesTotalCount((c) => (c ?? 0) + 1);
       return;
     }
 
@@ -325,8 +424,9 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (error) throw error;
       const row = inserted as RecipeRow;
-      const recipe = rowToRecipe(row, user.name, 0, false);
+      const recipe = rowToRecipe(row, user.name ?? "Chef", 0, false);
       setRecipes((prev) => [recipe, ...prev]);
+      setRecipesTotalCount((c) => (c ?? 0) + 1);
     } catch (error) {
       console.error("Error adding recipe:", error);
       throw error;
@@ -351,11 +451,10 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
       );
 
       writeAllMockRecipes(nextAll);
-      setRecipes((prev) =>
-        prev.map((r) =>
-          r.id === id ? { ...r, ...updates, updatedAt } : r,
-        ),
-      );
+      const patch = (r: Recipe) =>
+        r.id === id ? { ...r, ...updates, updatedAt } : r;
+      setRecipes((prev) => prev.map(patch));
+      setFavoriteRecipes((prev) => prev.map(patch));
       return;
     }
 
@@ -380,17 +479,17 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
         .eq("user_id", user.id);
 
       if (error) throw error;
-      setRecipes((prev) =>
-        prev.map((r) =>
-          r.id === id
-            ? {
-                ...r,
-                ...updates,
-                updatedAt: new Date().toISOString(),
-              }
-            : r
-        )
-      );
+      const ts = new Date().toISOString();
+      const patch = (r: Recipe) =>
+        r.id === id
+          ? {
+              ...r,
+              ...updates,
+              updatedAt: ts,
+            }
+          : r;
+      setRecipes((prev) => prev.map(patch));
+      setFavoriteRecipes((prev) => prev.map(patch));
     } catch (error) {
       console.error("Error updating recipe:", error);
       throw error;
@@ -405,6 +504,8 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
       const nextAll = all.filter((r) => !(r.id === id && r.userId === user.id));
       writeAllMockRecipes(nextAll);
       setRecipes((prev) => prev.filter((r) => r.id !== id));
+      setFavoriteRecipes((prev) => prev.filter((r) => r.id !== id));
+      setRecipesTotalCount((c) => Math.max(0, (c ?? 1) - 1));
       return;
     }
 
@@ -417,6 +518,8 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (error) throw error;
       setRecipes((prev) => prev.filter((r) => r.id !== id));
+      setFavoriteRecipes((prev) => prev.filter((r) => r.id !== id));
+      setRecipesTotalCount((c) => Math.max(0, (c ?? 1) - 1));
     } catch (error) {
       console.error("Error deleting recipe:", error);
       throw error;
@@ -424,31 +527,40 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const toggleFavorite = async (id: string) => {
-    const recipe = recipes.find((r) => r.id === id);
-    if (!recipe || !user) return;
+    if (!user) return;
+
+    let recipe = recipesRef.current.find((r) => r.id === id);
+    if (!recipe && !useMockData) {
+      recipe = (await fetchRecipeById(id, user.id)) ?? undefined;
+    }
+    if (!recipe && useMockData) {
+      recipe = readAllMockRecipes().find((r) => r.id === id);
+    }
+    if (!recipe) return;
 
     const isFav = recipe.isLiked;
 
     if (useMockData) {
       const all = readAllMockRecipes();
       const nextAll = all.map((r) => {
-        if (r.id !== id || r.userId !== user.id) return r;
+        if (r.id !== id) return r;
         const nextLiked = !r.isLiked;
         const nextLikes = nextLiked ? r.likes + 1 : Math.max(0, r.likes - 1);
-        return { ...r, isLiked: nextLiked, likes: nextLikes, updatedAt: new Date().toISOString() };
+        return {
+          ...r,
+          isLiked: nextLiked,
+          likes: nextLikes,
+          updatedAt: new Date().toISOString(),
+        };
       });
       writeAllMockRecipes(nextAll);
-      setRecipes((prev) =>
-        prev.map((r) =>
-          r.id === id
-            ? {
-                ...r,
-                isLiked: !isFav,
-                likes: !isFav ? r.likes + 1 : Math.max(0, r.likes - 1),
-              }
-            : r,
-        ),
-      );
+      const nextRecipe: Recipe = {
+        ...recipe,
+        isLiked: !isFav,
+        likes: !isFav ? recipe.likes + 1 : Math.max(0, recipe.likes - 1),
+      };
+      setRecipes((prev) => upsertRecipeSorted(prev, nextRecipe));
+      await loadFavorites({ withSpinner: false });
       return;
     }
 
@@ -459,30 +571,38 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
           .delete()
           .eq("user_id", user.id)
           .eq("recipe_id", id);
-        setRecipes((prev) =>
-          prev.map((r) =>
-            r.id === id
-              ? {
-                  ...r,
-                  isLiked: false,
-                  likes: Math.max(0, r.likes - 1),
-                }
-              : r
-          )
-        );
+        const nextRecipe: Recipe = {
+          ...recipe,
+          isLiked: false,
+          likes: Math.max(0, recipe.likes - 1),
+        };
+        setRecipes((prev) => upsertRecipeSorted(prev, nextRecipe));
       } else {
         await supabase.from("favorites").insert({
           user_id: user.id,
           recipe_id: id,
         });
-        setRecipes((prev) =>
-          prev.map((r) =>
-            r.id === id
-              ? { ...r, isLiked: true, likes: r.likes + 1 }
-              : r
-          )
-        );
+        if (recipe.userId !== user.id) {
+          const { error: notifyErr } = await supabase
+            .from("notifications")
+            .insert({
+              user_id: recipe.userId,
+              actor_id: user.id,
+              recipe_id: id,
+              type: "favorite",
+            });
+          if (notifyErr) {
+            console.warn("Could not create favorite notification:", notifyErr);
+          }
+        }
+        const nextRecipe: Recipe = {
+          ...recipe,
+          isLiked: true,
+          likes: recipe.likes + 1,
+        };
+        setRecipes((prev) => upsertRecipeSorted(prev, nextRecipe));
       }
+      await loadFavorites({ withSpinner: false });
     } catch (error) {
       console.error("Error toggling favorite:", error);
       throw error;
@@ -512,6 +632,13 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         recipes,
         recipesLoading,
+        hasMoreRecipes,
+        loadMoreRecipes,
+        ensureRecipeLoaded,
+        favoriteRecipes,
+        favoritesLoading,
+        refreshFavorites: (options) => loadFavorites(options),
+        recipesTotalCount,
         addRecipe,
         updateRecipe,
         deleteRecipe,

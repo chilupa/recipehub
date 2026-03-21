@@ -10,7 +10,7 @@
 
 1. In the dashboard, open **SQL Editor** → **New query**.
 2. Copy the contents of `supabase/schema.sql` and run it.
-3. This creates `profiles`, `recipes`, and `favorites` tables and RLS policies.
+3. This creates `profiles`, `recipes`, `favorites`, and `notifications` tables and RLS policies.
 
 ## 3. Enable Google sign-in
 
@@ -79,3 +79,11 @@ Google sign-in finishes by opening **`recipehub://login-callback?...`**. If iOS 
 1. Use the same **Supabase** redirect allow-list entry as Android: `recipehub://login-callback`.
 2. Register the URL scheme in **`ios/App/App/Info.plist`** under `CFBundleURLTypes` with scheme **`recipehub`** (this repo already includes it). If you use a custom `VITE_NATIVE_AUTH_REDIRECT_URL`, the scheme must match its URI (e.g. `myapp://...` → scheme `myapp`).
 3. Rebuild: `npm run build` → `npx cap sync ios` → archive in Xcode.
+
+## Activity tab (in-app notifications)
+
+When someone favorites your recipe, the app inserts a row into `notifications` (validated by RLS). The **Activity** tab lists those items and shows an unread badge on the tab bar.
+
+1. Ensure the `notifications` table from `supabase/schema.sql` is applied (see §2).
+2. **Realtime (recommended):** Supabase Dashboard → **Database** → **Publications** → `supabase_realtime` → enable the **`notifications`** table so new favorites appear without refreshing the app. If you skip this, users can **pull to refresh** on the Activity screen or switch away and back to reload.
+3. **Database** → **Replication** (or **Realtime** settings): confirm Realtime is enabled for the project if inserts don’t show up live.

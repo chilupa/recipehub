@@ -13,6 +13,8 @@ import {
   IonToast,
   IonSpinner,
   IonText,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
 } from "@ionic/react";
 import { create, trash, add } from "ionicons/icons";
 import { useRecipes } from "../contexts/RecipeContext";
@@ -23,8 +25,15 @@ import NoData from "../components/NoData";
 
 const RecipeList: React.FC = () => {
   const { user } = useAuth();
-  const { recipes, recipesLoading, toggleFavorite, shareRecipe, deleteRecipe } =
-    useRecipes();
+  const {
+    recipes,
+    recipesLoading,
+    hasMoreRecipes,
+    loadMoreRecipes,
+    toggleFavorite,
+    shareRecipe,
+    deleteRecipe,
+  } = useRecipes();
   const [toast, setToast] = useState({ show: false, message: "" });
   const [deleteAlert, setDeleteAlert] = useState<{
     isOpen: boolean;
@@ -84,6 +93,16 @@ const RecipeList: React.FC = () => {
                 />
               </div>
             ))}
+            <IonInfiniteScroll
+              threshold="120px"
+              disabled={!hasMoreRecipes}
+              onIonInfinite={async (e) => {
+                await loadMoreRecipes();
+                await (e.target as HTMLIonInfiniteScrollElement).complete();
+              }}
+            >
+              <IonInfiniteScrollContent loadingText="Loading more recipes…" />
+            </IonInfiniteScroll>
           </div>
         )}
 

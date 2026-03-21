@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   IonContent,
   IonPage,
@@ -11,6 +11,7 @@ import {
   IonItem,
   IonInput,
   IonToast,
+  IonSpinner,
 } from "@ionic/react";
 import {
   heart,
@@ -36,13 +37,28 @@ const formatFavorites = (count: number): string => {
 
 const RecipeDetail: React.FC = () => {
   const { user } = useAuth();
-  const { recipes, toggleFavorite, updateRecipe } = useRecipes();
+  const { recipes, toggleFavorite, updateRecipe, ensureRecipeLoaded } =
+    useRecipes();
   const { id } = useParams<{ id: string }>();
   const [newTag, setNewTag] = useState("");
   const [toast, setToast] = useState({ show: false, message: "" });
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const recipe = recipes.find((r) => r.id === id);
   const tags = recipe?.tags ?? [];
+
+  useEffect(() => {
+    if (!id) return;
+    setLoadFailed(false);
+    if (recipes.some((r) => r.id === id)) return;
+    let cancelled = false;
+    void ensureRecipeLoaded(id).then((ok) => {
+      if (!cancelled && !ok) setLoadFailed(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, recipes, ensureRecipeLoaded]);
 
   const handleAddTag = async () => {
     if (!recipe || !id) return;
@@ -77,6 +93,28 @@ const RecipeDetail: React.FC = () => {
   };
 
   if (!recipe) {
+    if (!loadFailed) {
+      return (
+        <IonPage>
+          <AppHeader showBackButton={true} />
+          <IonContent className="ion-padding">
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                paddingTop: 48,
+              }}
+            >
+              <IonSpinner name="crescent" />
+              <IonText color="medium">
+                <p style={{ marginTop: 12 }}>Loading recipe…</p>
+              </IonText>
+            </div>
+          </IonContent>
+        </IonPage>
+      );
+    }
     return (
       <IonPage>
         <AppHeader title="Recipe Not Found" showBackButton={true} />

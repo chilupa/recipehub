@@ -15,15 +15,15 @@ import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
 
 const Favorites: React.FC = () => {
-  const { recipes, recipesLoading, toggleFavorite, shareRecipe } = useRecipes();
-  const favoriteRecipes = recipes.filter((recipe) => recipe.isLiked);
+  const { favoriteRecipes, favoritesLoading, toggleFavorite, shareRecipe } =
+    useRecipes();
   const [toast, setToast] = useState({ show: false, message: "" });
 
   return (
     <IonPage>
       <AppHeader title="RecipeHub" />
       <IonContent fullscreen>
-        {recipesLoading ? (
+        {favoritesLoading ? (
           <div
             className="ion-padding"
             style={{

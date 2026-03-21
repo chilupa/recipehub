@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   IonContent,
   IonHeader,
@@ -7,6 +7,8 @@ import {
   IonToolbar,
   IonButtons,
   IonBackButton,
+  IonSpinner,
+  IonText,
 } from "@ionic/react";
 import { useRecipes } from "../contexts/RecipeContext";
 import { useHistory, useParams } from "react-router-dom";
@@ -14,11 +16,25 @@ import RecipeForm from "../components/RecipeForm";
 import type { NewRecipe } from "../types/Recipe";
 
 const EditRecipe: React.FC = () => {
-  const { recipes, updateRecipe } = useRecipes();
+  const { recipes, updateRecipe, ensureRecipeLoaded } = useRecipes();
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const recipe = recipes.find((r) => r.id === id);
+
+  useEffect(() => {
+    if (!id) return;
+    setLoadFailed(false);
+    if (recipes.some((r) => r.id === id)) return;
+    let cancelled = false;
+    void ensureRecipeLoaded(id).then((ok) => {
+      if (!cancelled && !ok) setLoadFailed(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, recipes, ensureRecipeLoaded]);
 
   const handleSubmit = async (data: NewRecipe) => {
     if (!id) return;
@@ -56,6 +72,21 @@ const EditRecipe: React.FC = () => {
             onSubmit={handleSubmit}
             submitLabel="Update Recipe"
           />
+        ) : !loadFailed ? (
+          <div
+            className="ion-padding"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              paddingTop: 48,
+            }}
+          >
+            <IonSpinner name="crescent" />
+            <IonText color="medium">
+              <p style={{ marginTop: 12 }}>Loading recipe…</p>
+            </IonText>
+          </div>
         ) : (
           <p style={{ padding: "16px", color: "var(--ion-color-medium)" }}>
             Recipe not found.
