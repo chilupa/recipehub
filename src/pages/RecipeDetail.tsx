@@ -13,19 +13,12 @@ import {
   IonToast,
   IonSpinner,
 } from "@ionic/react";
-import {
-  heart,
-  heartOutline,
-  time,
-  people,
-  createOutline,
-  add,
-  close,
-} from "ionicons/icons";
+import { time, people, createOutline, add, close } from "ionicons/icons";
 import { useRecipes } from "../contexts/RecipeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useParams } from "react-router-dom";
 import AppHeader from "../components/AppHeader";
+import FavoriteHeartButton from "../components/FavoriteHeartButton";
 import UserAvatar from "../components/UserAvatar";
 
 const MAX_TAGS = 5;
@@ -210,23 +203,21 @@ const RecipeDetail: React.FC = () => {
               </IonText>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <IonButton
-                fill="clear"
-                color={recipe.isLiked ? "danger" : "medium"}
-                onClick={async () => {
+              <FavoriteHeartButton
+                isLiked={recipe.isLiked}
+                onToggle={async () => {
                   try {
                     await toggleFavorite(recipe.id);
                   } catch {
-                    setToast({ show: true, message: "Could not update favorite." });
+                    setToast({
+                      show: true,
+                      message: "Could not update favorite.",
+                    });
                   }
                 }}
               >
-                <IonIcon
-                  icon={recipe.isLiked ? heart : heartOutline}
-                  slot="start"
-                />
                 {recipe.likes > 0 && formatFavorites(recipe.likes)}
-              </IonButton>
+              </FavoriteHeartButton>
             </div>
           </div>
         </div>

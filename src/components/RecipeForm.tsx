@@ -13,16 +13,18 @@ import {
 import { add, remove } from "ionicons/icons";
 import type { NewRecipe } from "../types/Recipe";
 
-const defaultFormData: FormState = {
-  title: "",
-  description: "",
-  ingredients: [""],
-  instructions: [""],
-  prepTime: 0,
-  cookTime: 0,
-  servings: 0,
-  tags: [],
-};
+function emptyFormState(): FormState {
+  return {
+    title: "",
+    description: "",
+    ingredients: [""],
+    instructions: [""],
+    prepTime: 0,
+    cookTime: 0,
+    servings: 0,
+    tags: [],
+  };
+}
 
 type FormState = Omit<NewRecipe, "image"> & {
   ingredients: string[];
@@ -63,6 +65,8 @@ const MAX_TAG_LENGTH = 20; // keeps tags readable on chips
 export interface RecipeFormProps {
   /** Initial values (e.g. when editing). Omit for add mode. */
   initialData?: NewRecipe | null;
+  /** Increment when re-opening Add Recipe so the form clears (Ionic caches pages). */
+  formResetKey?: number;
   /** Called with cleaned form data on submit. */
   onSubmit: (data: NewRecipe) => void | Promise<void>;
   /** Label for the submit button. */
@@ -71,11 +75,12 @@ export interface RecipeFormProps {
 
 const RecipeForm: React.FC<RecipeFormProps> = ({
   initialData,
+  formResetKey = 0,
   onSubmit,
   submitLabel,
 }) => {
   const [formData, setFormData] = useState<FormState>(() =>
-    initialData ? toFormState(initialData) : defaultFormData
+    initialData ? toFormState(initialData) : emptyFormState()
   );
   const [newTag, setNewTag] = useState("");
   const [toast, setToast] = useState({ show: false, message: "" });
@@ -86,6 +91,13 @@ const RecipeForm: React.FC<RecipeFormProps> = ({
       setFormData(toFormState(initialData));
     }
   }, [initialData]);
+
+  useEffect(() => {
+    if (initialData) return;
+    if (formResetKey === 0) return;
+    setFormData(emptyFormState());
+    setNewTag("");
+  }, [formResetKey, initialData]);
 
   const handleSubmit = async () => {
     if (!formData.title.trim()) {

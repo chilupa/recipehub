@@ -7,16 +7,10 @@ import {
   IonLabel,
   IonText,
 } from "@ionic/react";
-import {
-  heart,
-  heartOutline,
-  share,
-  time,
-  people,
-  ellipsisVertical,
-} from "ionicons/icons";
+import { share, time, people, ellipsisVertical } from "ionicons/icons";
 import { Recipe } from "../types/Recipe";
 import UserAvatar from "./UserAvatar";
+import FavoriteHeartButton from "./FavoriteHeartButton";
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -197,23 +191,15 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
             </IonText>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <IonButton
-              fill="clear"
-              color={recipe.isLiked ? "danger" : "medium"}
+            <FavoriteHeartButton
+              isLiked={recipe.isLiked}
               size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onFavorite(recipe.id).catch(() => {});
-              }}
+              stopEventPropagation
               style={{ margin: "0", minHeight: "32px" }}
+              onToggle={() => onFavorite(recipe.id).catch(() => {})}
             >
-              <IonIcon
-                icon={recipe.isLiked ? heart : heartOutline}
-                slot="start"
-              />
               {recipe.likes > 0 && formatFavorites(recipe.likes)}
-            </IonButton>
+            </FavoriteHeartButton>
             {/* <IonButton
               fill="clear"
               color="medium"

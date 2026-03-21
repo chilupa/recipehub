@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   IonContent,
   IonHeader,
@@ -9,6 +9,7 @@ import {
   IonBackButton,
   IonSpinner,
   IonText,
+  useIonViewDidEnter,
 } from "@ionic/react";
 import { useRecipes } from "../contexts/RecipeContext";
 import { useHistory, useParams } from "react-router-dom";
@@ -20,8 +21,13 @@ const EditRecipe: React.FC = () => {
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
   const [loadFailed, setLoadFailed] = useState(false);
+  const contentRef = useRef<HTMLIonContentElement>(null);
 
   const recipe = recipes.find((r) => r.id === id);
+
+  useIonViewDidEnter(() => {
+    void contentRef.current?.scrollToTop(0);
+  });
 
   useEffect(() => {
     if (!id) return;
@@ -65,7 +71,7 @@ const EditRecipe: React.FC = () => {
           <IonTitle>Edit Recipe</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
+      <IonContent ref={contentRef} fullscreen>
         {recipe ? (
           <RecipeForm
             initialData={initialData}

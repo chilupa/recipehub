@@ -1,0 +1,93 @@
+/* Light favorite feedback — short pop on like, soft settle on unlike */
+
+/* Circular hit target so the MD ripple reads as a round splash, not a rounded rect */
+.favorite-heart-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap:2px;
+  max-width: 100%;
+}
+
+ion-button.favorite-heart-btn {
+  --border-radius: 50%;
+  --padding-start: 0;
+  --padding-end: 0;
+  margin: 0;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
+  --background-activated: transparent;
+  --background-focused: transparent;
+  --ripple-color: rgba(var(--ion-color-medium-rgb), 0.22);
+}
+
+ion-button.favorite-heart-btn.button-small {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+ion-button.favorite-heart-btn.favorite-heart-btn--liked {
+  --ripple-color: rgba(var(--ion-color-danger-rgb), 0.28);
+}
+
+.favorite-heart-count {
+  font-size: 0.8125rem;
+  line-height: 1;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--ion-color-medium);
+  flex-shrink: 0;
+}
+
+.favorite-heart-count--liked {
+  color: var(--ion-color-danger);
+}
+
+@keyframes favorite-heart-pop {
+  0% {
+    transform: scale(0.88);
+    opacity: 0.9;
+  }
+  55% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes favorite-heart-out {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.favorite-heart-wrap ion-icon {
+  transform-origin: center;
+}
+
+.favorite-heart-wrap ion-icon.favorite-heart-ion--pop {
+  animation: favorite-heart-pop 0.38s cubic-bezier(0.33, 1.4, 0.55, 1) 1;
+}
+
+.favorite-heart-wrap ion-icon.favorite-heart-ion--out {
+  animation: favorite-heart-out 0.22s ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .favorite-heart-wrap ion-icon.favorite-heart-ion--pop,
+  .favorite-heart-wrap ion-icon.favorite-heart-ion--out {
+    animation: none;
+  }
+}

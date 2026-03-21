@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   IonContent,
   IonPage,
@@ -9,23 +9,38 @@ import {
   IonToast,
   IonText,
   IonList,
+  IonIcon,
+  IonNote,
   useIonRouter,
 } from "@ionic/react";
-import { logOutOutline, bookOutline } from "ionicons/icons";
-import { IonIcon } from "@ionic/react";
+import {
+  logOutOutline,
+  bookOutline,
+  heartOutline,
+  notificationsOutline,
+  createOutline,
+} from "ionicons/icons";
 
 import AppHeader from "../components/AppHeader";
 import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../contexts/AuthContext";
 import { useRecipes } from "../contexts/RecipeContext";
+import "./Profile.css";
 
 const Profile: React.FC = () => {
   const { user, logout, updateUser } = useAuth();
-  const { recipesTotalCount, recipesLoading } = useRecipes();
+  const {
+    recipesTotalCount,
+    recipesLoading,
+    favoriteRecipes,
+    favoritesLoading,
+  } = useRecipes();
   const ionRouter = useIonRouter();
   const [name, setName] = useState("");
   const [originalName, setOriginalName] = useState("");
+  const [editingName, setEditingName] = useState(false);
   const [loading, setLoading] = useState(false);
+  const nameInputRef = useRef<HTMLIonInputElement>(null);
   const [showToast, setShowToast] = useState({
     show: false,
     message: "",
@@ -49,6 +64,14 @@ const Profile: React.FC = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!editingName) return;
+    const t = requestAnimationFrame(() => {
+      void nameInputRef.current?.setFocus();
+    });
+    return () => cancelAnimationFrame(t);
+  }, [editingName]);
+
   const saveProfile = async () => {
     if (!user || !name.trim()) {
       setShowToast({
@@ -64,7 +87,6 @@ const Profile: React.FC = () => {
       const nextName = name.trim();
       await updateUser({ name: nextName });
 
-      // Notify RecipeContext to update already-loaded authors.
       window.dispatchEvent(
         new CustomEvent("profile:updated", {
           detail: { userId: user.id, displayName: nextName },
@@ -72,6 +94,7 @@ const Profile: React.FC = () => {
       );
 
       setOriginalName(name.trim());
+      setEditingName(false);
       setShowToast({
         show: true,
         message: "Profile updated",
@@ -87,83 +110,145 @@ const Profile: React.FC = () => {
     setLoading(false);
   };
 
+  const cancelNameEdit = () => {
+    setName(originalName);
+    setEditingName(false);
+  };
+
   const displayName = name || user?.name || user?.email || "User";
 
+  const readOnlyNameLabel =
+    originalName.trim() ||
+    user?.name?.trim() ||
+    user?.email ||
+    "Add your name";
+
+  const feedCountLabel =
+    recipesLoading || recipesTotalCount === null
+      ? "…"
+      : String(recipesTotalCount);
+
+  const favoritesCountLabel = favoritesLoading ? "…" : String(favoriteRecipes.length);
+
   return (
-    <IonPage>
-      <AppHeader  />
+    <IonPage className="profile-page">
+      <AppHeader />
       <IonContent className="ion-padding">
-        {/* Profile card */}
-        <div
-          style={{
-            marginTop: 8,
-            marginBottom: 24,
-            padding: "24px 20px",
-            borderRadius: 12,
-            background: "var(--ion-color-light)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 16,
-          }}
-        >
+        <div className="profile-card">
           <UserAvatar name={displayName} size={88} color="primary" />
-            <IonItem
-              lines="none"
-              style={{
-                width: "100%",
-                "--background": "transparent",
-                "--padding-start": 0,
-                "--inner-padding-end": 0,
-              }}
-            >
-              <IonLabel position="stacked">Name</IonLabel>
-              <IonInput
-                value={name}
-                onIonInput={(e) => setName(e.detail.value ?? "")}
-                placeholder="Enter your name"
-                clearOnEdit={false}
-              />
-            </IonItem>
-            {user?.email && (
-              <IonText color="medium" style={{ fontSize: 14, width: "100%" }}>
-                {user.email}
-              </IonText>
+          <div className="profile-name-block">
+            <span className="profile-name-caption">Name</span>
+            {editingName ? (
+              <>
+                <IonItem
+                  lines="none"
+                  style={{
+                    width: "100%",
+                    "--background": "transparent",
+                    "--padding-start": 0,
+                    "--inner-padding-end": 0,
+                  }}
+                >
+                  <IonInput
+                    ref={nameInputRef}
+                    value={name}
+                    onIonInput={(e) => setName(e.detail.value ?? "")}
+                    placeholder="Your display name"
+                    clearOnEdit={false}
+                    maxlength={80}
+                  />
+                </IonItem>
+                <div className="profile-name-actions">
+                  <IonButton
+                    fill="clear"
+                    color="medium"
+                    onClick={cancelNameEdit}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </IonButton>
+                  <IonButton
+                    onClick={() => void saveProfile()}
+                    disabled={loading || !hasChanges() || !name.trim()}
+                  >
+                    {loading ? "Saving…" : "Save"}
+                  </IonButton>
+                </div>
+              </>
+            ) : (
+              <div className="profile-name-row">
+                <span className="profile-name-display">{readOnlyNameLabel}</span>
+                <IonButton
+                  fill="clear"
+                  size="small"
+                  aria-label="Edit name"
+                  onClick={() => setEditingName(true)}
+                  style={{ margin: 0, flexShrink: 0 }}
+                >
+                  <IonIcon slot="icon-only" icon={createOutline} />
+                </IonButton>
+              </div>
             )}
-          <IonButton
-            expand="block"
-            onClick={saveProfile}
-            disabled={loading || !hasChanges()}
-            style={{ width: "100%", marginTop: 8 }}
-          >
-            {loading ? "Saving…" : "Save profile"}
-          </IonButton>
+          </div>
+          {user?.email && (
+            <IonText color="medium" style={{ fontSize: 14, width: "100%" }}>
+              {user.email}
+            </IonText>
+          )}
         </div>
 
-        {/* Stats */}
-        <IonList lines="none" style={{ marginBottom: 24 }}>
-          <IonItem>
-            <IonIcon icon={bookOutline} slot="start" color="primary" />
-            <IonLabel>
-              <strong>
-                {recipesLoading || recipesTotalCount === null
-                  ? "…"
-                  : recipesTotalCount}
-              </strong>{" "}
-              {recipesLoading || recipesTotalCount === null
-                ? "recipes"
-                : `recipe${recipesTotalCount !== 1 ? "s" : ""}`}
-            </IonLabel>
-          </IonItem>
-        </IonList>
+        <p className="profile-section-label">Browse</p>
+        <div className="profile-links">
+          <IonList lines="none">
+            <IonItem button detail routerLink="/recipes">
+              <IonIcon icon={bookOutline} slot="start" color="primary" />
+              <IonLabel>
+                <h2 style={{ fontSize: "1rem", fontWeight: 600, margin: 0 }}>
+                  Recipe feed
+                </h2>
+                <p style={{ margin: "4px 0 0", fontSize: "0.875rem" }}>
+                  All community recipes
+                </p>
+              </IonLabel>
+            </IonItem>
+            <IonItem button detail routerLink="/favorites">
+              <IonIcon icon={heartOutline} slot="start" color="danger" />
+              <IonLabel>
+                <h2 style={{ fontSize: "1rem", fontWeight: 600, margin: 0 }}>
+                  Favorites
+                </h2>
+                <p style={{ margin: "4px 0 0", fontSize: "0.875rem" }}>
+                  Recipes you’ve saved
+                </p>
+              </IonLabel>
+            </IonItem>
+            <IonItem button detail routerLink="/activity">
+              <IonIcon
+                icon={notificationsOutline}
+                slot="start"
+                color="tertiary"
+              />
+              <IonLabel>
+                <h2 style={{ fontSize: "1rem", fontWeight: 600, margin: 0 }}>
+                  Activity
+                </h2>
+                <p style={{ margin: "4px 0 0", fontSize: "0.875rem" }}>
+                  Likes and notifications
+                </p>
+              </IonLabel>
+            </IonItem>
+          </IonList>
+        </div>
 
-        {/* Sign out */}
+        <p className="profile-section-label" style={{ marginTop: 20 }}>
+          Account
+        </p>
         <IonList lines="none">
           <IonItem
             button
             detail={false}
             onClick={handleLogout}
-            style={{ "--background": "transparent" }}
+            style={{ "--border-radius": "12px" }}
           >
             <IonIcon icon={logOutOutline} slot="start" color="danger" />
             <IonLabel color="danger">Sign out</IonLabel>
