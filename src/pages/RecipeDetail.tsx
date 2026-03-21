@@ -244,7 +244,7 @@ const RecipeDetail: React.FC = () => {
             </h2>
             <IonList>
               {recipe.instructions.map((instruction, index) => (
-                <IonItem key={index}>
+                <IonItem key={index} >
                   <div
                     style={{
                       display: "flex",

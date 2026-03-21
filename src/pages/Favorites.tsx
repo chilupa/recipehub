@@ -46,10 +46,10 @@ const Favorites: React.FC = () => {
             description="Save some recipes to see them here."
           />
         ) : (
-          <IonGrid className="ion-no-padding">
+          <IonGrid className="ion-no-padding recipe-favorites-grid">
             <IonRow>
               {favoriteRecipes.map((recipe) => (
-                <IonCol size="12" key={recipe.id}>
+                <IonCol size="12" className="ion-no-padding" key={recipe.id}>
                   <RecipeCard
                     recipe={recipe}
                     onFavorite={async (recipeId) => {

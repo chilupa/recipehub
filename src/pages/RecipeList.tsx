@@ -73,25 +73,24 @@ const RecipeList: React.FC = () => {
             description="Tap the + button to add your first recipe."
           />
         ) : (
-          <div style={{ paddingBottom: "80px" }}>
+          <div style={{ paddingBottom: "80px", paddingTop: 8 }}>
             {recipes.map((recipe) => (
-              <div key={recipe.id} style={{ marginBottom: "12px" }}>
-                <RecipeCard
-                  recipe={recipe}
-                  onFavorite={async (recipeId) => {
-                    try {
-                      await toggleFavorite(recipeId);
-                    } catch {
-                      setToast({ show: true, message: "Could not update favorite." });
-                    }
-                  }}
-                  onShare={shareRecipe}
-                  onMenuClick={(event, recipeId) =>
-                    setPopoverOpen({ isOpen: true, event, recipeId })
+              <RecipeCard
+                key={recipe.id}
+                recipe={recipe}
+                onFavorite={async (recipeId) => {
+                  try {
+                    await toggleFavorite(recipeId);
+                  } catch {
+                    setToast({ show: true, message: "Could not update favorite." });
                   }
-                  showMenu={recipe.userId === user?.id}
-                />
-              </div>
+                }}
+                onShare={shareRecipe}
+                onMenuClick={(event, recipeId) =>
+                  setPopoverOpen({ isOpen: true, event, recipeId })
+                }
+                showMenu={recipe.userId === user?.id}
+              />
             ))}
             <IonInfiniteScroll
               threshold="120px"

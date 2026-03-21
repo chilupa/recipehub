@@ -1,0 +1,10 @@
+/* Tighter feed layout: Ionic ion-card defaults add ~10px margin each side + stack */
+ion-card.recipe-card {
+  margin: 0 12px 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.recipe-favorites-grid {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}

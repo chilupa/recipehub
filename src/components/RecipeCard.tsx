@@ -11,6 +11,7 @@ import { share, time, people, ellipsisVertical } from "ionicons/icons";
 import { Recipe } from "../types/Recipe";
 import UserAvatar from "./UserAvatar";
 import FavoriteHeartButton from "./FavoriteHeartButton";
+import "./RecipeCard.css";
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -47,7 +48,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   showMenu = false,
 }) => {
   return (
-    <IonCard button routerLink={`/recipes/recipe/${recipe.id}`}>
+    <IonCard className="recipe-card" button routerLink={`/recipes/recipe/${recipe.id}`}>
       <div style={{ padding: "12px" }}>
         <div
           style={{
