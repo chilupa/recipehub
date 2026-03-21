@@ -9,7 +9,7 @@ import {
 import { Swiper, SwiperSlide } from "swiper/react";
 import type { Swiper as SwiperType } from "swiper";
 import { Pagination, A11y } from "swiper/modules";
-import { restaurant, heart, bookmark } from "ionicons/icons";
+import { restaurant, heart, pencil } from "ionicons/icons";
 import "swiper/css";
 import "swiper/css/pagination";
 
@@ -40,11 +40,11 @@ const slides = [
     icon: restaurant,
     title: "Welcome to RecipeHub",
     description:
-      "Your place to save, organize, and discover recipes. Keep everything in one app.",
+      "Your place to create, save, organize, and discover recipes. Keep everything in one app.",
   },
   {
-    icon: bookmark,
-    title: "Save & organize",
+    icon: pencil,
+    title: "Create, save & organize",
     description:
       "Add recipes with ingredients and steps. Edit anytime and find them quickly.",
   },
