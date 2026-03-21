@@ -119,6 +119,15 @@ function upsertRecipeSorted(prev: Recipe[], updated: Recipe): Recipe[] {
   );
 }
 
+/** Update one recipe without re-sorting (feed order must stay stable when only likes change). */
+function replaceRecipePreservingOrder(prev: Recipe[], updated: Recipe): Recipe[] {
+  const i = prev.findIndex((r) => r.id === updated.id);
+  if (i === -1) return upsertRecipeSorted(prev, updated);
+  const next = prev.slice();
+  next[i] = updated;
+  return next;
+}
+
 export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -559,7 +568,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
         isLiked: !isFav,
         likes: !isFav ? recipe.likes + 1 : Math.max(0, recipe.likes - 1),
       };
-      setRecipes((prev) => upsertRecipeSorted(prev, nextRecipe));
+      setRecipes((prev) => replaceRecipePreservingOrder(prev, nextRecipe));
       await loadFavorites({ withSpinner: false });
       return;
     }
@@ -576,7 +585,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
           isLiked: false,
           likes: Math.max(0, recipe.likes - 1),
         };
-        setRecipes((prev) => upsertRecipeSorted(prev, nextRecipe));
+        setRecipes((prev) => replaceRecipePreservingOrder(prev, nextRecipe));
       } else {
         await supabase.from("favorites").insert({
           user_id: user.id,
@@ -600,7 +609,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
           isLiked: true,
           likes: recipe.likes + 1,
         };
-        setRecipes((prev) => upsertRecipeSorted(prev, nextRecipe));
+        setRecipes((prev) => replaceRecipePreservingOrder(prev, nextRecipe));
       }
       await loadFavorites({ withSpinner: false });
     } catch (error) {
