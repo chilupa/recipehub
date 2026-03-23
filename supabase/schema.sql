@@ -25,6 +25,27 @@ create table if not exists public.recipes (
 
 create index if not exists recipes_user_id_idx on public.recipes (user_id);
 create index if not exists recipes_created_at_idx on public.recipes (created_at desc);
+create index if not exists recipes_servings_idx on public.recipes (servings);
+create index if not exists recipes_total_time_idx
+  on public.recipes ((coalesce(prep_time, 0) + coalesce(cook_time, 0)));
+
+-- List recipes where prep_time + cook_time equals p_total (for total-time filter links)
+create or replace function public.recipes_with_total_minutes(p_total int)
+returns setof public.recipes
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select r.*
+  from public.recipes r
+  where coalesce(r.prep_time, 0) + coalesce(r.cook_time, 0) = p_total
+  order by r.created_at desc
+  limit 200;
+$$;
+
+grant execute on function public.recipes_with_total_minutes(int) to authenticated;
+grant execute on function public.recipes_with_total_minutes(int) to anon;
 
 -- Favorites: which user favorited which recipe (heart/like in the app)
 create table if not exists public.favorites (

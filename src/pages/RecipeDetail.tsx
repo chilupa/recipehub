@@ -169,14 +169,30 @@ const RecipeDetail: React.FC = () => {
               flexWrap: "wrap",
             }}
           >
-            {totalMinutes > 0 && <IonChip color="primary">
-              <IonIcon icon={time} />
-              <IonLabel>{totalMinutes} min</IonLabel>
-            </IonChip>}
-           {recipe.servings > 0 && <IonChip color="secondary">
-              <IonIcon icon={people} />
-              <IonLabel>{recipe.servings} servings</IonLabel>
-            </IonChip>}
+            {totalMinutes > 0 && (
+              <IonChip
+                color="primary"
+                style={{ cursor: "pointer" }}
+                onClick={() =>
+                  history.push(`/recipes/total-time/${totalMinutes}`)
+                }
+              >
+                <IonIcon icon={time} />
+                <IonLabel>{totalMinutes} min</IonLabel>
+              </IonChip>
+            )}
+            {recipe.servings > 0 && (
+              <IonChip
+                color="secondary"
+                style={{ cursor: "pointer" }}
+                onClick={() =>
+                  history.push(`/recipes/servings/${recipe.servings}`)
+                }
+              >
+                <IonIcon icon={people} />
+                <IonLabel>{recipe.servings} servings</IonLabel>
+              </IonChip>
+            )}
           </div>
 
        

@@ -21,6 +21,8 @@ import AddRecipe from './pages/AddRecipe';
 import EditRecipe from './pages/EditRecipe';
 import RecipeDetail from './pages/RecipeDetail';
 import TagRecipeList from './pages/TagRecipeList';
+import ServingsRecipeList from './pages/ServingsRecipeList';
+import TotalTimeRecipeList from './pages/TotalTimeRecipeList';
 import Favorites from './pages/Favorites';
 import Profile from './pages/Profile';
 import Activity from './pages/Activity';
@@ -95,6 +97,8 @@ const AppRoutes: React.FC = () => {
         <IonTabs>
           <IonRouterOutlet>
             <Route exact path="/:tab(recipes)" component={RecipeList} />
+            <Route path="/:tab(recipes)/servings/:servings" component={ServingsRecipeList} />
+            <Route path="/:tab(recipes)/total-time/:minutes" component={TotalTimeRecipeList} />
             <Route path="/:tab(recipes)/tag/:tag" component={TagRecipeList} />
             <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
             <Route exact path="/:tab(recipes)/add" component={AddRecipe} />
