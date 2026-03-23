@@ -169,14 +169,14 @@ const RecipeDetail: React.FC = () => {
               flexWrap: "wrap",
             }}
           >
-            <IonChip color="primary">
+            {totalMinutes > 0 && <IonChip color="primary">
               <IonIcon icon={time} />
               <IonLabel>{totalMinutes} min</IonLabel>
-            </IonChip>
-            <IonChip color="secondary">
+            </IonChip>}
+           {recipe.servings > 0 && <IonChip color="secondary">
               <IonIcon icon={people} />
               <IonLabel>{recipe.servings} servings</IonLabel>
-            </IonChip>
+            </IonChip>}
           </div>
 
        
