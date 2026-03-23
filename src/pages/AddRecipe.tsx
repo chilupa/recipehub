@@ -44,7 +44,7 @@ const AddRecipe: React.FC = () => {
           <IonTitle>Add Recipe</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent ref={contentRef} fullscreen>
+      <IonContent ref={contentRef}>
         <RecipeForm
           formResetKey={formResetKey}
           onSubmit={handleSubmit}

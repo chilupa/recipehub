@@ -17,6 +17,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useHistory } from "react-router-dom";
 
 interface AppHeaderProps {
+  /** Omit on stack pages that only show a back control (title in content). Pass for tag search, errors, etc. */
   title?: string;
   showBackButton?: boolean;
   backHref?: string;
@@ -24,7 +25,7 @@ interface AppHeaderProps {
 }
 
 const AppHeader: React.FC<AppHeaderProps> = ({
-  title = "RecipeHub",
+  title,
   showBackButton = false,
   backHref = "/recipes",
   showMenu = true,
@@ -36,6 +37,14 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     event: Event | undefined;
   }>({ isOpen: false, event: undefined });
 
+  /** Tab roots default to RecipeHub; stack pages with back omit title unless `title` is passed. */
+  const resolvedTitle =
+    title !== undefined
+      ? title
+      : showBackButton
+        ? undefined
+        : "RecipeHub";
+
   const handleLogout = async () => {
     setMenuOpen({ isOpen: false, event: undefined });
     await logout();
@@ -44,14 +53,14 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   return (
     <IonHeader>
       <IonToolbar color="primary">
-        {showBackButton && (
+        {showBackButton ? (
           <IonButtons slot="start">
             <IonBackButton defaultHref={backHref} />
           </IonButtons>
-        )}
-        {!showBackButton && (
-          <IonTitle style={{ textAlign: "center" }}>{title}</IonTitle>
-        )}
+        ) : null}
+        {resolvedTitle != null && resolvedTitle !== "" ? (
+          <IonTitle style={{ textAlign: "center" }}>{resolvedTitle}</IonTitle>
+        ) : null}
         {/* {showMenu && user && (
           <IonButtons slot="end">
             <IonButton
