@@ -1,19 +1,21 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
   IonContent,
+  IonFooter,
   IonHeader,
   IonPage,
   IonTitle,
   IonToolbar,
   IonButtons,
   IonBackButton,
+  IonButton,
   IonSpinner,
   IonText,
   useIonViewDidEnter,
 } from "@ionic/react";
 import { useRecipes } from "../contexts/RecipeContext";
 import { useHistory, useParams } from "react-router-dom";
-import RecipeForm from "../components/RecipeForm";
+import RecipeForm, { type RecipeFormHandle } from "../components/RecipeForm";
 import type { NewRecipe } from "../types/Recipe";
 
 const EditRecipe: React.FC = () => {
@@ -22,6 +24,7 @@ const EditRecipe: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [loadFailed, setLoadFailed] = useState(false);
   const contentRef = useRef<HTMLIonContentElement>(null);
+  const formRef = useRef<RecipeFormHandle>(null);
 
   const recipe = recipes.find((r) => r.id === id);
 
@@ -74,9 +77,9 @@ const EditRecipe: React.FC = () => {
       <IonContent ref={contentRef}>
         {recipe ? (
           <RecipeForm
+            ref={formRef}
             initialData={initialData}
             onSubmit={handleSubmit}
-            submitLabel="Update Recipe"
           />
         ) : !loadFailed ? (
           <div
@@ -99,6 +102,20 @@ const EditRecipe: React.FC = () => {
           </p>
         )}
       </IonContent>
+      {recipe ? (
+        <IonFooter>
+          <IonToolbar className="recipe-form-footer-toolbar">
+            <IonButton
+              expand="block"
+              strong
+              className="ion-margin"
+              onClick={() => void formRef.current?.submit()}
+            >
+              Update recipe
+            </IonButton>
+          </IonToolbar>
+        </IonFooter>
+      ) : null}
     </IonPage>
   );
 };

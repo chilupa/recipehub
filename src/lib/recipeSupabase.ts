@@ -159,3 +159,43 @@ export async function fetchRecipesByTag(
   if (!rows?.length) return [];
   return enrichRecipeRows(rows as RecipeRow[], userId);
 }
+
+export async function fetchRecipesByServings(
+  servings: number,
+  userId: string,
+): Promise<Recipe[]> {
+  if (!Number.isFinite(servings) || servings <= 0) return [];
+
+  const { data: rows, error } = await supabase
+    .from("recipes")
+    .select("*")
+    .eq("servings", servings)
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  if (error) {
+    console.error("fetchRecipesByServings:", error);
+    return [];
+  }
+  if (!rows?.length) return [];
+  return enrichRecipeRows(rows as RecipeRow[], userId);
+}
+
+export async function fetchRecipesByTotalMinutes(
+  totalMinutes: number,
+  userId: string,
+): Promise<Recipe[]> {
+  if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) return [];
+
+  const { data, error } = await supabase.rpc("recipes_with_total_minutes", {
+    p_total: Math.floor(totalMinutes),
+  });
+
+  if (error) {
+    console.error("fetchRecipesByTotalMinutes:", error);
+    return [];
+  }
+  const rows = (data ?? []) as RecipeRow[];
+  if (rows.length === 0) return [];
+  return enrichRecipeRows(rows, userId);
+}

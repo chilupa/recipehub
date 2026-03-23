@@ -1,18 +1,20 @@
 import React, { useState, useRef } from "react";
 import {
   IonContent,
+  IonFooter,
   IonHeader,
   IonPage,
   IonTitle,
   IonToolbar,
   IonButtons,
   IonBackButton,
+  IonButton,
   useIonViewWillEnter,
   useIonViewDidEnter,
 } from "@ionic/react";
 import { useRecipes } from "../contexts/RecipeContext";
 import { useHistory } from "react-router-dom";
-import RecipeForm from "../components/RecipeForm";
+import RecipeForm, { type RecipeFormHandle } from "../components/RecipeForm";
 import type { NewRecipe } from "../types/Recipe";
 
 const AddRecipe: React.FC = () => {
@@ -20,6 +22,7 @@ const AddRecipe: React.FC = () => {
   const history = useHistory();
   const [formResetKey, setFormResetKey] = useState(0);
   const contentRef = useRef<HTMLIonContentElement>(null);
+  const formRef = useRef<RecipeFormHandle>(null);
 
   useIonViewWillEnter(() => {
     setFormResetKey((k) => k + 1);
@@ -46,11 +49,23 @@ const AddRecipe: React.FC = () => {
       </IonHeader>
       <IonContent ref={contentRef}>
         <RecipeForm
+          ref={formRef}
           formResetKey={formResetKey}
           onSubmit={handleSubmit}
-          submitLabel="Save Recipe"
         />
       </IonContent>
+      <IonFooter>
+        <IonToolbar className="recipe-form-footer-toolbar">
+          <IonButton
+            expand="block"
+            strong
+            className="ion-margin"
+            onClick={() => void formRef.current?.submit()}
+          >
+            Save recipe
+          </IonButton>
+        </IonToolbar>
+      </IonFooter>
     </IonPage>
   );
 };

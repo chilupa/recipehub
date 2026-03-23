@@ -120,17 +120,20 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
             overflow: "hidden",
           }}
         >
-          <IonChip color="primary" style={{ height: "24px", fontSize: "12px" }}>
+          {(recipe.prepTime ?? 0) + (recipe.cookTime ?? 0) > 0 && <IonChip color="primary" style={{ height: "24px", fontSize: "12px" }}>
             <IonIcon icon={time} style={{ fontSize: "14px" }} />
             <IonLabel>{(recipe.prepTime ?? 0) + (recipe.cookTime ?? 0)} min</IonLabel>
-          </IonChip>
+          </IonChip>}
+          {recipe.servings > 0 && 
+          <>
           <IonChip
             color="secondary"
             style={{ height: "24px", fontSize: "12px" }}
-          >
+            >
             <IonIcon icon={people} style={{ fontSize: "14px" }} />
             <IonLabel>{recipe.servings}</IonLabel>
-          </IonChip>
+            </IonChip>
+          </>}
           {recipe.tags.slice(0, 1).map((tag, index) => (
             <IonChip
               key={index}

@@ -1,0 +1,58 @@
+.recipe-form-list {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.recipe-form-section {
+  margin-top: 8px;
+}
+
+.recipe-form-section-title {
+  margin: 16px 16px 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ion-text-color);
+}
+
+.recipe-form-hint {
+  margin: 0 0 8px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.recipe-form-tags {
+  margin: 10px 0 8px;
+}
+
+.recipe-form-scroll-pad {
+  height: 100px;
+}
+
+/* Footer holds full-width primary action; keep toolbar compact above home indicator */
+.recipe-form-footer-toolbar {
+  --padding-top: 8px;
+  --padding-bottom: max(8px, env(safe-area-inset-bottom));
+  --min-height: 0;
+}
+
+.recipe-form-section--tags {
+  margin-bottom: 8px;
+}
+
+.recipe-form-meta-grid {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.recipe-form-meta-row {
+  align-items: flex-end;
+}
+
+.recipe-form-meta-item {
+  --inner-padding-end: 0;
+  --inner-padding-start: 0;
+  --min-height: 56px;
+}
+
+.recipe-form-meta-item ion-label {
+  font-size: 0.75rem;
+}

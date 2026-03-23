@@ -1,4 +1,4 @@
-/* Warm / foodie sign-in — flat linen background + soft card */
+/* Warm sign-in — flat linen background + soft card */
 
 .login-page {
   height: 100%;
@@ -8,7 +8,6 @@
   --background: #faf6f1;
 }
 
-/* Let the scroll host participate in flex so the inner stack can fill and center */
 .login-page ion-content.login-content::part(scroll) {
   display: flex;
   flex-direction: column;
@@ -31,66 +30,10 @@
 
 .login-hero {
   text-align: center;
-  padding: 0 0 22px;
+  padding: 0 0 20px;
   margin: 0 0 4px;
   flex-shrink: 0;
   border-bottom: 1px solid rgba(61, 41, 20, 0.08);
-}
-
-.login-eyebrow {
-  margin: 0 0 14px;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ion-color-primary-shade, var(--ion-color-primary));
-}
-
-.login-hero-strip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 18px;
-  padding: 10px 18px;
-  border-radius: 999px;
-  background: rgba(250, 246, 241, 0.95);
-  border: 1px solid rgba(184, 69, 26, 0.1);
-  box-shadow: 0 1px 8px rgba(184, 69, 26, 0.06);
-}
-
-.login-hero-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: rgba(184, 69, 26, 0.25);
-}
-
-.login-hero-icon-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(250, 246, 241, 0.95);
-  border: 1px solid rgba(184, 69, 26, 0.1);
-}
-
-.login-hero-icon-wrap ion-icon {
-  font-size: 22px;
-}
-
-.login-hero-icon-wrap:nth-child(1) ion-icon {
-  color: var(--ion-color-primary);
-}
-
-.login-hero-icon-wrap:nth-child(3) ion-icon {
-  color: var(--ion-color-secondary);
-}
-
-.login-hero-icon-wrap:nth-child(5) ion-icon {
-  color: var(--ion-color-tertiary-shade);
 }
 
 .login-title {
@@ -103,7 +46,7 @@
 }
 
 .login-subtitle {
-  margin: 12px auto 0;
+  margin: 14px auto 0;
   max-width: 320px;
   font-size: 1rem;
   line-height: 1.45;
@@ -144,30 +87,14 @@
   padding: 28px 20px 22px;
 }
 
-.login-card-heading {
-  margin: 0 0 8px;
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #3d2914;
-  text-align: center;
-}
-
-.login-card-hint {
-  margin: 0 0 20px;
-  font-size: 0.875rem;
-  color: #7a6556;
-  text-align: center;
-  line-height: 1.45;
-}
-
 .login-signin-block {
+  margin-top: 20px;
   padding: 18px 16px 16px;
   border-radius: 14px;
   background: rgba(250, 246, 241, 0.85);
   border: 1px solid rgba(184, 69, 26, 0.08);
 }
 
-/* Matches the common “Sign in with Google” surface: white, neutral border */
 .login-google-btn {
   width: 100%;
   display: flex;
@@ -246,65 +173,6 @@
   color: var(--ion-color-danger);
 }
 
-.login-perks-panel {
-  margin-top: 22px;
-  padding: 16px 14px 14px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px dashed rgba(184, 69, 26, 0.18);
-}
-
-.login-perks-title {
-  margin: 0 0 14px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #9a8474;
-  text-align: center;
-}
-
-.login-perk {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.login-perk:last-child {
-  margin-bottom: 0;
-}
-
-.login-perk ion-icon {
-  flex-shrink: 0;
-  margin-top: 2px;
-  font-size: 22px;
-}
-
-.login-perk p {
-  margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  color: #5c4a3d;
-}
-
-.login-perk p strong {
-  font-weight: 600;
-  color: #3d2914;
-}
-
-.login-footer {
-  margin: 24px 0 0;
-  width: 100%;
-  max-width: 440px;
-  flex-shrink: 0;
-  text-align: center;
-  font-size: 0.8125rem;
-  font-style: italic;
-  color: #9a8474;
-  letter-spacing: 0.02em;
-}
-
 @media (prefers-color-scheme: dark) {
   .login-page ion-content.login-content {
     --background: #1c1916;
@@ -312,25 +180,6 @@
 
   .login-hero {
     border-bottom-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .login-eyebrow {
-    color: var(--ion-color-primary-tint, var(--ion-color-primary));
-  }
-
-  .login-hero-strip {
-    background: rgba(40, 34, 28, 0.9);
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-  }
-
-  .login-hero-dot {
-    background: rgba(255, 255, 255, 0.2);
-  }
-
-  .login-hero-icon-wrap {
-    background: rgba(28, 25, 22, 0.95);
-    border-color: rgba(255, 255, 255, 0.08);
   }
 
   .login-title {
@@ -349,14 +198,6 @@
       0 2px 8px rgba(0, 0, 0, 0.2);
   }
 
-  .login-card-heading {
-    color: #f4ebe3;
-  }
-
-  .login-card-hint {
-    color: #a8988a;
-  }
-
   .login-signin-block {
     background: rgba(0, 0, 0, 0.2);
     border-color: rgba(255, 255, 255, 0.08);
@@ -366,28 +207,6 @@
     color: #8a7b6f;
   }
 
-  .login-perks-panel {
-    background: rgba(0, 0, 0, 0.15);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .login-perks-title {
-    color: #8a7b6f;
-  }
-
-  .login-perk p {
-    color: #c4b5a8;
-  }
-
-  .login-perk p strong {
-    color: #f4ebe3;
-  }
-
-  .login-footer {
-    color: #8a7b6f;
-  }
-
-  /* Keep a light Google-style control on dark cards */
   .login-google-btn {
     background: #ffffff;
     border-color: #5f6368;
