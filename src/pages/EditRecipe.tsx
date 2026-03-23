@@ -71,7 +71,7 @@ const EditRecipe: React.FC = () => {
           <IonTitle>Edit Recipe</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent ref={contentRef} fullscreen>
+      <IonContent ref={contentRef}>
         {recipe ? (
           <RecipeForm
             initialData={initialData}

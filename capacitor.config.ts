@@ -10,6 +10,12 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: true,
   },
+  plugins: {
+    Keyboard: {
+      // WebView resize when keyboard opens (esp. with edge-to-edge / status bar overlay)
+      resizeOnFullScreen: true,
+    },
+  },
 };
 
 export default config;

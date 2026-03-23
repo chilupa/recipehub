@@ -16,7 +16,7 @@ import {
 import { time, people, createOutline, add, close } from "ionicons/icons";
 import { useRecipes } from "../contexts/RecipeContext";
 import { useAuth } from "../contexts/AuthContext";
-import { useParams } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 import AppHeader from "../components/AppHeader";
 import FavoriteHeartButton from "../components/FavoriteHeartButton";
 import UserAvatar from "../components/UserAvatar";
@@ -30,6 +30,7 @@ const formatFavorites = (count: number): string => {
 
 const RecipeDetail: React.FC = () => {
   const { user } = useAuth();
+  const history = useHistory();
   const { recipes, toggleFavorite, updateRecipe, ensureRecipeLoaded } =
     useRecipes();
   const { id } = useParams<{ id: string }>();
@@ -179,9 +180,23 @@ const RecipeDetail: React.FC = () => {
           </div>
 
        
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "6px",
+                marginBottom: "10px",
+              }}
+            >
               {tags.map((tag) => (
-                <IonChip key={tag} color="tertiary">
+                <IonChip
+                  key={tag}
+                  color="tertiary"
+                  style={{ cursor: "pointer" }}
+                  onClick={() =>
+                    history.push(`/recipes/tag/${encodeURIComponent(tag)}`)
+                  }
+                >
                   <IonLabel>{tag}</IonLabel>
                 </IonChip>
               ))}

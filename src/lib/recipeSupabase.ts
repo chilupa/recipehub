@@ -137,3 +137,25 @@ export async function fetchVisibleRecipeCount(): Promise<number> {
   if (error) return 0;
   return count ?? 0;
 }
+
+export async function fetchRecipesByTag(
+  tag: string,
+  userId: string,
+): Promise<Recipe[]> {
+  const trimmed = tag.trim();
+  if (!trimmed) return [];
+
+  const { data: rows, error } = await supabase
+    .from("recipes")
+    .select("*")
+    .contains("tags", JSON.stringify([trimmed]))
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  if (error) {
+    console.error("fetchRecipesByTag:", error);
+    return [];
+  }
+  if (!rows?.length) return [];
+  return enrichRecipeRows(rows as RecipeRow[], userId);
+}

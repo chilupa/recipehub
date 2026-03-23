@@ -1,5 +1,5 @@
 import { IonBadge, IonIcon, IonLabel, IonTabBar, IonTabButton } from "@ionic/react";
-import { heart, home, notificationsOutline, person } from "ionicons/icons";
+import { heart, home, notifications, person } from "ionicons/icons";
 import { useNotifications } from "../contexts/NotificationContext";
 
 const Tabs = () => {
@@ -16,7 +16,7 @@ const Tabs = () => {
         <IonLabel>Favorites</IonLabel>
       </IonTabButton>
       <IonTabButton tab="activity" href="/activity">
-        <IonIcon aria-hidden="true" icon={notificationsOutline} />
+        <IonIcon aria-hidden="true" icon={notifications} />
         <IonLabel>Activity</IonLabel>
         {unreadCount > 0 ? (
           <IonBadge color="danger">{unreadCount > 99 ? "99+" : unreadCount}</IonBadge>
