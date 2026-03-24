@@ -23,6 +23,24 @@
    - Copy **Client ID** and **Client secret**.
 3. Back in Supabase → **Google** provider → paste Client ID and Client secret → Save.
 
+## 3b. Enable Apple sign-in (optional)
+
+1. In Supabase: **Authentication** → **Providers** → **Apple** → enable.
+2. In Apple Developer:
+   - Create a **Service ID** and enable **Sign in with Apple**.
+   - Add the Supabase callback as return URL:  
+     `https://<your-project-ref>.supabase.co/auth/v1/callback`
+   - Create a **private key** for Sign in with Apple and note:
+     - Team ID
+     - Key ID
+     - Service ID (Client ID)
+3. Back in Supabase Apple provider settings, paste:
+   - Client ID (Service ID)
+   - Team ID
+   - Key ID
+   - Private key (`.p8` contents)
+4. Save and test sign-in from the app login page.
+
 ## 4. Configure the app
 
 1. In Supabase: **Project Settings** → **API**.
