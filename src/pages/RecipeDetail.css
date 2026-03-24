@@ -1,0 +1,133 @@
+.recipe-detail-top {
+  margin-bottom: 20px;
+}
+
+.recipe-detail-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.recipe-detail-title {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  flex: 1;
+  min-width: 0;
+}
+
+.recipe-detail-edit-btn {
+  margin: -8px -8px 0 0;
+  min-height: 36px;
+}
+
+.recipe-detail-header-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.recipe-detail-share-btn {
+  margin: -8px 0 0 0;
+  min-height: 36px;
+}
+
+.recipe-detail-description {
+  color: var(--ion-color-medium);
+  margin: 0 0 12px 0;
+}
+
+.recipe-detail-meta-chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.recipe-detail-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.recipe-detail-chip-clickable {
+  cursor: pointer;
+}
+
+.recipe-detail-chip-hint {
+  margin: 0 0 10px 2px;
+  font-size: 12px;
+}
+
+.recipe-detail-author-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.recipe-detail-author-block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recipe-detail-author-name {
+  margin: 0;
+}
+
+.recipe-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.recipe-detail-section {
+  margin-bottom: 24px;
+}
+
+.recipe-detail-section-title {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+}
+
+.recipe-detail-loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 48px;
+}
+
+.recipe-detail-loading-text {
+  margin-top: 12px;
+}
+
+.recipe-detail-not-found-btn {
+  margin-top: 14px;
+}
+
+.recipe-detail-instruction-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.recipe-detail-step-number {
+  min-width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--ion-color-secondary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.recipe-detail-multiline {
+  white-space: normal;
+}

@@ -15,6 +15,8 @@ import {
   IonText,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
+  IonRefresher,
+  IonRefresherContent,
 } from "@ionic/react";
 import { create, trash, add } from "ionicons/icons";
 import { useRecipes } from "../contexts/RecipeContext";
@@ -29,6 +31,7 @@ const RecipeList: React.FC = () => {
     recipes,
     recipesLoading,
     hasMoreRecipes,
+    refreshRecipes,
     loadMoreRecipes,
     toggleFavorite,
     shareRecipe,
@@ -50,6 +53,15 @@ const RecipeList: React.FC = () => {
     <IonPage>
       <AppHeader />
       <IonContent fullscreen>
+        <IonRefresher
+          slot="fixed"
+          onIonRefresh={async (e) => {
+            await refreshRecipes();
+            await (e.target as HTMLIonRefresherElement).complete();
+          }}
+        >
+          <IonRefresherContent pullingText="Pull to refresh" />
+        </IonRefresher>
         {recipesLoading ? (
           <div
             className="ion-padding"

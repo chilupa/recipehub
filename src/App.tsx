@@ -89,8 +89,13 @@ const AppRoutes: React.FC = () => {
           <Route exact path="/">
             <Redirect to="/login" />
           </Route>
-          <Route>
-            <Redirect to="/login" />
+          <Route
+            render={({ location }) => {
+              const requestedPath = `${location.pathname}${location.search}${location.hash}`;
+              const redirect = encodeURIComponent(requestedPath);
+              return <Redirect to={`/login?redirect=${redirect}`} />;
+            }}
+          >
           </Route>
         </IonRouterOutlet>
       ) : (

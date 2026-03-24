@@ -8,19 +8,29 @@ import {
   IonSpinner,
 } from "@ionic/react";
 import { useAuth } from "../contexts/AuthContext";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import { logoGoogle } from "ionicons/icons";
 import "./Login.css";
+
+const sanitizeRedirectPath = (value: string | null): string => {
+  if (!value) return "/recipes";
+  // Only allow in-app relative paths.
+  if (!value.startsWith("/") || value.startsWith("//")) return "/recipes";
+  if (value.startsWith("/login")) return "/recipes";
+  return value;
+};
 
 const Login: React.FC = () => {
   const { user, loginWithGoogle, isLoading, authError } = useAuth();
   const history = useHistory();
+  const location = useLocation();
 
   useEffect(() => {
     if (user) {
-      history.replace("/recipes");
+      const redirect = new URLSearchParams(location.search).get("redirect");
+      history.replace(sanitizeRedirectPath(redirect));
     }
-  }, [user, history]);
+  }, [user, history, location.search]);
 
   return (
     <IonPage className="login-page">

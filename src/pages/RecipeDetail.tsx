@@ -1,119 +1,125 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  IonContent,
-  IonPage,
   IonButton,
-  IonIcon,
   IonChip,
-  IonLabel,
-  IonText,
-  IonList,
+  IonContent,
+  IonIcon,
   IonItem,
-  IonInput,
-  IonToast,
+  IonLabel,
+  IonList,
+  IonPage,
   IonSpinner,
+  IonText,
+  IonToast,
 } from "@ionic/react";
-import { time, people, createOutline, add, close } from "ionicons/icons";
-import { useRecipes } from "../contexts/RecipeContext";
-import { useAuth } from "../contexts/AuthContext";
+import { createOutline, people, shareOutline, time } from "ionicons/icons";
 import { useHistory, useParams } from "react-router-dom";
 import AppHeader from "../components/AppHeader";
 import FavoriteHeartButton from "../components/FavoriteHeartButton";
 import UserAvatar from "../components/UserAvatar";
+import { useAuth } from "../contexts/AuthContext";
+import { useRecipes } from "../contexts/RecipeContext";
+import type { Recipe } from "../types/Recipe";
+import "./RecipeDetail.css";
 
-const MAX_TAGS = 5;
 const formatFavorites = (count: number): string => {
   if (count >= 1000000) return `${(count / 1000000).toFixed(1)}m`;
   if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
   return count.toString();
 };
 
+type RecipeSectionProps = {
+  title: string;
+  items: string[];
+  numbered?: boolean;
+};
+
+const RecipeSection: React.FC<RecipeSectionProps> = ({
+  title,
+  items,
+  numbered = false,
+}) => {
+  if (items.length === 0) return null;
+
+  return (
+    <section className="recipe-detail-section">
+      <h2 className="recipe-detail-section-title">{title}</h2>
+      <IonList>
+        {items.map((item, index) => (
+          <IonItem key={`${title}-${index}-${item}`}>
+            {numbered ? (
+              <div className="recipe-detail-instruction-row">
+                <div className="recipe-detail-step-number">{index + 1}</div>
+                <IonLabel className="recipe-detail-multiline">{item}</IonLabel>
+              </div>
+            ) : (
+              <IonLabel>{item}</IonLabel>
+            )}
+          </IonItem>
+        ))}
+      </IonList>
+    </section>
+  );
+};
+
 const RecipeDetail: React.FC = () => {
   const { user } = useAuth();
   const history = useHistory();
-  const { recipes, toggleFavorite, updateRecipe, ensureRecipeLoaded } =
+  const { recipes, toggleFavorite, ensureRecipeLoaded, shareRecipe } =
     useRecipes();
   const { id } = useParams<{ id: string }>();
-  const [newTag, setNewTag] = useState("");
   const [toast, setToast] = useState({ show: false, message: "" });
   const [loadFailed, setLoadFailed] = useState(false);
 
-  const recipe = recipes.find((r) => r.id === id);
-  const tags = recipe?.tags ?? [];
+  const recipe = useMemo(
+    () => recipes.find((r) => r.id === id),
+    [recipes, id],
+  );
 
   useEffect(() => {
     if (!id) return;
     setLoadFailed(false);
     if (recipes.some((r) => r.id === id)) return;
+
     let cancelled = false;
     void ensureRecipeLoaded(id).then((ok) => {
       if (!cancelled && !ok) setLoadFailed(true);
     });
+
     return () => {
       cancelled = true;
     };
   }, [id, recipes, ensureRecipeLoaded]);
 
-  const handleAddTag = async () => {
-    if (!recipe || !id) return;
-    const tag = newTag.trim();
-    if (!tag) return;
-    if (tags.includes(tag)) {
-      setToast({ show: true, message: "Tag already added" });
-      return;
-    }
-    if (tags.length >= MAX_TAGS) {
-      setToast({ show: true, message: `Max ${MAX_TAGS} tags` });
-      return;
-    }
-    try {
-      await updateRecipe(id, { tags: [...tags, tag] });
-    } catch {
-      setToast({ show: true, message: "Could not add tag." });
-      return;
-    }
-    setNewTag("");
-  };
-
-  const handleRemoveTag = async (tagToRemove: string) => {
-    if (!recipe || !id) return;
-    try {
-      await updateRecipe(id, {
-        tags: tags.filter((t) => t !== tagToRemove),
-      });
-    } catch {
-      setToast({ show: true, message: "Could not remove tag." });
-    }
-  };
-
   if (!recipe) {
     if (!loadFailed) {
       return (
         <IonPage>
-          <AppHeader showBackButton={true} />
+          <AppHeader showBackButton />
           <IonContent className="ion-padding">
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                paddingTop: 48,
-              }}
-            >
+            <div className="recipe-detail-loading-wrap">
               <IonSpinner name="crescent" />
               <IonText color="medium">
-                <p style={{ marginTop: 12 }}>Loading recipe…</p>
+                <p className="recipe-detail-loading-text">Loading recipe…</p>
               </IonText>
             </div>
           </IonContent>
         </IonPage>
       );
     }
+
     return (
       <IonPage>
-        <AppHeader title="Recipe Not Found" showBackButton={true} />
+        <AppHeader title="Recipe Not Found" showBackButton />
         <IonContent className="ion-padding">
           <IonText>Recipe not found.</IonText>
+          <IonButton
+            expand="block"
+            className="recipe-detail-not-found-btn"
+            routerLink="/recipes"
+          >
+            Back to recipes
+          </IonButton>
         </IonContent>
       </IonPage>
     );
@@ -121,73 +127,101 @@ const RecipeDetail: React.FC = () => {
 
   const totalMinutes = (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
 
+  const goToTag = (tag: string) => {
+    history.push(`/recipes/tag/${encodeURIComponent(tag)}`);
+  };
+
+  const goToTotalTime = () => {
+    if (totalMinutes > 0) {
+      history.push(`/recipes/total-time/${totalMinutes}`);
+    }
+  };
+
+  const goToServings = () => {
+    if (recipe.servings > 0) {
+      history.push(`/recipes/servings/${recipe.servings}`);
+    }
+  };
+
   return (
     <IonPage>
-      <AppHeader showBackButton={true} />
+      <AppHeader showBackButton />
       <IonContent className="ion-padding">
-        <div style={{ marginBottom: "20px" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              gap: "8px",
-            }}
-          >
-            <h1
-              style={{
-                margin: "0 0 8px 0",
-                fontSize: "24px",
-                flex: 1,
-                minWidth: 0,
-              }}
-            >
-              {recipe.title}
-            </h1>
-            {recipe.userId === user?.id && (
+        <div className="recipe-detail-top">
+          <div className="recipe-detail-header-row">
+            <h1 className="recipe-detail-title">{recipe.title}</h1>
+            <div className="recipe-detail-header-actions">
               <IonButton
                 fill="clear"
                 size="small"
-                routerLink={`/recipes/edit/${recipe.id}`}
-                style={{ margin: "-8px -8px 0 0", minHeight: "36px" }}
+                className="recipe-detail-share-btn"
+                onClick={async () => {
+                  try {
+                    await shareRecipe(recipe);
+                  } catch {
+                    setToast({
+                      show: true,
+                      message: "Could not share recipe.",
+                    });
+                  }
+                }}
               >
-                <IonIcon icon={createOutline} slot="icon-only" />
+                <IonIcon icon={shareOutline} slot="icon-only" />
               </IonButton>
-            )}
+              {recipe.userId === user?.id && (
+                <IonButton
+                  fill="clear"
+                  size="small"
+                  routerLink={`/recipes/edit/${recipe.id}`}
+                  className="recipe-detail-edit-btn"
+                >
+                  <IonIcon icon={createOutline} slot="icon-only" />
+                </IonButton>
+              )}
+            </div>
           </div>
+
           {recipe.description ? (
-            <p style={{ color: "var(--ion-color-medium)", margin: "0 0 12px 0" }}>
-              {recipe.description}
-            </p>
+            <p className="recipe-detail-description">{recipe.description}</p>
           ) : null}
 
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              marginBottom: "16px",
-              flexWrap: "wrap",
-            }}
-          >
+          <IonText color="medium">
+            <p className="recipe-detail-chip-hint">Tap chips to explore similar recipes</p>
+          </IonText>
+
+          <div className="recipe-detail-meta-chips">
             {totalMinutes > 0 && (
               <IonChip
                 color="primary"
-                style={{ cursor: "pointer" }}
-                onClick={() =>
-                  history.push(`/recipes/total-time/${totalMinutes}`)
-                }
+                className="recipe-detail-chip-clickable"
+                onClick={goToTotalTime}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    goToTotalTime();
+                  }
+                }}
               >
                 <IonIcon icon={time} />
                 <IonLabel>{totalMinutes} min</IonLabel>
               </IonChip>
             )}
+
             {recipe.servings > 0 && (
               <IonChip
                 color="secondary"
-                style={{ cursor: "pointer" }}
-                onClick={() =>
-                  history.push(`/recipes/servings/${recipe.servings}`)
-                }
+                className="recipe-detail-chip-clickable"
+                onClick={goToServings}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    goToServings();
+                  }
+                }}
               >
                 <IonIcon icon={people} />
                 <IonLabel>{recipe.servings} servings</IonLabel>
@@ -195,45 +229,36 @@ const RecipeDetail: React.FC = () => {
             )}
           </div>
 
-       
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "6px",
-                marginBottom: "10px",
-              }}
-            >
-              {tags.map((tag) => (
-                <IonChip
-                  key={tag}
-                  color="tertiary"
-                  style={{ cursor: "pointer" }}
-                  onClick={() =>
-                    history.push(`/recipes/tag/${encodeURIComponent(tag)}`)
+          <div className="recipe-detail-tag-row">
+            {recipe.tags.map((tag) => (
+              <IonChip
+                key={tag}
+                color="tertiary"
+                className="recipe-detail-chip-clickable"
+                onClick={() => goToTag(tag)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    goToTag(tag);
                   }
-                >
-                  <IonLabel>{tag}</IonLabel>
-                </IonChip>
-              ))}
-            </div>
+                }}
+              >
+                <IonLabel>{tag}</IonLabel>
+              </IonChip>
+            ))}
+          </div>
 
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "24px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div className="recipe-detail-author-row">
+            <div className="recipe-detail-author-block">
               <UserAvatar color="tertiary" name={recipe.author} />
               <IonText color="medium">
-                <p style={{ margin: 0 }}>{recipe.author}</p>
+                <p className="recipe-detail-author-name">{recipe.author}</p>
               </IonText>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+
+            <div className="recipe-detail-actions">
               <FavoriteHeartButton
                 isLiked={recipe.isLiked}
                 onToggle={async () => {
@@ -253,63 +278,12 @@ const RecipeDetail: React.FC = () => {
           </div>
         </div>
 
-        {recipe.ingredients.length > 0 && (
-          <div style={{ marginBottom: "24px" }}>
-            <h2 style={{ margin: "0 0 12px 0", fontSize: "20px" }}>
-              Ingredients
-            </h2>
-            <IonList>
-              {recipe.ingredients.map((ingredient, index) => (
-                <IonItem key={index}>
-                  <IonLabel>{ingredient}</IonLabel>
-                </IonItem>
-              ))}
-            </IonList>
-          </div>
-        )}
-
-        {recipe.instructions.length > 0 && (
-          <div>
-            <h2 style={{ margin: "0 0 12px 0", fontSize: "20px" }}>
-              Instructions
-            </h2>
-            <IonList>
-              {recipe.instructions.map((instruction, index) => (
-                <IonItem key={index} >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      width: "100%",
-                    }}
-                  >
-                    <div
-                      style={{
-                        minWidth: "24px",
-                        height: "24px",
-                        borderRadius: "50%",
-                        backgroundColor: "var(--ion-color-secondary)",
-                        color: "white",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "12px",
-                        fontWeight: "bold",
-                        marginTop: "2px",
-                      }}
-                    >
-                      {index + 1}
-                    </div>
-                    <IonLabel style={{ whiteSpace: "normal" }}>
-                      {instruction}
-                    </IonLabel>
-                  </div>
-                </IonItem>
-              ))}
-            </IonList>
-          </div>
-        )}
+        <RecipeSection title="Ingredients" items={recipe.ingredients} />
+        <RecipeSection
+          title="Instructions"
+          items={recipe.instructions}
+          numbered
+        />
 
         <IonToast
           isOpen={toast.show}

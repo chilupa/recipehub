@@ -103,6 +103,8 @@ Useful scripts from `package.json`:
 | `VITE_USE_MOCK_DATA=true` | Recipes/favorites use **localStorage** mock data instead of Supabase. |
 | `VITE_USE_MOCK_AUTH=true` | Skip real auth; mock user in localStorage. |
 | `VITE_NATIVE_AUTH_REDIRECT_URL` | Custom native OAuth redirect (must match app URL scheme). |
+| `VITE_SHARE_WEB_BASE_URL` | Public base URL used in shares for recipe links (example: `https://recipehub.app`). |
+| `VITE_APP_DOWNLOAD_URL` | App download/smart link appended in share text to help recipients install the app. |
 
 ---
 
