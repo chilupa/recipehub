@@ -25,6 +25,8 @@ interface RecipeContextType {
   recipesLoading: boolean;
   /** More pages available for the main list (infinite scroll). */
   hasMoreRecipes: boolean;
+  /** Re-fetch the first page for pull-to-refresh. */
+  refreshRecipes: () => Promise<void>;
   loadMoreRecipes: () => Promise<void>;
   /** Fetch a recipe by id and merge into `recipes` if missing (detail / edit deep links). */
   ensureRecipeLoaded: (id: string) => Promise<boolean>;
@@ -46,6 +48,8 @@ const useMockData = import.meta.env.VITE_USE_MOCK_DATA === "true";
 const MOCK_RECIPES_KEY = "recipe-logger-recipes";
 const MAX_TAGS = 5;
 const PAGE_SIZE = 10;
+const shareWebBaseUrl = (import.meta.env.VITE_SHARE_WEB_BASE_URL ?? "").trim();
+const appDownloadUrl = (import.meta.env.VITE_APP_DOWNLOAD_URL ?? "").trim();
 
 const readAllMockRecipes = (): Recipe[] => {
   try {
@@ -63,6 +67,15 @@ const writeAllMockRecipes = (all: Recipe[]) => {
   } catch {
     // ignore
   }
+};
+
+const getRecipeShareUrl = (recipeId: string): string => {
+  if (shareWebBaseUrl) {
+    const base = shareWebBaseUrl.replace(/\/+$/, "");
+    return `${base}/recipes/recipe/${encodeURIComponent(recipeId)}`;
+  }
+  if (appDownloadUrl) return appDownloadUrl;
+  return window.location.href;
 };
 
 const seedMockRecipesForUser = (u: {
@@ -548,6 +561,11 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!recipe) return;
 
     const isFav = recipe.isLiked;
+    const optimisticRecipe: Recipe = {
+      ...recipe,
+      isLiked: !isFav,
+      likes: !isFav ? recipe.likes + 1 : Math.max(0, recipe.likes - 1),
+    };
 
     if (useMockData) {
       const all = readAllMockRecipes();
@@ -563,15 +581,13 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
         };
       });
       writeAllMockRecipes(nextAll);
-      const nextRecipe: Recipe = {
-        ...recipe,
-        isLiked: !isFav,
-        likes: !isFav ? recipe.likes + 1 : Math.max(0, recipe.likes - 1),
-      };
-      setRecipes((prev) => replaceRecipePreservingOrder(prev, nextRecipe));
-      await loadFavorites({ withSpinner: false });
+      setRecipes((prev) => replaceRecipePreservingOrder(prev, optimisticRecipe));
+      void loadFavorites({ withSpinner: false });
       return;
     }
+
+    // Optimistic UI: reflect heart/count immediately, then persist server-side.
+    setRecipes((prev) => replaceRecipePreservingOrder(prev, optimisticRecipe));
 
     try {
       if (isFav) {
@@ -580,12 +596,6 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
           .delete()
           .eq("user_id", user.id)
           .eq("recipe_id", id);
-        const nextRecipe: Recipe = {
-          ...recipe,
-          isLiked: false,
-          likes: Math.max(0, recipe.likes - 1),
-        };
-        setRecipes((prev) => replaceRecipePreservingOrder(prev, nextRecipe));
       } else {
         await supabase.from("favorites").insert({
           user_id: user.id,
@@ -604,33 +614,35 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
             console.warn("Could not create favorite notification:", notifyErr);
           }
         }
-        const nextRecipe: Recipe = {
-          ...recipe,
-          isLiked: true,
-          likes: recipe.likes + 1,
-        };
-        setRecipes((prev) => replaceRecipePreservingOrder(prev, nextRecipe));
       }
-      await loadFavorites({ withSpinner: false });
+      void loadFavorites({ withSpinner: false });
     } catch (error) {
+      // Revert optimistic state if write fails.
+      setRecipes((prev) => replaceRecipePreservingOrder(prev, recipe));
       console.error("Error toggling favorite:", error);
       throw error;
     }
   };
 
   const shareRecipe = async (recipe: Recipe) => {
+    const shareUrl = getRecipeShareUrl(recipe.id);
+    const recipeDescription = recipe.description?.trim() || "Open this recipe in RecipeHub.";
+    const installLine = appDownloadUrl
+      ? `\n\nGet RecipeHub: ${appDownloadUrl}`
+      : "";
+
     if (navigator.share) {
       try {
         await navigator.share({
           title: recipe.title,
-          text: `Check out this recipe: ${recipe.description}`,
-          url: window.location.href,
+          text: `Check out this recipe: ${recipeDescription}${installLine}`,
+          url: shareUrl,
         });
       } catch (error) {
         console.log("Error sharing:", error);
       }
     } else {
-      const shareText = `${recipe.title}\n\n${recipe.description}\n\nIngredients:\n${recipe.ingredients.join("\n")}\n\nInstructions:\n${recipe.instructions.join("\n")}`;
+      const shareText = `${recipe.title}\n\n${recipeDescription}\n\nIngredients:\n${recipe.ingredients.join("\n")}\n\nInstructions:\n${recipe.instructions.join("\n")}`;
       await navigator.clipboard.writeText(shareText);
       alert("Recipe copied to clipboard!");
     }
@@ -642,6 +654,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
         recipes,
         recipesLoading,
         hasMoreRecipes,
+        refreshRecipes: loadRecipes,
         loadMoreRecipes,
         ensureRecipeLoaded,
         favoriteRecipes,

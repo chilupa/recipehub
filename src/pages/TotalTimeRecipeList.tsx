@@ -186,7 +186,6 @@ const TotalTimeRecipeList: React.FC = () => {
                 onFavorite={async (recipeId) => {
                   try {
                     await toggleFavorite(recipeId);
-                    await load();
                   } catch {
                     setToast({
                       show: true,
