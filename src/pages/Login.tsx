@@ -9,7 +9,7 @@ import {
 } from "@ionic/react";
 import { useAuth } from "../contexts/AuthContext";
 import { useHistory, useLocation } from "react-router-dom";
-import { logoGoogle } from "ionicons/icons";
+import { logoApple, logoGoogle } from "ionicons/icons";
 import "./Login.css";
 
 const sanitizeRedirectPath = (value: string | null): string => {
@@ -21,7 +21,8 @@ const sanitizeRedirectPath = (value: string | null): string => {
 };
 
 const Login: React.FC = () => {
-  const { user, loginWithGoogle, isLoading, authError } = useAuth();
+  const { user, loginWithGoogle, loginWithApple, isLoading, authError } =
+    useAuth();
   const history = useHistory();
   const location = useLocation();
 
@@ -67,9 +68,29 @@ const Login: React.FC = () => {
                     </>
                   )}
                 </button>
+                <button
+                  type="button"
+                  className="login-apple-btn"
+                  onClick={() => loginWithApple()}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <IonSpinner
+                      name="crescent"
+                      className="login-google-spinner"
+                    />
+                  ) : (
+                    <>
+                      <IonIcon icon={logoApple} className="login-google-icon" />
+                      <span className="login-google-label">
+                        Continue with Apple
+                      </span>
+                    </>
+                  )}
+                </button>
                 <p style={{marginTop: 8}} className="login-privacy">
-                  We only use Google to identify you and sync your data - no ads,
-                  no extra permissions.
+                  We only use your sign-in provider to identify you and sync your
+                  data - no ads, no extra permissions.
                 </p>
               </div>
 

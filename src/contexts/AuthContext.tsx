@@ -15,7 +15,7 @@ import {
   getOAuthRedirectUrl,
   looksLikeOAuthCallbackUrl,
 } from "../lib/oauthRedirect";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
+import type { Provider, User as SupabaseUser } from "@supabase/supabase-js";
 
 export interface User {
   id: string;
@@ -29,6 +29,7 @@ type AuthContextType = {
   isLoading: boolean;
   authError: string | null;
   loginWithGoogle: () => Promise<void>;
+  loginWithApple: () => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
 };
@@ -249,7 +250,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, []);
 
-  const loginWithGoogle = async () => {
+  const loginWithProvider = async (provider: Provider, errorLabel: string) => {
     if (useMockAuth) {
       setIsLoading(true);
       const mock = loadMockUser() ?? defaultMockUser;
@@ -264,7 +265,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const redirectTo = getOAuthRedirectUrl();
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider,
         options: {
           redirectTo,
           skipBrowserRedirect: Capacitor.isNativePlatform(),
@@ -278,11 +279,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Google sign-in failed.";
+        error instanceof Error ? error.message : `${errorLabel} sign-in failed.`;
       setAuthError(message);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const loginWithGoogle = async () => {
+    await loginWithProvider("google", "Google");
+  };
+
+  const loginWithApple = async () => {
+    await loginWithProvider("apple", "Apple");
   };
 
   const logout = async () => {
@@ -328,6 +337,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       isLoading,
       authError,
       loginWithGoogle,
+      loginWithApple,
       logout,
       updateUser,
     }),
