@@ -19,3 +19,14 @@ export function persistGuestBrowsePreference(on: boolean) {
     // ignore
   }
 }
+
+/** Shared recipe / deep links: allow the app shell without landing on sign-in first. */
+export function shouldAutoGuestBrowseFromLocation(
+  pathname: string,
+  search: string,
+): boolean {
+  const path = pathname.replace(/\/$/, "") || "/";
+  if (/^\/recipes\/recipe\/[^/]+$/i.test(path)) return true;
+  if (path === "/" && new URLSearchParams(search).get("recipeId")) return true;
+  return false;
+}

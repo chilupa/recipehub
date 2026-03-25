@@ -14,12 +14,30 @@ import "./Login.css";
 
 const useMockAuth = import.meta.env.VITE_USE_MOCK_AUTH === "true";
 
+/**
+ * Only allow in-app relative targets. Unwraps accidental nested
+ * `/login?redirect=...` values (e.g. from a double Redirect) so share links still work.
+ */
 const sanitizeRedirectPath = (value: string | null): string => {
   if (!value) return "/recipes";
-  // Only allow in-app relative paths.
-  if (!value.startsWith("/") || value.startsWith("//")) return "/recipes";
-  if (value.startsWith("/login")) return "/recipes";
-  return value;
+  let path = value.trim();
+  for (let i = 0; i < 5; i++) {
+    if (!path.startsWith("/") || path.startsWith("//")) return "/recipes";
+    if (!path.startsWith("/login")) {
+      const hash = path.indexOf("#");
+      return hash >= 0 ? path.slice(0, hash) : path;
+    }
+    const q = path.indexOf("?");
+    if (q < 0) return "/recipes";
+    const inner = new URLSearchParams(path.slice(q + 1)).get("redirect");
+    if (!inner) return "/recipes";
+    try {
+      path = decodeURIComponent(inner);
+    } catch {
+      return "/recipes";
+    }
+  }
+  return "/recipes";
 };
 
 const Login: React.FC = () => {
