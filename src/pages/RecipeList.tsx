@@ -3,6 +3,7 @@ import {
   IonContent,
   IonPage,
   IonAlert,
+  IonNote,
   IonPopover,
   IonList,
   IonItem,
@@ -19,6 +20,7 @@ import {
   IonRefresherContent,
 } from "@ionic/react";
 import { create, trash, add } from "ionicons/icons";
+import { useHistory } from "react-router-dom";
 import { useRecipes } from "../contexts/RecipeContext";
 import { useAuth } from "../contexts/AuthContext";
 import RecipeCard from "../components/RecipeCard";
@@ -26,7 +28,8 @@ import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
 
 const RecipeList: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
+  const history = useHistory();
   const {
     recipes,
     recipesLoading,
@@ -48,6 +51,9 @@ const RecipeList: React.FC = () => {
     event: Event | undefined;
     recipeId: string;
   }>({ isOpen: false, event: undefined, recipeId: "" });
+  const [signInAlertOpen, setSignInAlertOpen] = useState(false);
+
+  const promptSignIn = () => setSignInAlertOpen(true);
 
   return (
     <IonPage>
@@ -81,8 +87,12 @@ const RecipeList: React.FC = () => {
           </div>
         ) : recipes.length === 0 ? (
           <NoData
-            title="No recipes yet!"
-            description="Tap the + button to add your first recipe."
+            title={isGuest ? "Nothing to show yet" : "No recipes yet!"}
+            description={
+              isGuest
+                ? "There are no public recipes to preview right now, or your connection had trouble loading them."
+                : "Tap the + button to add your first recipe."
+            }
           />
         ) : (
           <div style={{ paddingBottom: "80px", paddingTop: 8 }}>
@@ -91,13 +101,24 @@ const RecipeList: React.FC = () => {
                 key={recipe.id}
                 recipe={recipe}
                 onFavorite={async (recipeId) => {
+                  if (isGuest) {
+                    promptSignIn();
+                    return;
+                  }
                   try {
                     await toggleFavorite(recipeId);
                   } catch {
                     setToast({ show: true, message: "Could not update favorite." });
                   }
                 }}
-                onShare={shareRecipe}
+                onShare={
+                  isGuest
+                    ? () => {
+                        promptSignIn();
+                        return Promise.resolve();
+                      }
+                    : shareRecipe
+                }
                 onMenuClick={(event, recipeId) =>
                   setPopoverOpen({ isOpen: true, event, recipeId })
                 }
@@ -209,11 +230,30 @@ const RecipeList: React.FC = () => {
           color="danger"
         />
 
-        <IonFab vertical="bottom" horizontal="end" slot="fixed">
-          <IonFabButton routerLink="/recipes/add" color="secondary">
-            <IonIcon icon={add} />
-          </IonFabButton>
-        </IonFab>
+        {!isGuest ? (
+          <IonFab vertical="bottom" horizontal="end" slot="fixed">
+            <IonFabButton routerLink="/recipes/add" color="secondary">
+              <IonIcon icon={add} />
+            </IonFabButton>
+          </IonFab>
+        ) : null}
+
+        <IonAlert
+          isOpen={signInAlertOpen}
+          onDidDismiss={() => setSignInAlertOpen(false)}
+          header="Keep going"
+          message="It only takes a moment to sign in."
+          buttons={[
+            { text: "Cancel", role: "cancel" },
+            {
+              text: "Sign in",
+              handler: () => {
+                history.push("/login");
+                return true;
+              },
+            },
+          ]}
+        />
       </IonContent>
     </IonPage>
   );

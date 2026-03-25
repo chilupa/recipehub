@@ -12,6 +12,8 @@ import { useHistory, useLocation } from "react-router-dom";
 import { logoApple, logoGoogle } from "ionicons/icons";
 import "./Login.css";
 
+const useMockAuth = import.meta.env.VITE_USE_MOCK_AUTH === "true";
+
 const sanitizeRedirectPath = (value: string | null): string => {
   if (!value) return "/recipes";
   // Only allow in-app relative paths.
@@ -21,8 +23,14 @@ const sanitizeRedirectPath = (value: string | null): string => {
 };
 
 const Login: React.FC = () => {
-  const { user, loginWithGoogle, loginWithApple, isLoading, authError } =
-    useAuth();
+  const {
+    user,
+    loginWithGoogle,
+    loginWithApple,
+    continueWithoutSignIn,
+    isLoading,
+    authError,
+  } = useAuth();
   const history = useHistory();
   const location = useLocation();
 
@@ -32,6 +40,11 @@ const Login: React.FC = () => {
       history.replace(sanitizeRedirectPath(redirect));
     }
   }, [user, history, location.search]);
+
+  const handleBrowseWithoutAccount = () => {
+    continueWithoutSignIn();
+    history.replace("/recipes");
+  };
 
   return (
     <IonPage className="login-page">
@@ -92,6 +105,16 @@ const Login: React.FC = () => {
                   We only use your sign-in provider to identify you and sync your
                   data - no ads, no extra permissions.
                 </p>
+                {!useMockAuth ? (
+                  <button
+                    type="button"
+                    className="login-browse-guest-btn"
+                    onClick={handleBrowseWithoutAccount}
+                    disabled={isLoading}
+                  >
+                    Continue as guest
+                  </button>
+                ) : null}
               </div>
 
               {authError ? (

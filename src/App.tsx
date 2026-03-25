@@ -2,11 +2,7 @@ import React, { useState } from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import {
   IonApp,
-  IonIcon,
-  IonLabel,
   IonRouterOutlet,
-  IonTabBar,
-  IonTabButton,
   IonTabs,
   IonContent,
   IonPage,
@@ -60,13 +56,15 @@ import '@ionic/react/css/palettes/dark.system.css';
 import './theme/variables.css';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
+import SignInGatePage from './pages/SignInGatePage';
 import Tabs from './components/Tabs';
 import Intro, { hasSeenIntro } from './pages/Intro';
 
 setupIonicReact();
 
 const AppRoutes: React.FC = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isGuest, isLoading } = useAuth();
+  const canUseApp = Boolean(user || isGuest);
 
   return (
     <IonReactRouter>
@@ -83,7 +81,7 @@ const AppRoutes: React.FC = () => {
             </IonText>
           </IonContent>
         </IonPage>
-      ) : !user ? (
+      ) : !canUseApp ? (
         <IonRouterOutlet>
           <Route exact path="/login" component={Login} />
           <Route exact path="/">
@@ -101,26 +99,49 @@ const AppRoutes: React.FC = () => {
       ) : (
         <IonTabs>
           <IonRouterOutlet>
-            <Route exact path="/:tab(recipes)" component={RecipeList} />
-            <Route path="/:tab(recipes)/servings/:servings" component={ServingsRecipeList} />
-            <Route path="/:tab(recipes)/total-time/:minutes" component={TotalTimeRecipeList} />
-            <Route path="/:tab(recipes)/tag/:tag" component={TagRecipeList} />
-            <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
-            <Route exact path="/:tab(recipes)/add" component={AddRecipe} />
-            <Route path="/:tab(recipes)/edit/:id" component={EditRecipe} />
-            <Route exact path="/:tab(favorites)" component={Favorites} />
-            <Route exact path="/:tab(activity)" component={Activity} />
-            <Route exact path="/:tab(profile)" component={Profile} />
-            <Route exact path="/login">
-              <Redirect to="/recipes" />
-            </Route>
-            <Route exact path="/">
-              <Redirect to="/recipes" />
-            </Route>
-            {/* Fallback for any unmatched route (e.g. deep link to /login) */}
-            <Route>
-              <Redirect to="/recipes" />
-            </Route>
+            {user ? (
+              <>
+                <Route exact path="/:tab(recipes)" component={RecipeList} />
+                <Route path="/:tab(recipes)/servings/:servings" component={ServingsRecipeList} />
+                <Route path="/:tab(recipes)/total-time/:minutes" component={TotalTimeRecipeList} />
+                <Route path="/:tab(recipes)/tag/:tag" component={TagRecipeList} />
+                <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
+                <Route exact path="/:tab(recipes)/add" component={AddRecipe} />
+                <Route path="/:tab(recipes)/edit/:id" component={EditRecipe} />
+                <Route exact path="/:tab(favorites)" component={Favorites} />
+                <Route exact path="/:tab(activity)" component={Activity} />
+                <Route exact path="/:tab(profile)" component={Profile} />
+                <Route exact path="/login">
+                  <Redirect to="/recipes" />
+                </Route>
+                <Route exact path="/">
+                  <Redirect to="/recipes" />
+                </Route>
+                <Route>
+                  <Redirect to="/recipes" />
+                </Route>
+              </>
+            ) : (
+              <>
+                <Route exact path="/login" component={Login} />
+                <Route exact path="/:tab(recipes)" component={RecipeList} />
+                <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
+                <Route path="/:tab(recipes)/servings/:servings" component={SignInGatePage} />
+                <Route path="/:tab(recipes)/total-time/:minutes" component={SignInGatePage} />
+                <Route path="/:tab(recipes)/tag/:tag" component={SignInGatePage} />
+                <Route exact path="/:tab(recipes)/add" component={SignInGatePage} />
+                <Route path="/:tab(recipes)/edit/:id" component={SignInGatePage} />
+                <Route exact path="/:tab(favorites)" component={SignInGatePage} />
+                <Route exact path="/:tab(activity)" component={SignInGatePage} />
+                <Route exact path="/:tab(profile)" component={SignInGatePage} />
+                <Route exact path="/">
+                  <Redirect to="/recipes" />
+                </Route>
+                <Route>
+                  <Redirect to="/recipes" />
+                </Route>
+              </>
+            )}
           </IonRouterOutlet>
 
           <Tabs />

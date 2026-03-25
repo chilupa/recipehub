@@ -1,5 +1,6 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -16,6 +17,10 @@ import {
   looksLikeOAuthCallbackUrl,
 } from "../lib/oauthRedirect";
 import type { Provider, User as SupabaseUser } from "@supabase/supabase-js";
+import {
+  persistGuestBrowsePreference,
+  readGuestBrowsePreference,
+} from "../lib/guestBrowse";
 
 export interface User {
   id: string;
@@ -26,10 +31,13 @@ export interface User {
 
 type AuthContextType = {
   user: User | null;
+  /** True when the user is browsing without an account (feed preview only). */
+  isGuest: boolean;
   isLoading: boolean;
   authError: string | null;
   loginWithGoogle: () => Promise<void>;
   loginWithApple: () => Promise<void>;
+  continueWithoutSignIn: () => void;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
 };
@@ -86,8 +94,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [guestBrowse, setGuestBrowse] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  const clearGuestBrowse = useCallback(() => {
+    setGuestBrowse(false);
+    persistGuestBrowsePreference(false);
+  }, []);
+
+  const continueWithoutSignIn = () => {
+    if (useMockAuth) return;
+    setGuestBrowse(true);
+    persistGuestBrowsePreference(true);
+  };
 
   const fetchProfile = async (userId: string) => {
     if (useMockAuth) return null;
@@ -126,6 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const mock = loadMockUser() ?? defaultMockUser;
       if (mounted) {
         setUser(mock);
+        clearGuestBrowse();
         setIsLoading(false);
       }
       return () => {
@@ -165,6 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } = await supabase.auth.getSession();
         if (!mounted) return;
         if (session?.user) {
+          clearGuestBrowse();
           // Show home immediately from JWT metadata; hydrate profile in background.
           setUser(mapAuthUser(session.user, null));
           void (async () => {
@@ -179,9 +201,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           })();
         } else {
           setUser(null);
+          if (mounted && readGuestBrowsePreference()) {
+            setGuestBrowse(true);
+          }
         }
       } catch (e) {
-        if (mounted) setUser(null);
+        if (mounted) {
+          setUser(null);
+          if (readGuestBrowsePreference()) setGuestBrowse(true);
+        }
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -195,9 +223,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!mounted) return;
       if (event === "SIGNED_OUT") {
         setUser(null);
+        clearGuestBrowse();
         return;
       }
       if (session?.user) {
+        clearGuestBrowse();
         setUser(mapAuthUser(session.user, null));
         setAuthError(null);
         void (async () => {
@@ -212,6 +242,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         })();
       } else {
         setUser(null);
+        if (readGuestBrowsePreference()) setGuestBrowse(true);
       }
     });
 
@@ -219,7 +250,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [clearGuestBrowse]);
 
   useEffect(() => {
     if (useMockAuth || !isSupabaseConfigured()) return;
@@ -302,11 +333,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         // ignore
       }
       setUser(null);
+      clearGuestBrowse();
       return;
     }
 
     // Clear UI first so we don’t stay on tabs while sign-out network runs.
     setUser(null);
+    clearGuestBrowse();
     await supabase.auth.signOut();
   };
 
@@ -331,17 +364,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (error) throw error;
   };
 
+  const isGuest = Boolean(!user && guestBrowse);
+
   const value = useMemo(
     () => ({
       user,
+      isGuest,
       isLoading,
       authError,
       loginWithGoogle,
       loginWithApple,
+      continueWithoutSignIn,
       logout,
       updateUser,
     }),
-    [user, isLoading, authError]
+    [user, isGuest, isLoading, authError]
   );
 
   return (
