@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  IonAlert,
   IonButton,
   IonChip,
   IonContent,
@@ -63,18 +64,26 @@ const RecipeSection: React.FC<RecipeSectionProps> = ({
 };
 
 const RecipeDetail: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
   const history = useHistory();
   const { recipes, toggleFavorite, ensureRecipeLoaded, shareRecipe } =
     useRecipes();
   const { id } = useParams<{ id: string }>();
   const [toast, setToast] = useState({ show: false, message: "" });
   const [loadFailed, setLoadFailed] = useState(false);
+  const [signInAlertOpen, setSignInAlertOpen] = useState(false);
 
-  const recipe = useMemo(
-    () => recipes.find((r) => r.id === id),
-    [recipes, id],
-  );
+  const promptSignIn = () => setSignInAlertOpen(true);
+
+  const guardGuestNav = (fn: () => void) => {
+    if (isGuest) {
+      promptSignIn();
+      return;
+    }
+    fn();
+  };
+
+  const recipe = useMemo(() => recipes.find((r) => r.id === id), [recipes, id]);
 
   useEffect(() => {
     if (!id) return;
@@ -128,18 +137,20 @@ const RecipeDetail: React.FC = () => {
   const totalMinutes = (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
 
   const goToTag = (tag: string) => {
-    history.push(`/recipes/tag/${encodeURIComponent(tag)}`);
+    guardGuestNav(() =>
+      history.push(`/recipes/tag/${encodeURIComponent(tag)}`),
+    );
   };
 
   const goToTotalTime = () => {
     if (totalMinutes > 0) {
-      history.push(`/recipes/total-time/${totalMinutes}`);
+      guardGuestNav(() => history.push(`/recipes/total-time/${totalMinutes}`));
     }
   };
 
   const goToServings = () => {
     if (recipe.servings > 0) {
-      history.push(`/recipes/servings/${recipe.servings}`);
+      guardGuestNav(() => history.push(`/recipes/servings/${recipe.servings}`));
     }
   };
 
@@ -156,6 +167,10 @@ const RecipeDetail: React.FC = () => {
                 size="small"
                 className="recipe-detail-share-btn"
                 onClick={async () => {
+                  if (isGuest) {
+                    promptSignIn();
+                    return;
+                  }
                   try {
                     await shareRecipe(recipe);
                   } catch {
@@ -186,7 +201,9 @@ const RecipeDetail: React.FC = () => {
           ) : null}
 
           <IonText color="medium">
-            <p className="recipe-detail-chip-hint">Tap chips to explore similar recipes</p>
+            <p className="recipe-detail-chip-hint">
+              Tap chips to explore similar recipes
+            </p>
           </IonText>
 
           <div className="recipe-detail-meta-chips">
@@ -262,6 +279,10 @@ const RecipeDetail: React.FC = () => {
               <FavoriteHeartButton
                 isLiked={recipe.isLiked}
                 onToggle={async () => {
+                  if (isGuest) {
+                    promptSignIn();
+                    return;
+                  }
                   try {
                     await toggleFavorite(recipe.id);
                   } catch {
@@ -290,6 +311,23 @@ const RecipeDetail: React.FC = () => {
           onDidDismiss={() => setToast((t) => ({ ...t, show: false }))}
           message={toast.message}
           duration={2000}
+        />
+
+        <IonAlert
+          isOpen={signInAlertOpen}
+          onDidDismiss={() => setSignInAlertOpen(false)}
+          header="Keep going"
+          message="It only takes a moment to sign in."
+          buttons={[
+            { text: "Cancel", role: "cancel" },
+            {
+              text: "Sign in",
+              handler: () => {
+                history.push("/login");
+                return true;
+              },
+            },
+          ]}
         />
       </IonContent>
     </IonPage>

@@ -18,6 +18,7 @@ import {
   fetchFavoriteRecipesList,
   fetchVisibleRecipeCount,
 } from "../lib/recipeSupabase";
+import { GUEST_VIEWER_ID } from "../lib/guestBrowse";
 
 interface RecipeContextType {
   recipes: Recipe[];
@@ -144,7 +145,9 @@ function replaceRecipePreservingOrder(prev: Recipe[], updated: Recipe): Recipe[]
 export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
+  const canLoadFeed = Boolean(user || isGuest);
+  const viewerId = user?.id ?? GUEST_VIEWER_ID;
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [hasMoreRecipes, setHasMoreRecipes] = useState(false);
@@ -193,7 +196,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
   const loadRecipes = useCallback(async () => {
     const gen = ++loadGenerationRef.current;
 
-    if (!user) {
+    if (!canLoadFeed) {
       setRecipes([]);
       setHasMoreRecipes(false);
       setRecipesLoading(false);
@@ -208,14 +211,29 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       if (useMockData) {
         const all = readAllMockRecipes();
-        let userRecipes = all.filter((r) => r.userId === user.id);
+        if (user) {
+          let userRecipes = all.filter((r) => r.userId === user.id);
 
-        if (userRecipes.length === 0) {
-          userRecipes = seedMockRecipesForUser(user);
-          writeAllMockRecipes([...(all ?? []), ...userRecipes]);
+          if (userRecipes.length === 0) {
+            userRecipes = seedMockRecipesForUser(user);
+            writeAllMockRecipes([...(all ?? []), ...userRecipes]);
+          }
+
+          const sorted = userRecipes
+            .slice()
+            .sort((a, b) =>
+              (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+            );
+          if (gen !== loadGenerationRef.current) return;
+
+          const first = sorted.slice(0, PAGE_SIZE);
+          setRecipes(first);
+          setHasMoreRecipes(sorted.length > PAGE_SIZE);
+          setRecipesTotalCount(sorted.length);
+          return;
         }
 
-        const sorted = userRecipes
+        const sorted = all
           .slice()
           .sort((a, b) =>
             (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
@@ -257,7 +275,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
           return;
         }
 
-        const list = await enrichRecipeRows(recipeList, user.id);
+        const list = await enrichRecipeRows(recipeList, viewerId);
         if (gen !== loadGenerationRef.current) return;
 
         setRecipes(list);
@@ -273,15 +291,17 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
         setRecipesLoading(false);
       }
     }
-  }, [user?.id]);
+  }, [user, canLoadFeed, viewerId]);
 
   const loadMoreRecipes = useCallback(async () => {
-    if (!user || !hasMoreRecipes || loadingMoreRef.current) return;
+    if (!canLoadFeed || !hasMoreRecipes || loadingMoreRef.current) return;
 
     if (useMockData) {
       loadingMoreRef.current = true;
       try {
-        const all = readAllMockRecipes().filter((r) => r.userId === user.id);
+        const all = readAllMockRecipes().filter((r) =>
+          user ? r.userId === user.id : true,
+        );
         const sorted = all
           .slice()
           .sort((a, b) =>
@@ -318,7 +338,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      const list = await enrichRecipeRows(recipeList, user.id);
+      const list = await enrichRecipeRows(recipeList, viewerId);
       setRecipes((prev) => {
         const seen = new Set(prev.map((r) => r.id));
         const merged = [...prev];
@@ -336,11 +356,11 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
     } finally {
       loadingMoreRef.current = false;
     }
-  }, [user?.id, hasMoreRecipes]);
+  }, [user, canLoadFeed, viewerId, hasMoreRecipes]);
 
   const ensureRecipeLoaded = useCallback(
     async (id: string): Promise<boolean> => {
-      if (!user) return false;
+      if (!canLoadFeed) return false;
       if (recipesRef.current.some((r) => r.id === id)) return true;
 
       if (useMockData) {
@@ -352,21 +372,21 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
         return false;
       }
 
-      const r = await fetchRecipeById(id, user.id);
+      const r = await fetchRecipeById(id, viewerId);
       if (r) {
         setRecipes((prev) => upsertRecipeSorted(prev, r));
         return true;
       }
       return false;
     },
-    [user?.id],
+    [canLoadFeed, viewerId],
   );
 
   useLayoutEffect(() => {
-    if (user?.id) {
+    if (user?.id || isGuest) {
       setRecipesLoading(true);
     }
-  }, [user?.id]);
+  }, [user?.id, isGuest]);
 
   useEffect(() => {
     loadRecipes();
