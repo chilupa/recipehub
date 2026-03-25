@@ -43,7 +43,8 @@ const Login: React.FC = () => {
 
   const handleBrowseWithoutAccount = () => {
     continueWithoutSignIn();
-    history.replace("/recipes");
+    const redirect = new URLSearchParams(location.search).get("redirect");
+    history.replace(sanitizeRedirectPath(redirect));
   };
 
   return (

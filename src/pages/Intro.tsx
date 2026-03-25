@@ -31,6 +31,19 @@ export function setIntroSeen(): void {
   }
 }
 
+/** Skip onboarding when opening a shared / deep link so the router URL stays meaningful. */
+export function shouldSkipIntroForDeepLink(): boolean {
+  if (typeof window === "undefined") return false;
+  const path = window.location.pathname;
+  if (/^\/recipes\/recipe\//i.test(path)) return true;
+  try {
+    if (new URLSearchParams(window.location.search).get("recipeId")) return true;
+  } catch {
+    // ignore
+  }
+  return false;
+}
+
 interface IntroProps {
   onComplete: () => void;
 }
