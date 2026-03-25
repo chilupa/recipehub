@@ -131,12 +131,10 @@ const AppRoutes: React.FC = () => {
             {user ? (
               <>
                 {/*
-                  Ionic’s outlet picks the *last* matching Route. A pathless Route matches
-                  every URL, so the catch-all Redirect must be first; recipe detail routes last.
+                  IonRouterOutlet resolves the first matching route in stack order.
+                  A pathless Route matches every URL — it must be last or it always wins
+                  and redirects /recipes/recipe/:id to /recipes.
                 */}
-                <Route>
-                  <Redirect to="/recipes" />
-                </Route>
                 <Route exact path="/:tab(recipes)" component={RecipeList} />
                 <Route path="/:tab(recipes)/servings/:servings" component={ServingsRecipeList} />
                 <Route path="/:tab(recipes)/total-time/:minutes" component={TotalTimeRecipeList} />
@@ -156,12 +154,12 @@ const AppRoutes: React.FC = () => {
                 />
                 <Route path="/recipes/recipe/:id" component={RecipeDetail} />
                 <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
-              </>
-            ) : (
-              <>
                 <Route>
                   <Redirect to="/recipes" />
                 </Route>
+              </>
+            ) : (
+              <>
                 <Route exact path="/login" component={Login} />
                 <Route exact path="/:tab(recipes)" component={RecipeList} />
                 <Route path="/:tab(recipes)/servings/:servings" component={SignInGatePage} />
@@ -179,6 +177,9 @@ const AppRoutes: React.FC = () => {
                 />
                 <Route path="/recipes/recipe/:id" component={RecipeDetail} />
                 <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
+                <Route>
+                  <Redirect to="/recipes" />
+                </Route>
               </>
             )}
           </IonRouterOutlet>
