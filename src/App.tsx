@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Redirect, Route, Switch, useHistory, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Redirect, Route } from 'react-router-dom';
 import {
   IonApp,
   IonRouterOutlet,
   IonTabs,
-  IonButton,
   IonContent,
   IonPage,
   IonSpinner,
@@ -59,81 +58,13 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
 import SignInGatePage from './pages/SignInGatePage';
 import Tabs from './components/Tabs';
-import Intro, { hasSeenIntro, shouldSkipIntroForDeepLink } from './pages/Intro';
-import { isShareWebHost } from "./lib/shareWeb";
+import Intro, { hasSeenIntro } from './pages/Intro';
 
 setupIonicReact();
-
-const appDownloadUrl = (import.meta.env.VITE_APP_DOWNLOAD_URL ?? "").trim();
-
-const ShareWebOpenInApp: React.FC = () => {
-  return (
-    <IonPage>
-      <IonContent fullscreen className="ion-padding">
-        <div style={{ maxWidth: 560, margin: "24px auto" }}>
-          <IonText>
-            <h1 style={{ margin: 0 }}>RecipeHub</h1>
-          </IonText>
-          <IonText color="medium">
-            <p style={{ marginTop: 12 }}>
-              This link is meant to open a recipe detail page. To browse the full app,
-              open RecipeHub on your device.
-            </p>
-          </IonText>
-
-          {appDownloadUrl ? (
-            <IonButton expand="block" href={appDownloadUrl}>
-              Open / install RecipeHub
-            </IonButton>
-          ) : null}
-        </div>
-      </IonContent>
-    </IonPage>
-  );
-};
-
-const ShareRecipeLanding: React.FC<{ defaultHref: string }> = ({
-  defaultHref,
-}) => {
-  const history = useHistory();
-  const location = useLocation();
-
-  useEffect(() => {
-    const recipeId = new URLSearchParams(location.search).get("recipeId");
-    if (recipeId) {
-      history.replace(`/recipes/recipe/${encodeURIComponent(recipeId)}`);
-      return;
-    }
-    history.replace(defaultHref);
-  }, [defaultHref, history, location.search]);
-
-  return null;
-};
 
 const AppRoutes: React.FC = () => {
   const { user, isGuest, isLoading } = useAuth();
   const canUseApp = Boolean(user || isGuest);
-
-  // Public share web host: only allow recipe detail (and legacy /?recipeId= landing).
-  // Everything else should show an "open in app" page and never show tabs/feed.
-  if (isShareWebHost()) {
-    return (
-      <IonReactRouter>
-        <IonRouterOutlet>
-          <Switch>
-            <Route
-              exact
-              path="/"
-              render={() => <ShareRecipeLanding defaultHref="/open" />}
-            />
-            <Route exact path="/open" component={ShareWebOpenInApp} />
-            <Route path="/recipes/recipe/:id" component={RecipeDetail} />
-            <Route render={() => <Redirect to="/open" />} />
-          </Switch>
-        </IonRouterOutlet>
-      </IonReactRouter>
-    );
-  }
 
   return (
     <IonReactRouter>
@@ -152,95 +83,64 @@ const AppRoutes: React.FC = () => {
         </IonPage>
       ) : !canUseApp ? (
         <IonRouterOutlet>
-          {/*
-            Without Switch, the pathless Route matches /login too and stacks a second
-            Redirect, producing redirect=/login?redirect=... and breaking post-login navigation.
-          */}
-          <Switch>
-            <Route exact path="/login" component={Login} />
-            <Route
-              exact
-              path="/"
-              render={({ location }) => {
-                const requestedPath = `${location.pathname}${location.search}${location.hash}`;
-                const redirect = encodeURIComponent(requestedPath);
-                return <Redirect to={`/login?redirect=${redirect}`} />;
-              }}
-            />
-            <Route
-              render={({ location }) => {
-                const requestedPath = `${location.pathname}${location.search}${location.hash}`;
-                const redirect = encodeURIComponent(requestedPath);
-                return <Redirect to={`/login?redirect=${redirect}`} />;
-              }}
-            />
-          </Switch>
+          <Route exact path="/login" component={Login} />
+          <Route exact path="/">
+            <Redirect to="/login" />
+          </Route>
+          <Route
+            render={({ location }) => {
+              const requestedPath = `${location.pathname}${location.search}${location.hash}`;
+              const redirect = encodeURIComponent(requestedPath);
+              return <Redirect to={`/login?redirect=${redirect}`} />;
+            }}
+          >
+          </Route>
         </IonRouterOutlet>
       ) : (
         <IonTabs>
           <IonRouterOutlet>
-            {/*
-              A pathless <Route> matches every URL in React Router v5. Without <Switch>, it
-              renders together with /recipes/recipe/:id, so <Redirect to="/recipes" /> always
-              runs. One <Switch> as the outlet’s single child keeps Ionic’s matchRoute() stable
-              and ensures only one route (or the final fallback) renders.
-            */}
             {user ? (
-              <Switch>
-                <Route path="/recipes/recipe/:id" component={RecipeDetail} />
-                <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
-                <Route
-                  path="/:tab(recipes)/servings/:servings"
-                  component={ServingsRecipeList}
-                />
-                <Route
-                  path="/:tab(recipes)/total-time/:minutes"
-                  component={TotalTimeRecipeList}
-                />
+              <>
+                <Route exact path="/:tab(recipes)" component={RecipeList} />
+                <Route path="/:tab(recipes)/servings/:servings" component={ServingsRecipeList} />
+                <Route path="/:tab(recipes)/total-time/:minutes" component={TotalTimeRecipeList} />
                 <Route path="/:tab(recipes)/tag/:tag" component={TagRecipeList} />
+                <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
                 <Route exact path="/:tab(recipes)/add" component={AddRecipe} />
                 <Route path="/:tab(recipes)/edit/:id" component={EditRecipe} />
                 <Route exact path="/:tab(favorites)" component={Favorites} />
                 <Route exact path="/:tab(activity)" component={Activity} />
                 <Route exact path="/:tab(profile)" component={Profile} />
-                <Route exact path="/:tab(recipes)" component={RecipeList} />
                 <Route exact path="/login">
                   <Redirect to="/recipes" />
                 </Route>
-                <Route
-                  exact
-                  path="/"
-                  render={() => <ShareRecipeLanding defaultHref="/recipes" />}
-                />
-                <Route render={() => <Redirect to="/recipes" />} />
-              </Switch>
+                <Route exact path="/">
+                  <Redirect to="/recipes" />
+                </Route>
+                <Route>
+                  <Redirect to="/recipes" />
+                </Route>
+              </>
             ) : (
-              <Switch>
-                <Route path="/recipes/recipe/:id" component={RecipeDetail} />
-                <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
+              <>
                 <Route exact path="/login" component={Login} />
-                <Route
-                  path="/:tab(recipes)/servings/:servings"
-                  component={SignInGatePage}
-                />
-                <Route
-                  path="/:tab(recipes)/total-time/:minutes"
-                  component={SignInGatePage}
-                />
+                <Route exact path="/:tab(recipes)" component={RecipeList} />
+                <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
+                <Route path="/:tab(recipes)/servings/:servings" component={SignInGatePage} />
+                <Route path="/:tab(recipes)/total-time/:minutes" component={SignInGatePage} />
                 <Route path="/:tab(recipes)/tag/:tag" component={SignInGatePage} />
                 <Route exact path="/:tab(recipes)/add" component={SignInGatePage} />
                 <Route path="/:tab(recipes)/edit/:id" component={SignInGatePage} />
                 <Route exact path="/:tab(favorites)" component={SignInGatePage} />
                 <Route exact path="/:tab(activity)" component={SignInGatePage} />
                 <Route exact path="/:tab(profile)" component={SignInGatePage} />
-                <Route exact path="/:tab(recipes)" component={RecipeList} />
-                <Route
-                  exact
-                  path="/"
-                  render={() => <ShareRecipeLanding defaultHref="/recipes" />}
-                />
-                <Route render={() => <Redirect to="/recipes" />} />
-              </Switch>
+                <Route exact path="/">
+                  <Redirect to="/recipes" />
+                </Route>
+                <Route>
+                  <Redirect to="/recipes" />
+                </Route>
+              </>
             )}
           </IonRouterOutlet>
 
@@ -252,12 +152,7 @@ const AppRoutes: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  const [showIntro, setShowIntro] = useState(() => {
-    if (hasSeenIntro()) return false;
-    // Deep links must not sit behind intro (router is not mounted until intro dismisses).
-    if (shouldSkipIntroForDeepLink()) return false;
-    return true;
-  });
+  const [showIntro, setShowIntro] = useState(() => !hasSeenIntro());
 
   const handleIntroComplete = () => {
     setShowIntro(false);

@@ -10,8 +10,6 @@
 
 ion-button.favorite-heart-btn {
   --border-radius: 50%;
-  --background: transparent;
-  --background-hover: transparent;
   --padding-start: 0;
   --padding-end: 0;
   margin: 0;
@@ -20,10 +18,8 @@ ion-button.favorite-heart-btn {
   min-width: 44px;
   min-height: 44px;
   -webkit-tap-highlight-color: transparent;
-  --box-shadow: none;
   --background-activated: transparent;
   --background-focused: transparent;
-  --background-selected: transparent;
   --ripple-color: rgba(var(--ion-color-medium-rgb), 0.22);
 }
 
