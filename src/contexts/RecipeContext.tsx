@@ -73,7 +73,6 @@ const writeAllMockRecipes = (all: Recipe[]) => {
 const getRecipeShareUrl = (recipeId: string): string => {
   if (shareWebBaseUrl) {
     const base = shareWebBaseUrl.replace(/\/+$/, "");
-    // Public web URL (e.g. Netlify with `/*` → `/index.html`). Works with client-side routing.
     return `${base}/recipes/recipe/${encodeURIComponent(recipeId)}`;
   }
   if (appDownloadUrl) return appDownloadUrl;
