@@ -4,7 +4,6 @@ import {
   IonApp,
   IonRouterOutlet,
   IonTabs,
-  IonButton,
   IonContent,
   IonPage,
   IonSpinner,
@@ -63,46 +62,6 @@ import Intro, { hasSeenIntro, shouldSkipIntroForDeepLink } from './pages/Intro';
 
 setupIonicReact();
 
-function isShareWebHost(): boolean {
-  if (typeof window === "undefined") return false;
-  const rawBase = (import.meta.env.VITE_SHARE_WEB_BASE_URL ?? "").trim();
-  if (!rawBase) return false;
-  try {
-    const baseOrigin = new URL(rawBase).origin;
-    return window.location.origin === baseOrigin;
-  } catch {
-    return false;
-  }
-}
-
-const appDownloadUrl = (import.meta.env.VITE_APP_DOWNLOAD_URL ?? "").trim();
-
-const ShareWebOpenInApp: React.FC = () => {
-  return (
-    <IonPage>
-      <IonContent fullscreen className="ion-padding">
-        <div style={{ maxWidth: 560, margin: "24px auto" }}>
-          <IonText>
-            <h1 style={{ margin: 0 }}>RecipeHub</h1>
-          </IonText>
-          <IonText color="medium">
-            <p style={{ marginTop: 12 }}>
-              This link is meant to open a recipe detail page. To browse the full app,
-              open RecipeHub on your device.
-            </p>
-          </IonText>
-
-          {appDownloadUrl ? (
-            <IonButton expand="block" href={appDownloadUrl}>
-              Open / install RecipeHub
-            </IonButton>
-          ) : null}
-        </div>
-      </IonContent>
-    </IonPage>
-  );
-};
-
 const ShareRecipeLanding: React.FC<{ defaultHref: string }> = ({
   defaultHref,
 }) => {
@@ -124,27 +83,6 @@ const ShareRecipeLanding: React.FC<{ defaultHref: string }> = ({
 const AppRoutes: React.FC = () => {
   const { user, isGuest, isLoading } = useAuth();
   const canUseApp = Boolean(user || isGuest);
-
-  // Public share web host: only allow recipe detail (and legacy /?recipeId= landing).
-  // Everything else should show an "open in app" page and never show tabs/feed.
-  if (isShareWebHost()) {
-    return (
-      <IonReactRouter>
-        <IonRouterOutlet>
-          <Switch>
-            <Route
-              exact
-              path="/"
-              render={() => <ShareRecipeLanding defaultHref="/open" />}
-            />
-            <Route exact path="/open" component={ShareWebOpenInApp} />
-            <Route path="/recipes/recipe/:id" component={RecipeDetail} />
-            <Route render={() => <Redirect to="/open" />} />
-          </Switch>
-        </IonRouterOutlet>
-      </IonReactRouter>
-    );
-  }
 
   return (
     <IonReactRouter>
