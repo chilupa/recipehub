@@ -64,7 +64,7 @@ const RecipeSection: React.FC<RecipeSectionProps> = ({
 };
 
 const RecipeDetail: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
   const history = useHistory();
   const { recipes, toggleFavorite, ensureRecipeLoaded, shareRecipe } =
     useRecipes();
@@ -75,8 +75,8 @@ const RecipeDetail: React.FC = () => {
 
   const promptSignIn = () => setSignInAlertOpen(true);
 
-  const guardSignedInNav = (fn: () => void) => {
-    if (!user) {
+  const guardGuestNav = (fn: () => void) => {
+    if (isGuest) {
       promptSignIn();
       return;
     }
@@ -137,24 +137,20 @@ const RecipeDetail: React.FC = () => {
   const totalMinutes = (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
 
   const goToTag = (tag: string) => {
-    guardSignedInNav(() =>
+    guardGuestNav(() =>
       history.push(`/recipes/tag/${encodeURIComponent(tag)}`),
     );
   };
 
   const goToTotalTime = () => {
     if (totalMinutes > 0) {
-      guardSignedInNav(() =>
-        history.push(`/recipes/total-time/${totalMinutes}`),
-      );
+      guardGuestNav(() => history.push(`/recipes/total-time/${totalMinutes}`));
     }
   };
 
   const goToServings = () => {
     if (recipe.servings > 0) {
-      guardSignedInNav(() =>
-        history.push(`/recipes/servings/${recipe.servings}`),
-      );
+      guardGuestNav(() => history.push(`/recipes/servings/${recipe.servings}`));
     }
   };
 
@@ -171,7 +167,7 @@ const RecipeDetail: React.FC = () => {
                 size="small"
                 className="recipe-detail-share-btn"
                 onClick={async () => {
-                  if (!user) {
+                  if (isGuest) {
                     promptSignIn();
                     return;
                   }
@@ -283,7 +279,7 @@ const RecipeDetail: React.FC = () => {
               <FavoriteHeartButton
                 isLiked={recipe.isLiked}
                 onToggle={async () => {
-                  if (!user) {
+                  if (isGuest) {
                     promptSignIn();
                     return;
                   }

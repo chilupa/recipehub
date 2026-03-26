@@ -20,7 +20,6 @@ import type { Provider, User as SupabaseUser } from "@supabase/supabase-js";
 import {
   persistGuestBrowsePreference,
   readGuestBrowsePreference,
-  shouldAutoGuestBrowseFromLocation,
 } from "../lib/guestBrowse";
 
 export interface User {
@@ -202,32 +201,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           })();
         } else {
           setUser(null);
-          if (mounted) {
-            const autoGuest =
-              typeof window !== "undefined" &&
-              shouldAutoGuestBrowseFromLocation(
-                window.location.pathname,
-                window.location.search,
-              );
-            if (autoGuest || readGuestBrowsePreference()) {
-              setGuestBrowse(true);
-              if (autoGuest) persistGuestBrowsePreference(true);
-            }
+          if (mounted && readGuestBrowsePreference()) {
+            setGuestBrowse(true);
           }
         }
       } catch (e) {
         if (mounted) {
           setUser(null);
-          const autoGuest =
-            typeof window !== "undefined" &&
-            shouldAutoGuestBrowseFromLocation(
-              window.location.pathname,
-              window.location.search,
-            );
-          if (autoGuest || readGuestBrowsePreference()) {
-            setGuestBrowse(true);
-            if (autoGuest) persistGuestBrowsePreference(true);
-          }
+          if (readGuestBrowsePreference()) setGuestBrowse(true);
         }
       } finally {
         if (mounted) setIsLoading(false);
@@ -261,16 +242,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         })();
       } else {
         setUser(null);
-        const autoGuest =
-          typeof window !== "undefined" &&
-          shouldAutoGuestBrowseFromLocation(
-            window.location.pathname,
-            window.location.search,
-          );
-        if (autoGuest || readGuestBrowsePreference()) {
-          setGuestBrowse(true);
-          if (autoGuest) persistGuestBrowsePreference(true);
-        }
+        if (readGuestBrowsePreference()) setGuestBrowse(true);
       }
     });
 

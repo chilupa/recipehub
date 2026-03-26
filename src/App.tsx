@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Redirect, Route, Switch, useHistory, useLocation } from 'react-router-dom';
+import { Redirect, Route, useHistory, useLocation } from 'react-router-dom';
 import {
   IonApp,
   IonRouterOutlet,
@@ -101,29 +101,24 @@ const AppRoutes: React.FC = () => {
         </IonPage>
       ) : !canUseApp ? (
         <IonRouterOutlet>
-          {/*
-            Without Switch, the pathless Route matches /login too and stacks a second
-            Redirect, producing redirect=/login?redirect=... and breaking post-login navigation.
-          */}
-          <Switch>
-            <Route exact path="/login" component={Login} />
-            <Route
-              exact
-              path="/"
-              render={({ location }) => {
-                const requestedPath = `${location.pathname}${location.search}${location.hash}`;
-                const redirect = encodeURIComponent(requestedPath);
-                return <Redirect to={`/login?redirect=${redirect}`} />;
-              }}
-            />
-            <Route
-              render={({ location }) => {
-                const requestedPath = `${location.pathname}${location.search}${location.hash}`;
-                const redirect = encodeURIComponent(requestedPath);
-                return <Redirect to={`/login?redirect=${redirect}`} />;
-              }}
-            />
-          </Switch>
+          <Route exact path="/login" component={Login} />
+          <Route
+            exact
+            path="/"
+            render={({ location }) => {
+              const requestedPath = `${location.pathname}${location.search}${location.hash}`;
+              const redirect = encodeURIComponent(requestedPath);
+              return <Redirect to={`/login?redirect=${redirect}`} />;
+            }}
+          />
+          <Route
+            render={({ location }) => {
+              const requestedPath = `${location.pathname}${location.search}${location.hash}`;
+              const redirect = encodeURIComponent(requestedPath);
+              return <Redirect to={`/login?redirect=${redirect}`} />;
+            }}
+          >
+          </Route>
         </IonRouterOutlet>
       ) : (
         <IonTabs>
