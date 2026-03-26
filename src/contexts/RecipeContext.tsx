@@ -7,8 +7,6 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { Capacitor } from "@capacitor/core";
-import { Share } from "@capacitor/share";
 import { Recipe, NewRecipe } from "../types/Recipe";
 import { useAuth } from "./AuthContext";
 import { supabase } from "../lib/supabase";
@@ -653,38 +651,21 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
     const installLine = appDownloadUrl
       ? `\n\nGet RecipeHub: ${appDownloadUrl}`
       : "";
-    const shareText = `Check out this recipe: ${recipeDescription}${installLine}`;
 
-    try {
-      if (Capacitor.isNativePlatform()) {
-        await Share.share({
-          title: recipe.title,
-          text: shareText,
-          url: shareUrl,
-          dialogTitle: "Share recipe",
-        });
-        return;
-      }
-
-      if (navigator.share) {
+    if (navigator.share) {
+      try {
         await navigator.share({
           title: recipe.title,
-          text: shareText,
+          text: `Check out this recipe: ${recipeDescription}${installLine}`,
           url: shareUrl,
         });
-        return;
+      } catch (error) {
+        console.log("Error sharing:", error);
       }
-
-      await navigator.clipboard.writeText(shareUrl);
-      alert("Recipe link copied to clipboard!");
-    } catch (error) {
-      console.log("Error sharing:", error);
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        alert("Recipe link copied to clipboard!");
-      } catch {
-        // ignore
-      }
+    } else {
+      const shareText = `${recipe.title}\n\n${recipeDescription}\n\nIngredients:\n${recipe.ingredients.join("\n")}\n\nInstructions:\n${recipe.instructions.join("\n")}`;
+      await navigator.clipboard.writeText(shareText);
+      alert("Recipe copied to clipboard!");
     }
   };
 
