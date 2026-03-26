@@ -128,22 +128,31 @@ const AppRoutes: React.FC = () => {
       ) : (
         <IonTabs>
           <IonRouterOutlet>
+            {/*
+              A pathless <Route> matches every URL in React Router v5. Without <Switch>, it
+              renders together with /recipes/recipe/:id, so <Redirect to="/recipes" /> always
+              runs. One <Switch> as the outlet’s single child keeps Ionic’s matchRoute() stable
+              and ensures only one route (or the final fallback) renders.
+            */}
             {user ? (
-              <>
-                {/*
-                  IonRouterOutlet resolves the first matching route in stack order.
-                  A pathless Route matches every URL — it must be last or it always wins
-                  and redirects /recipes/recipe/:id to /recipes.
-                */}
-                <Route exact path="/:tab(recipes)" component={RecipeList} />
-                <Route path="/:tab(recipes)/servings/:servings" component={ServingsRecipeList} />
-                <Route path="/:tab(recipes)/total-time/:minutes" component={TotalTimeRecipeList} />
+              <Switch>
+                <Route path="/recipes/recipe/:id" component={RecipeDetail} />
+                <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
+                <Route
+                  path="/:tab(recipes)/servings/:servings"
+                  component={ServingsRecipeList}
+                />
+                <Route
+                  path="/:tab(recipes)/total-time/:minutes"
+                  component={TotalTimeRecipeList}
+                />
                 <Route path="/:tab(recipes)/tag/:tag" component={TagRecipeList} />
                 <Route exact path="/:tab(recipes)/add" component={AddRecipe} />
                 <Route path="/:tab(recipes)/edit/:id" component={EditRecipe} />
                 <Route exact path="/:tab(favorites)" component={Favorites} />
                 <Route exact path="/:tab(activity)" component={Activity} />
                 <Route exact path="/:tab(profile)" component={Profile} />
+                <Route exact path="/:tab(recipes)" component={RecipeList} />
                 <Route exact path="/login">
                   <Redirect to="/recipes" />
                 </Route>
@@ -152,35 +161,35 @@ const AppRoutes: React.FC = () => {
                   path="/"
                   render={() => <ShareRecipeLanding defaultHref="/recipes" />}
                 />
+                <Route render={() => <Redirect to="/recipes" />} />
+              </Switch>
+            ) : (
+              <Switch>
                 <Route path="/recipes/recipe/:id" component={RecipeDetail} />
                 <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
-                <Route>
-                  <Redirect to="/recipes" />
-                </Route>
-              </>
-            ) : (
-              <>
                 <Route exact path="/login" component={Login} />
-                <Route exact path="/:tab(recipes)" component={RecipeList} />
-                <Route path="/:tab(recipes)/servings/:servings" component={SignInGatePage} />
-                <Route path="/:tab(recipes)/total-time/:minutes" component={SignInGatePage} />
+                <Route
+                  path="/:tab(recipes)/servings/:servings"
+                  component={SignInGatePage}
+                />
+                <Route
+                  path="/:tab(recipes)/total-time/:minutes"
+                  component={SignInGatePage}
+                />
                 <Route path="/:tab(recipes)/tag/:tag" component={SignInGatePage} />
                 <Route exact path="/:tab(recipes)/add" component={SignInGatePage} />
                 <Route path="/:tab(recipes)/edit/:id" component={SignInGatePage} />
                 <Route exact path="/:tab(favorites)" component={SignInGatePage} />
                 <Route exact path="/:tab(activity)" component={SignInGatePage} />
                 <Route exact path="/:tab(profile)" component={SignInGatePage} />
+                <Route exact path="/:tab(recipes)" component={RecipeList} />
                 <Route
                   exact
                   path="/"
                   render={() => <ShareRecipeLanding defaultHref="/recipes" />}
                 />
-                <Route path="/recipes/recipe/:id" component={RecipeDetail} />
-                <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
-                <Route>
-                  <Redirect to="/recipes" />
-                </Route>
-              </>
+                <Route render={() => <Redirect to="/recipes" />} />
+              </Switch>
             )}
           </IonRouterOutlet>
 
