@@ -60,20 +60,9 @@ import Login from './pages/Login';
 import SignInGatePage from './pages/SignInGatePage';
 import Tabs from './components/Tabs';
 import Intro, { hasSeenIntro, shouldSkipIntroForDeepLink } from './pages/Intro';
+import { isShareWebHost } from "./lib/shareWeb";
 
 setupIonicReact();
-
-function isShareWebHost(): boolean {
-  if (typeof window === "undefined") return false;
-  const rawBase = (import.meta.env.VITE_SHARE_WEB_BASE_URL ?? "").trim();
-  if (!rawBase) return false;
-  try {
-    const baseOrigin = new URL(rawBase).origin;
-    return window.location.origin === baseOrigin;
-  } catch {
-    return false;
-  }
-}
 
 const appDownloadUrl = (import.meta.env.VITE_APP_DOWNLOAD_URL ?? "").trim();
 

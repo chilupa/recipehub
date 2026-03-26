@@ -21,6 +21,7 @@ import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../contexts/AuthContext";
 import { useRecipes } from "../contexts/RecipeContext";
 import type { Recipe } from "../types/Recipe";
+import { isShareWebHost } from "../lib/shareWeb";
 import "./RecipeDetail.css";
 
 const formatFavorites = (count: number): string => {
@@ -69,6 +70,7 @@ const RecipeDetail: React.FC = () => {
   const { recipes, toggleFavorite, ensureRecipeLoaded, shareRecipe } =
     useRecipes();
   const { id } = useParams<{ id: string }>();
+  const shareWebReadOnly = isShareWebHost();
   const [toast, setToast] = useState({ show: false, message: "" });
   const [loadFailed, setLoadFailed] = useState(false);
   const [signInAlertOpen, setSignInAlertOpen] = useState(false);
@@ -76,6 +78,7 @@ const RecipeDetail: React.FC = () => {
   const promptSignIn = () => setSignInAlertOpen(true);
 
   const guardSignedInNav = (fn: () => void) => {
+    if (shareWebReadOnly) return;
     if (!user) {
       promptSignIn();
       return;
@@ -160,70 +163,78 @@ const RecipeDetail: React.FC = () => {
 
   return (
     <IonPage>
-      <AppHeader showBackButton />
+      <AppHeader showBackButton={!shareWebReadOnly} showMenu={!shareWebReadOnly} />
       <IonContent className="ion-padding">
         <div className="recipe-detail-top">
           <div className="recipe-detail-header-row">
             <h1 className="recipe-detail-title">{recipe.title}</h1>
-            <div className="recipe-detail-header-actions">
-              <IonButton
-                fill="clear"
-                size="small"
-                className="recipe-detail-share-btn"
-                onClick={async () => {
-                  if (!user) {
-                    promptSignIn();
-                    return;
-                  }
-                  try {
-                    await shareRecipe(recipe);
-                  } catch {
-                    setToast({
-                      show: true,
-                      message: "Could not share recipe.",
-                    });
-                  }
-                }}
-              >
-                <IonIcon icon={shareOutline} slot="icon-only" />
-              </IonButton>
-              {recipe.userId === user?.id && (
+            {!shareWebReadOnly ? (
+              <div className="recipe-detail-header-actions">
                 <IonButton
                   fill="clear"
                   size="small"
-                  routerLink={`/recipes/edit/${recipe.id}`}
-                  className="recipe-detail-edit-btn"
+                  className="recipe-detail-share-btn"
+                  onClick={async () => {
+                    if (!user) {
+                      promptSignIn();
+                      return;
+                    }
+                    try {
+                      await shareRecipe(recipe);
+                    } catch {
+                      setToast({
+                        show: true,
+                        message: "Could not share recipe.",
+                      });
+                    }
+                  }}
                 >
-                  <IonIcon icon={createOutline} slot="icon-only" />
+                  <IonIcon icon={shareOutline} slot="icon-only" />
                 </IonButton>
-              )}
-            </div>
+                {recipe.userId === user?.id && (
+                  <IonButton
+                    fill="clear"
+                    size="small"
+                    routerLink={`/recipes/edit/${recipe.id}`}
+                    className="recipe-detail-edit-btn"
+                  >
+                    <IonIcon icon={createOutline} slot="icon-only" />
+                  </IonButton>
+                )}
+              </div>
+            ) : null}
           </div>
 
           {recipe.description ? (
             <p className="recipe-detail-description">{recipe.description}</p>
           ) : null}
 
-          <IonText color="medium">
-            <p className="recipe-detail-chip-hint">
-              Tap chips to explore similar recipes
-            </p>
-          </IonText>
+          {!shareWebReadOnly ? (
+            <IonText color="medium">
+              <p className="recipe-detail-chip-hint">
+                Tap chips to explore similar recipes
+              </p>
+            </IonText>
+          ) : null}
 
           <div className="recipe-detail-meta-chips">
             {totalMinutes > 0 && (
               <IonChip
                 color="primary"
-                className="recipe-detail-chip-clickable"
-                onClick={goToTotalTime}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    goToTotalTime();
-                  }
-                }}
+                className={shareWebReadOnly ? undefined : "recipe-detail-chip-clickable"}
+                onClick={shareWebReadOnly ? undefined : goToTotalTime}
+                role={shareWebReadOnly ? undefined : "button"}
+                tabIndex={shareWebReadOnly ? undefined : 0}
+                onKeyDown={
+                  shareWebReadOnly
+                    ? undefined
+                    : (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          goToTotalTime();
+                        }
+                      }
+                }
               >
                 <IonIcon icon={time} />
                 <IonLabel>{totalMinutes} min</IonLabel>
@@ -233,16 +244,20 @@ const RecipeDetail: React.FC = () => {
             {recipe.servings > 0 && (
               <IonChip
                 color="secondary"
-                className="recipe-detail-chip-clickable"
-                onClick={goToServings}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    goToServings();
-                  }
-                }}
+                className={shareWebReadOnly ? undefined : "recipe-detail-chip-clickable"}
+                onClick={shareWebReadOnly ? undefined : goToServings}
+                role={shareWebReadOnly ? undefined : "button"}
+                tabIndex={shareWebReadOnly ? undefined : 0}
+                onKeyDown={
+                  shareWebReadOnly
+                    ? undefined
+                    : (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          goToServings();
+                        }
+                      }
+                }
               >
                 <IonIcon icon={people} />
                 <IonLabel>{recipe.servings} servings</IonLabel>
@@ -255,16 +270,20 @@ const RecipeDetail: React.FC = () => {
               <IonChip
                 key={tag}
                 color="tertiary"
-                className="recipe-detail-chip-clickable"
-                onClick={() => goToTag(tag)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    goToTag(tag);
-                  }
-                }}
+                className={shareWebReadOnly ? undefined : "recipe-detail-chip-clickable"}
+                onClick={shareWebReadOnly ? undefined : () => goToTag(tag)}
+                role={shareWebReadOnly ? undefined : "button"}
+                tabIndex={shareWebReadOnly ? undefined : 0}
+                onKeyDown={
+                  shareWebReadOnly
+                    ? undefined
+                    : (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          goToTag(tag);
+                        }
+                      }
+                }
               >
                 <IonLabel>{tag}</IonLabel>
               </IonChip>
@@ -279,27 +298,29 @@ const RecipeDetail: React.FC = () => {
               </IonText>
             </div>
 
-            <div className="recipe-detail-actions">
-              <FavoriteHeartButton
-                isLiked={recipe.isLiked}
-                onToggle={async () => {
-                  if (!user) {
-                    promptSignIn();
-                    return;
-                  }
-                  try {
-                    await toggleFavorite(recipe.id);
-                  } catch {
-                    setToast({
-                      show: true,
-                      message: "Could not update favorite.",
-                    });
-                  }
-                }}
-              >
-                {recipe.likes > 0 && formatFavorites(recipe.likes)}
-              </FavoriteHeartButton>
-            </div>
+            {!shareWebReadOnly ? (
+              <div className="recipe-detail-actions">
+                <FavoriteHeartButton
+                  isLiked={recipe.isLiked}
+                  onToggle={async () => {
+                    if (!user) {
+                      promptSignIn();
+                      return;
+                    }
+                    try {
+                      await toggleFavorite(recipe.id);
+                    } catch {
+                      setToast({
+                        show: true,
+                        message: "Could not update favorite.",
+                      });
+                    }
+                  }}
+                >
+                  {recipe.likes > 0 && formatFavorites(recipe.likes)}
+                </FavoriteHeartButton>
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -317,22 +338,24 @@ const RecipeDetail: React.FC = () => {
           duration={2000}
         />
 
-        <IonAlert
-          isOpen={signInAlertOpen}
-          onDidDismiss={() => setSignInAlertOpen(false)}
-          header="Keep going"
-          message="It only takes a moment to sign in."
-          buttons={[
-            { text: "Cancel", role: "cancel" },
-            {
-              text: "Sign in",
-              handler: () => {
-                history.push("/login");
-                return true;
+        {!shareWebReadOnly ? (
+          <IonAlert
+            isOpen={signInAlertOpen}
+            onDidDismiss={() => setSignInAlertOpen(false)}
+            header="Keep going"
+            message="It only takes a moment to sign in."
+            buttons={[
+              { text: "Cancel", role: "cancel" },
+              {
+                text: "Sign in",
+                handler: () => {
+                  history.push("/login");
+                  return true;
+                },
               },
-            },
-          ]}
-        />
+            ]}
+          />
+        ) : null}
       </IonContent>
     </IonPage>
   );
