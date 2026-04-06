@@ -10,7 +10,7 @@ import {
   IonText,
   IonList,
   IonIcon,
-  IonNote,
+  IonAlert,
   useIonRouter,
 } from "@ionic/react";
 import {
@@ -19,6 +19,7 @@ import {
   heartOutline,
   notificationsOutline,
   createOutline,
+  trashOutline,
 } from "ionicons/icons";
 
 import AppHeader from "../components/AppHeader";
@@ -28,7 +29,7 @@ import { useRecipes } from "../contexts/RecipeContext";
 import "./Profile.css";
 
 const Profile: React.FC = () => {
-  const { user, logout, updateUser } = useAuth();
+  const { user, logout, updateUser, deleteAccount } = useAuth();
   const {
     recipesTotalCount,
     recipesLoading,
@@ -46,6 +47,8 @@ const Profile: React.FC = () => {
     message: "",
     color: "secondary",
   });
+  const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const hasChanges = () => {
     return name.trim() !== originalName.trim();
@@ -253,7 +256,61 @@ const Profile: React.FC = () => {
             <IonIcon icon={logOutOutline} slot="start" color="danger" />
             <IonLabel color="danger">Sign out</IonLabel>
           </IonItem>
+          <IonItem
+            button
+            detail={false}
+            disabled={deleteLoading}
+            onClick={() => setDeleteAlertOpen(true)}
+            style={{ "--border-radius": "12px", marginTop: 8 }}
+          >
+            <IonIcon icon={trashOutline} slot="start" color="danger" />
+            <IonLabel color="danger">Delete account</IonLabel>
+          </IonItem>
         </IonList>
+
+        <IonAlert
+          isOpen={deleteAlertOpen}
+          onDidDismiss={() => {
+            if (!deleteLoading) setDeleteAlertOpen(false);
+          }}
+          header="Delete your account?"
+          message="We'll delete your account and everything tied to it (your recipes, favorites, and activity). You can't undo this."
+          buttons={[
+            {
+              text: "Cancel",
+              role: "cancel",
+              handler: () => {
+                setDeleteAlertOpen(false);
+              },
+            },
+            {
+              text: deleteLoading ? "Deleting…" : "Delete my account",
+              role: "destructive",
+              handler: () => {
+                void (async () => {
+                  setDeleteLoading(true);
+                  try {
+                    await deleteAccount();
+                    setDeleteAlertOpen(false);
+                    ionRouter.push("/login", "root", "replace");
+                  } catch (e) {
+                    setShowToast({
+                      show: true,
+                      message:
+                        e instanceof Error
+                          ? e.message
+                          : "Could not delete account. If this keeps happening, contact support.",
+                      color: "danger",
+                    });
+                  } finally {
+                    setDeleteLoading(false);
+                  }
+                })();
+                return false;
+              },
+            },
+          ]}
+        />
 
         <IonToast
           isOpen={showToast.show}

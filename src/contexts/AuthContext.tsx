@@ -17,6 +17,7 @@ import {
   looksLikeOAuthCallbackUrl,
 } from "../lib/oauthRedirect";
 import type { Provider, User as SupabaseUser } from "@supabase/supabase-js";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import {
   persistGuestBrowsePreference,
   readGuestBrowsePreference,
@@ -39,6 +40,7 @@ type AuthContextType = {
   loginWithApple: () => Promise<void>;
   continueWithoutSignIn: () => void;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
 };
 
@@ -343,6 +345,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     await supabase.auth.signOut();
   };
 
+  const deleteAccount = useCallback(async () => {
+    if (useMockAuth) {
+      try {
+        localStorage.removeItem(MOCK_USER_STORAGE_KEY);
+      } catch {
+        // ignore
+      }
+      setUser(null);
+      clearGuestBrowse();
+      return;
+    }
+    if (!isSupabaseConfigured()) {
+      throw new Error("Sign-in is not configured.");
+    }
+    const { data, error: invokeError } = await supabase.functions.invoke(
+      "delete-account",
+      { method: "POST" },
+    );
+    if (invokeError) {
+      let message = invokeError.message || "Could not delete account.";
+      if (invokeError instanceof FunctionsHttpError) {
+        try {
+          const body = (await invokeError.context.json()) as {
+            error?: string;
+          };
+          if (body?.error) message = body.error;
+        } catch {
+          // response body wasn’t JSON
+        }
+      }
+      throw new Error(message);
+    }
+    if (
+      data &&
+      typeof data === "object" &&
+      "error" in data &&
+      (data as { error?: string }).error
+    ) {
+      throw new Error(String((data as { error: string }).error));
+    }
+    setUser(null);
+    clearGuestBrowse();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Session may already be invalid after user deletion.
+    }
+  }, [clearGuestBrowse]);
+
   const updateUser = async (updates: Partial<User>) => {
     if (!user) return;
     setUser((prev) => (prev ? { ...prev, ...updates } : null));
@@ -376,9 +427,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       loginWithApple,
       continueWithoutSignIn,
       logout,
+      deleteAccount,
       updateUser,
     }),
-    [user, isGuest, isLoading, authError]
+    [user, isGuest, isLoading, authError, deleteAccount]
   );
 
   return (
