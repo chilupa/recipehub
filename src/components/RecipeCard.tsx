@@ -7,7 +7,7 @@ import {
   IonLabel,
   IonText,
 } from "@ionic/react";
-import { share, time, people, ellipsisVertical } from "ionicons/icons";
+import { time, people, ellipsisVertical } from "ionicons/icons";
 import { Recipe } from "../types/Recipe";
 import UserAvatar from "./UserAvatar";
 import FavoriteHeartButton from "./FavoriteHeartButton";
@@ -43,7 +43,7 @@ const formatTimeAgo = (dateString: string): string => {
 const RecipeCard: React.FC<RecipeCardProps> = ({
   recipe,
   onFavorite,
-  onShare,
+  onShare: _onShare,
   onMenuClick,
   showMenu = false,
 }) => {

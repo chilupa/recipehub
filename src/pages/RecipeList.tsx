@@ -2,30 +2,31 @@ import React, { useState } from "react";
 import {
   IonContent,
   IonPage,
-  IonAlert,
-  IonNote,
-  IonPopover,
-  IonList,
-  IonItem,
-  IonIcon,
-  IonLabel,
-  IonFab,
-  IonFabButton,
-  IonToast,
-  IonSpinner,
-  IonText,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   IonRefresher,
   IonRefresherContent,
+  IonFab,
+  IonFabButton,
+  IonIcon,
 } from "@ionic/react";
-import { create, trash, add } from "ionicons/icons";
+import { add } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 import { useRecipes } from "../contexts/RecipeContext";
 import { useAuth } from "../contexts/AuthContext";
 import RecipeCard from "../components/RecipeCard";
 import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
+import DangerToast from "../components/DangerToast";
+import SignInPromptAlert from "../components/SignInPromptAlert";
+import RecipeListSkeleton from "../components/RecipeListSkeleton";
+import RecipeOwnerMenuPopover from "../components/RecipeOwnerMenuPopover";
+import DeleteRecipeConfirmAlert from "../components/DeleteRecipeConfirmAlert";
+import {
+  emptyDeleteRecipeAlertState,
+  emptyRecipeMenuPopoverState,
+} from "../lib/recipeListOwnerState";
+import type { DeleteRecipeAlertState } from "../lib/recipeListOwnerState";
 
 const RecipeList: React.FC = () => {
   const { user, isGuest } = useAuth();
@@ -41,16 +42,10 @@ const RecipeList: React.FC = () => {
     deleteRecipe,
   } = useRecipes();
   const [toast, setToast] = useState({ show: false, message: "" });
-  const [deleteAlert, setDeleteAlert] = useState<{
-    isOpen: boolean;
-    recipeId: string;
-    recipeName: string;
-  }>({ isOpen: false, recipeId: "", recipeName: "" });
-  const [popoverOpen, setPopoverOpen] = useState<{
-    isOpen: boolean;
-    event: Event | undefined;
-    recipeId: string;
-  }>({ isOpen: false, event: undefined, recipeId: "" });
+  const [deleteAlert, setDeleteAlert] = useState<DeleteRecipeAlertState>(
+    emptyDeleteRecipeAlertState,
+  );
+  const [popoverOpen, setPopoverOpen] = useState(emptyRecipeMenuPopoverState);
   const [signInAlertOpen, setSignInAlertOpen] = useState(false);
 
   const promptSignIn = () => setSignInAlertOpen(true);
@@ -69,22 +64,7 @@ const RecipeList: React.FC = () => {
           <IonRefresherContent pullingText="Pull to refresh" />
         </IonRefresher>
         {recipesLoading ? (
-          <div
-            className="ion-padding"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              paddingTop: 48,
-            }}
-          >
-            <IonSpinner name="crescent" />
-            <IonText color="medium">
-              <p style={{ marginTop: 12, textAlign: "center" }}>
-                Loading recipes…
-              </p>
-            </IonText>
-          </div>
+          <RecipeListSkeleton />
         ) : recipes.length === 0 ? (
           <NoData
             title={isGuest ? "Nothing to show yet" : "No recipes yet!"}
@@ -138,96 +118,30 @@ const RecipeList: React.FC = () => {
           </div>
         )}
 
-        <IonPopover
-          isOpen={popoverOpen.isOpen}
-          event={popoverOpen.event}
-          onDidDismiss={() =>
-            setPopoverOpen({ isOpen: false, event: undefined, recipeId: "" })
+        <RecipeOwnerMenuPopover
+          state={popoverOpen}
+          recipes={recipes}
+          onDismiss={() => setPopoverOpen(emptyRecipeMenuPopoverState)}
+          onRequestDelete={(recipeId, displayName) =>
+            setDeleteAlert({
+              isOpen: true,
+              recipeId,
+              recipeName: displayName,
+            })
           }
-        >
-          <IonList>
-            <IonItem
-              button
-              detail={false}
-              routerLink={`/recipes/edit/${popoverOpen.recipeId}`}
-              onClick={() =>
-                setPopoverOpen({
-                  isOpen: false,
-                  event: undefined,
-                  recipeId: "",
-                })
-              }
-            >
-              <IonIcon icon={create} slot="start" />
-              <IonLabel>Edit</IonLabel>
-            </IonItem>
-            <IonItem
-              button
-              detail={false}
-              color="danger"
-              onClick={() => {
-                const recipe = recipes.find(
-                  (r) => r.id === popoverOpen.recipeId,
-                );
-                const name = recipe?.title?.trim() || "this recipe";
-                const shortName =
-                  name.length > 50 ? `${name.slice(0, 47)}…` : name;
-                setDeleteAlert({
-                  isOpen: true,
-                  recipeId: popoverOpen.recipeId,
-                  recipeName: shortName,
-                });
-                setPopoverOpen({
-                  isOpen: false,
-                  event: undefined,
-                  recipeId: "",
-                });
-              }}
-            >
-              <IonIcon icon={trash} slot="start" />
-              <IonLabel>Delete</IonLabel>
-            </IonItem>
-          </IonList>
-        </IonPopover>
-
-        <IonAlert
-          isOpen={deleteAlert.isOpen}
-          onDidDismiss={() =>
-            setDeleteAlert({ isOpen: false, recipeId: "", recipeName: "" })
-          }
-          header="Delete Recipe"
-          message={`Are you sure you want to delete "${deleteAlert.recipeName || "this recipe"}"?`}
-          buttons={[
-            {
-              text: "Cancel",
-              role: "cancel",
-            },
-            {
-              text: "Delete",
-              role: "destructive",
-              handler: async () => {
-                try {
-                  await deleteRecipe(deleteAlert.recipeId);
-                } catch {
-                  setToast({ show: true, message: "Could not delete recipe." });
-                } finally {
-                  setDeleteAlert({
-                    isOpen: false,
-                    recipeId: "",
-                    recipeName: "",
-                  });
-                }
-              },
-            },
-          ]}
         />
 
-        <IonToast
+        <DeleteRecipeConfirmAlert
+          state={deleteAlert}
+          onDismiss={() => setDeleteAlert(emptyDeleteRecipeAlertState)}
+          deleteRecipe={deleteRecipe}
+          onError={(message) => setToast({ show: true, message })}
+        />
+
+        <DangerToast
           isOpen={toast.show}
-          onDidDismiss={() => setToast((t) => ({ ...t, show: false }))}
           message={toast.message}
-          duration={2500}
-          color="danger"
+          onDidDismiss={() => setToast((t) => ({ ...t, show: false }))}
         />
 
         {!isGuest ? (
@@ -238,21 +152,10 @@ const RecipeList: React.FC = () => {
           </IonFab>
         ) : null}
 
-        <IonAlert
+        <SignInPromptAlert
           isOpen={signInAlertOpen}
-          onDidDismiss={() => setSignInAlertOpen(false)}
-          header="Keep going"
-          message="It only takes a moment to sign in."
-          buttons={[
-            { text: "Cancel", role: "cancel" },
-            {
-              text: "Sign in",
-              handler: () => {
-                history.push("/login");
-                return true;
-              },
-            },
-          ]}
+          onDismiss={() => setSignInAlertOpen(false)}
+          onSignIn={() => history.push("/login")}
         />
       </IonContent>
     </IonPage>

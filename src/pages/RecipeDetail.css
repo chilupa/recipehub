@@ -11,7 +11,9 @@
 
 .recipe-detail-title {
   margin: 0 0 8px 0;
-  font-size: 24px;
+  font-size: 1.375rem; /* ~22px — detail hero without competing with section headings */
+  font-weight: 700;
+  line-height: 1.25;
   flex: 1;
   min-width: 0;
 }
@@ -70,11 +72,14 @@
 .recipe-detail-author-block {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .recipe-detail-author-name {
   margin: 0;
+  font-size: 0.8125rem; /* 13px — meta / byline, below body */
+  line-height: 1.35;
+  font-weight: 500;
 }
 
 .recipe-detail-actions {
@@ -89,18 +94,8 @@
 
 .recipe-detail-section-title {
   margin: 0 0 12px 0;
-  font-size: 20px;
-}
-
-.recipe-detail-loading-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 48px;
-}
-
-.recipe-detail-loading-text {
-  margin-top: 12px;
+  font-size: 1.125rem; /* 18px — steps below page title */
+  font-weight: 700;
 }
 
 .recipe-detail-not-found-btn {

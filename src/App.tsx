@@ -99,49 +99,142 @@ const AppRoutes: React.FC = () => {
       ) : (
         <IonTabs>
           <IonRouterOutlet>
-            {user ? (
-              <>
-                <Route exact path="/:tab(recipes)" component={RecipeList} />
-                <Route path="/:tab(recipes)/servings/:servings" component={ServingsRecipeList} />
-                <Route path="/:tab(recipes)/total-time/:minutes" component={TotalTimeRecipeList} />
-                <Route path="/:tab(recipes)/tag/:tag" component={TagRecipeList} />
-                <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
-                <Route exact path="/:tab(recipes)/add" component={AddRecipe} />
-                <Route path="/:tab(recipes)/edit/:id" component={EditRecipe} />
-                <Route exact path="/:tab(favorites)" component={Favorites} />
-                <Route exact path="/:tab(activity)" component={Activity} />
-                <Route exact path="/:tab(profile)" component={Profile} />
-                <Route exact path="/login">
-                  <Redirect to="/recipes" />
-                </Route>
-                <Route exact path="/">
-                  <Redirect to="/recipes" />
-                </Route>
-                <Route>
-                  <Redirect to="/recipes" />
-                </Route>
-              </>
-            ) : (
-              <>
-                <Route exact path="/login" component={Login} />
-                <Route exact path="/:tab(recipes)" component={RecipeList} />
-                <Route path="/:tab(recipes)/recipe/:id" component={RecipeDetail} />
-                <Route path="/:tab(recipes)/servings/:servings" component={SignInGatePage} />
-                <Route path="/:tab(recipes)/total-time/:minutes" component={SignInGatePage} />
-                <Route path="/:tab(recipes)/tag/:tag" component={SignInGatePage} />
-                <Route exact path="/:tab(recipes)/add" component={SignInGatePage} />
-                <Route path="/:tab(recipes)/edit/:id" component={SignInGatePage} />
-                <Route exact path="/:tab(favorites)" component={SignInGatePage} />
-                <Route exact path="/:tab(activity)" component={SignInGatePage} />
-                <Route exact path="/:tab(profile)" component={SignInGatePage} />
-                <Route exact path="/">
-                  <Redirect to="/recipes" />
-                </Route>
-                <Route>
-                  <Redirect to="/recipes" />
-                </Route>
-              </>
-            )}
+            {user
+              ? [
+                  <Route
+                    key="u-recipes"
+                    exact
+                    path="/:tab(recipes)"
+                    component={RecipeList}
+                  />,
+                  <Route
+                    key="u-servings"
+                    path="/:tab(recipes)/servings/:servings"
+                    component={ServingsRecipeList}
+                  />,
+                  <Route
+                    key="u-total-time"
+                    path="/:tab(recipes)/total-time/:minutes"
+                    component={TotalTimeRecipeList}
+                  />,
+                  <Route
+                    key="u-tag"
+                    path="/:tab(recipes)/tag/:tag"
+                    component={TagRecipeList}
+                  />,
+                  <Route
+                    key="u-recipe"
+                    path="/:tab(recipes)/recipe/:id"
+                    component={RecipeDetail}
+                  />,
+                  <Route
+                    key="u-add"
+                    exact
+                    path="/:tab(recipes)/add"
+                    component={AddRecipe}
+                  />,
+                  <Route
+                    key="u-edit"
+                    path="/:tab(recipes)/edit/:id"
+                    component={EditRecipe}
+                  />,
+                  <Route
+                    key="u-favorites"
+                    exact
+                    path="/:tab(favorites)"
+                    component={Favorites}
+                  />,
+                  <Route
+                    key="u-activity"
+                    exact
+                    path="/:tab(activity)"
+                    component={Activity}
+                  />,
+                  <Route
+                    key="u-profile"
+                    exact
+                    path="/:tab(profile)"
+                    component={Profile}
+                  />,
+                  <Route key="u-login-redirect" exact path="/login">
+                    <Redirect to="/recipes" />
+                  </Route>,
+                  <Route key="u-root-redirect" exact path="/">
+                    <Redirect to="/recipes" />
+                  </Route>,
+                  <Route key="u-fallback-redirect">
+                    <Redirect to="/recipes" />
+                  </Route>,
+                ]
+              : [
+                  <Route
+                    key="g-login"
+                    exact
+                    path="/login"
+                    component={Login}
+                  />,
+                  <Route
+                    key="g-recipes"
+                    exact
+                    path="/:tab(recipes)"
+                    component={RecipeList}
+                  />,
+                  <Route
+                    key="g-recipe"
+                    path="/:tab(recipes)/recipe/:id"
+                    component={RecipeDetail}
+                  />,
+                  <Route
+                    key="g-servings"
+                    path="/:tab(recipes)/servings/:servings"
+                    component={SignInGatePage}
+                  />,
+                  <Route
+                    key="g-total-time"
+                    path="/:tab(recipes)/total-time/:minutes"
+                    component={SignInGatePage}
+                  />,
+                  <Route
+                    key="g-tag"
+                    path="/:tab(recipes)/tag/:tag"
+                    component={SignInGatePage}
+                  />,
+                  <Route
+                    key="g-add"
+                    exact
+                    path="/:tab(recipes)/add"
+                    component={SignInGatePage}
+                  />,
+                  <Route
+                    key="g-edit"
+                    path="/:tab(recipes)/edit/:id"
+                    component={SignInGatePage}
+                  />,
+                  <Route
+                    key="g-favorites"
+                    exact
+                    path="/:tab(favorites)"
+                    component={SignInGatePage}
+                  />,
+                  <Route
+                    key="g-activity"
+                    exact
+                    path="/:tab(activity)"
+                    component={SignInGatePage}
+                  />,
+                  <Route
+                    key="g-profile"
+                    exact
+                    path="/:tab(profile)"
+                    component={SignInGatePage}
+                  />,
+                  <Route key="g-root-redirect" exact path="/">
+                    <Redirect to="/recipes" />
+                  </Route>,
+                  <Route key="g-fallback-redirect">
+                    <Redirect to="/recipes" />
+                  </Route>,
+                ]}
           </IonRouterOutlet>
 
           <Tabs />

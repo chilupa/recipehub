@@ -5,14 +5,13 @@ import {
   IonTitle,
   IonButtons,
   IonBackButton,
-  IonButton,
   IonIcon,
   IonPopover,
   IonList,
   IonItem,
   IonLabel,
 } from "@ionic/react";
-import { menu, person, settings, logOut } from "ionicons/icons";
+import { person, logOut } from "ionicons/icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useHistory } from "react-router-dom";
 
@@ -28,9 +27,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   title,
   showBackButton = false,
   backHref = "/recipes",
-  showMenu = true,
+  showMenu: _showMenu = true,
 }) => {
-  const { logout, user } = useAuth();
+  const { logout } = useAuth();
   const history = useHistory();
   const [menuOpen, setMenuOpen] = useState<{
     isOpen: boolean;

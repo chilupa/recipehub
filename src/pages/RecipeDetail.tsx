@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  IonAlert,
   IonButton,
   IonChip,
   IonContent,
@@ -9,18 +8,18 @@ import {
   IonLabel,
   IonList,
   IonPage,
-  IonSpinner,
   IonText,
   IonToast,
 } from "@ionic/react";
 import { createOutline, people, shareOutline, time } from "ionicons/icons";
 import { useHistory, useParams } from "react-router-dom";
 import AppHeader from "../components/AppHeader";
+import RecipeDetailSkeleton from "../components/RecipeDetailSkeleton";
+import SignInPromptAlert from "../components/SignInPromptAlert";
 import FavoriteHeartButton from "../components/FavoriteHeartButton";
 import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../contexts/AuthContext";
 import { useRecipes } from "../contexts/RecipeContext";
-import type { Recipe } from "../types/Recipe";
 import "./RecipeDetail.css";
 
 const formatFavorites = (count: number): string => {
@@ -106,12 +105,7 @@ const RecipeDetail: React.FC = () => {
         <IonPage>
           <AppHeader showBackButton />
           <IonContent className="ion-padding">
-            <div className="recipe-detail-loading-wrap">
-              <IonSpinner name="crescent" />
-              <IonText color="medium">
-                <p className="recipe-detail-loading-text">Loading recipe…</p>
-              </IonText>
-            </div>
+            <RecipeDetailSkeleton />
           </IonContent>
         </IonPage>
       );
@@ -269,7 +263,7 @@ const RecipeDetail: React.FC = () => {
 
           <div className="recipe-detail-author-row">
             <div className="recipe-detail-author-block">
-              <UserAvatar color="tertiary" name={recipe.author} />
+              <UserAvatar color="tertiary" name={recipe.author} size={20} />
               <IonText color="medium">
                 <p className="recipe-detail-author-name">{recipe.author}</p>
               </IonText>
@@ -313,21 +307,10 @@ const RecipeDetail: React.FC = () => {
           duration={2000}
         />
 
-        <IonAlert
+        <SignInPromptAlert
           isOpen={signInAlertOpen}
-          onDidDismiss={() => setSignInAlertOpen(false)}
-          header="Keep going"
-          message="It only takes a moment to sign in."
-          buttons={[
-            { text: "Cancel", role: "cancel" },
-            {
-              text: "Sign in",
-              handler: () => {
-                history.push("/login");
-                return true;
-              },
-            },
-          ]}
+          onDismiss={() => setSignInAlertOpen(false)}
+          onSignIn={() => history.push("/login")}
         />
       </IonContent>
     </IonPage>
