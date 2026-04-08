@@ -12,12 +12,10 @@ import {
   IonSpinner,
   IonText,
 } from "@ionic/react";
-import { heart, notificationsOutline } from "ionicons/icons";
+import { heart } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 import AppHeader from "../components/AppHeader";
 import { useNotifications } from "../contexts/NotificationContext";
-import NoData from "../components/NoData";
-
 const formatWhen = (iso: string): string => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
@@ -65,12 +63,7 @@ const Activity: React.FC = () => {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <IonIcon
-              icon={notificationsOutline}
-              style={{ fontSize: 26, color: "var(--ion-color-primary)" }}
-            />
             <div>
-              <h2 style={{ margin: 0, fontSize: 20 }}>Activity</h2>
               {unreadCount > 0 && (
                 <IonText color="medium">
                   <p style={{ margin: "4px 0 0", fontSize: 13 }}>
@@ -103,10 +96,22 @@ const Activity: React.FC = () => {
             </IonText>
           </div>
         ) : items.length === 0 ? (
-          <NoData
-            title="No activity yet"
-            description="When someone favorites your recipe, you’ll see it here."
-          />
+          <div
+            className="ion-padding"
+            style={{
+              textAlign: "center",
+              paddingTop: 28,
+              paddingBottom: 24,
+              maxWidth: 320,
+              marginInline: "auto",
+            }}
+          >
+            <IonText color="medium">
+              <p style={{ margin: 0, fontSize: "0.9375rem", lineHeight: 1.5 }}>
+                When someone favorites your recipe, you’ll see it here.
+              </p>
+            </IonText>
+          </div>
         ) : (
           <IonList lines="full" className="ion-no-padding">
             {items.map((n) => (

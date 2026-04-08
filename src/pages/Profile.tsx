@@ -25,17 +25,10 @@ import {
 import AppHeader from "../components/AppHeader";
 import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../contexts/AuthContext";
-import { useRecipes } from "../contexts/RecipeContext";
 import "./Profile.css";
 
 const Profile: React.FC = () => {
   const { user, logout, updateUser, deleteAccount } = useAuth();
-  const {
-    recipesTotalCount,
-    recipesLoading,
-    favoriteRecipes,
-    favoritesLoading,
-  } = useRecipes();
   const ionRouter = useIonRouter();
   const [name, setName] = useState("");
   const [originalName, setOriginalName] = useState("");
@@ -121,17 +114,7 @@ const Profile: React.FC = () => {
   const displayName = name || user?.name || user?.email || "User";
 
   const readOnlyNameLabel =
-    originalName.trim() ||
-    user?.name?.trim() ||
-    user?.email ||
-    "Add your name";
-
-  const feedCountLabel =
-    recipesLoading || recipesTotalCount === null
-      ? "…"
-      : String(recipesTotalCount);
-
-  const favoritesCountLabel = favoritesLoading ? "…" : String(favoriteRecipes.length);
+    originalName.trim() || user?.name?.trim() || user?.email || "Add your name";
 
   return (
     <IonPage className="profile-page">
@@ -180,7 +163,9 @@ const Profile: React.FC = () => {
               </>
             ) : (
               <div className="profile-name-row">
-                <span className="profile-name-display">{readOnlyNameLabel}</span>
+                <span className="profile-name-display">
+                  {readOnlyNameLabel}
+                </span>
                 <IonButton
                   fill="clear"
                   size="small"
@@ -236,7 +221,7 @@ const Profile: React.FC = () => {
                   Activity
                 </h2>
                 <p style={{ margin: "4px 0 0", fontSize: "0.875rem" }}>
-                  Likes and notifications
+                  Favorites and notifications
                 </p>
               </IonLabel>
             </IonItem>

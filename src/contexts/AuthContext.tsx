@@ -207,7 +207,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setGuestBrowse(true);
           }
         }
-      } catch (e) {
+      } catch {
         if (mounted) {
           setUser(null);
           if (readGuestBrowsePreference()) setGuestBrowse(true);

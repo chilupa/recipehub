@@ -1,25 +1,23 @@
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  IonContent,
-  IonPage,
-  IonAlert,
-  IonPopover,
-  IonList,
-  IonItem,
-  IonIcon,
-  IonLabel,
-  IonToast,
-  IonSpinner,
-  IonText,
-} from "@ionic/react";
-import { create, trash } from "ionicons/icons";
+import { IonContent, IonPage } from "@ionic/react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useRecipes } from "../contexts/RecipeContext";
 import { fetchRecipesByTag } from "../lib/recipeSupabase";
+import { formatRecipeListCount } from "../lib/recipeUi";
+import {
+  emptyDeleteRecipeAlertState,
+  emptyRecipeMenuPopoverState,
+} from "../lib/recipeListOwnerState";
+import type { DeleteRecipeAlertState } from "../lib/recipeListOwnerState";
 import RecipeCard from "../components/RecipeCard";
 import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
+import DangerToast from "../components/DangerToast";
+import RecipeListLoadingBlock from "../components/RecipeListLoadingBlock";
+import FilteredRecipeListPageIntro from "../components/FilteredRecipeListPageIntro";
+import RecipeOwnerMenuPopover from "../components/RecipeOwnerMenuPopover";
+import DeleteRecipeConfirmAlert from "../components/DeleteRecipeConfirmAlert";
 import type { Recipe } from "../types/Recipe";
 
 function safeDecodeURIComponent(s: string): string {
@@ -60,16 +58,10 @@ const TagRecipeList: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({ show: false, message: "" });
-  const [deleteAlert, setDeleteAlert] = useState<{
-    isOpen: boolean;
-    recipeId: string;
-    recipeName: string;
-  }>({ isOpen: false, recipeId: "", recipeName: "" });
-  const [popoverOpen, setPopoverOpen] = useState<{
-    isOpen: boolean;
-    event: Event | undefined;
-    recipeId: string;
-  }>({ isOpen: false, event: undefined, recipeId: "" });
+  const [deleteAlert, setDeleteAlert] = useState<DeleteRecipeAlertState>(
+    emptyDeleteRecipeAlertState,
+  );
+  const [popoverOpen, setPopoverOpen] = useState(emptyRecipeMenuPopoverState);
 
   const tagLabel = tagParam ? safeDecodeURIComponent(tagParam) : "";
 
@@ -108,46 +100,15 @@ const TagRecipeList: React.FC = () => {
 
   const pageIntro =
     tagDisplay ? (
-      <div
-        className="ion-padding"
-        style={{
-          paddingTop: 20,
-          paddingBottom: 4,
-        }}
-      >
-        <IonText color="medium">
-          <p
-            style={{
-              margin: 0,
-              fontSize: "0.8125rem",
-              fontWeight: 600,
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-            }}
-          >
-            Recipes for this tag
-          </p>
-        </IonText>
-        <h3
-          style={{
-            margin: "10px 0 0",
-            fontWeight: 700,
-            lineHeight: 1.25,
-            color: "var(--ion-color-primary)",
-          }}
-        >
-          {tagDisplay}
-        </h3>
-        {!loading && recipes.length > 0 ? (
-          <IonText color="medium">
-            <p style={{ margin: "8px 0 0", fontSize: "0.9375rem" }}>
-              {recipes.length === 1
-                ? "1 recipe"
-                : `${recipes.length} recipes`}
-            </p>
-          </IonText>
-        ) : null}
-      </div>
+      <FilteredRecipeListPageIntro
+        eyebrow="Recipes for this tag"
+        title={tagDisplay}
+        countLine={
+          !loading && recipes.length > 0
+            ? formatRecipeListCount(recipes.length)
+            : null
+        }
+      />
     ) : null;
 
   return (
@@ -157,22 +118,7 @@ const TagRecipeList: React.FC = () => {
         {loading ? (
           <>
             {pageIntro}
-            <div
-              className="ion-padding"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                paddingTop: 24,
-              }}
-            >
-              <IonSpinner name="crescent" />
-              <IonText color="medium">
-                <p style={{ marginTop: 12, textAlign: "center" }}>
-                  Loading recipes…
-                </p>
-              </IonText>
-            </div>
+            <RecipeListLoadingBlock />
           </>
         ) : !tagDisplay ? (
           <NoData
@@ -214,94 +160,31 @@ const TagRecipeList: React.FC = () => {
           </div>
         )}
 
-        <IonPopover
-          isOpen={popoverOpen.isOpen}
-          event={popoverOpen.event}
-          onDidDismiss={() =>
-            setPopoverOpen({ isOpen: false, event: undefined, recipeId: "" })
+        <RecipeOwnerMenuPopover
+          state={popoverOpen}
+          recipes={recipes}
+          onDismiss={() => setPopoverOpen(emptyRecipeMenuPopoverState)}
+          onRequestDelete={(recipeId, displayName) =>
+            setDeleteAlert({
+              isOpen: true,
+              recipeId,
+              recipeName: displayName,
+            })
           }
-        >
-          <IonList>
-            <IonItem
-              button
-              detail={false}
-              routerLink={`/recipes/edit/${popoverOpen.recipeId}`}
-              onClick={() =>
-                setPopoverOpen({
-                  isOpen: false,
-                  event: undefined,
-                  recipeId: "",
-                })
-              }
-            >
-              <IonIcon icon={create} slot="start" />
-              <IonLabel>Edit</IonLabel>
-            </IonItem>
-            <IonItem
-              button
-              detail={false}
-              color="danger"
-              onClick={() => {
-                const recipe = recipes.find(
-                  (r) => r.id === popoverOpen.recipeId,
-                );
-                const name = recipe?.title?.trim() || "this recipe";
-                const shortName =
-                  name.length > 50 ? `${name.slice(0, 47)}…` : name;
-                setDeleteAlert({
-                  isOpen: true,
-                  recipeId: popoverOpen.recipeId,
-                  recipeName: shortName,
-                });
-                setPopoverOpen({
-                  isOpen: false,
-                  event: undefined,
-                  recipeId: "",
-                });
-              }}
-            >
-              <IonIcon icon={trash} slot="start" />
-              <IonLabel>Delete</IonLabel>
-            </IonItem>
-          </IonList>
-        </IonPopover>
-
-        <IonAlert
-          isOpen={deleteAlert.isOpen}
-          onDidDismiss={() =>
-            setDeleteAlert({ isOpen: false, recipeId: "", recipeName: "" })
-          }
-          header="Delete Recipe"
-          message={`Are you sure you want to delete "${deleteAlert.recipeName || "this recipe"}"?`}
-          buttons={[
-            { text: "Cancel", role: "cancel" },
-            {
-              text: "Delete",
-              role: "destructive",
-              handler: async () => {
-                try {
-                  await deleteRecipe(deleteAlert.recipeId);
-                  await load();
-                } catch {
-                  setToast({ show: true, message: "Could not delete recipe." });
-                } finally {
-                  setDeleteAlert({
-                    isOpen: false,
-                    recipeId: "",
-                    recipeName: "",
-                  });
-                }
-              },
-            },
-          ]}
         />
 
-        <IonToast
+        <DeleteRecipeConfirmAlert
+          state={deleteAlert}
+          onDismiss={() => setDeleteAlert(emptyDeleteRecipeAlertState)}
+          deleteRecipe={deleteRecipe}
+          afterDelete={load}
+          onError={(message) => setToast({ show: true, message })}
+        />
+
+        <DangerToast
           isOpen={toast.show}
-          onDidDismiss={() => setToast((t) => ({ ...t, show: false }))}
           message={toast.message}
-          duration={2500}
-          color="danger"
+          onDidDismiss={() => setToast((t) => ({ ...t, show: false }))}
         />
       </IonContent>
     </IonPage>

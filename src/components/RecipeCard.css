@@ -4,6 +4,11 @@ ion-card.recipe-card {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
+ion-card.recipe-card.recipe-card-skeleton {
+  pointer-events: none;
+  user-select: none;
+}
+
 .recipe-favorites-grid {
   padding-top: 8px;
   padding-bottom: 8px;
