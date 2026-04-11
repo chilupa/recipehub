@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
+  IonAlert,
   IonContent,
   IonPage,
   IonItem,
@@ -10,16 +11,17 @@ import {
   IonText,
   IonList,
   IonIcon,
-  IonAlert,
   useIonRouter,
 } from "@ionic/react";
+import { useHistory } from "react-router-dom";
 import {
-  logOutOutline,
   bookOutline,
   heartOutline,
+  logOutOutline,
   notificationsOutline,
   createOutline,
   trashOutline,
+  listCircleOutline,
 } from "ionicons/icons";
 
 import AppHeader from "../components/AppHeader";
@@ -28,8 +30,9 @@ import { useAuth } from "../contexts/AuthContext";
 import "./Profile.css";
 
 const Profile: React.FC = () => {
-  const { user, logout, updateUser, deleteAccount } = useAuth();
+  const history = useHistory();
   const ionRouter = useIonRouter();
+  const { user, updateUser, logout, deleteAccount } = useAuth();
   const [name, setName] = useState("");
   const [originalName, setOriginalName] = useState("");
   const [editingName, setEditingName] = useState(false);
@@ -45,11 +48,6 @@ const Profile: React.FC = () => {
 
   const hasChanges = () => {
     return name.trim() !== originalName.trim();
-  };
-
-  const handleLogout = () => {
-    logout();
-    ionRouter.push("/login", "root", "replace");
   };
 
   useEffect(() => {
@@ -111,10 +109,22 @@ const Profile: React.FC = () => {
     setEditingName(false);
   };
 
+  const signOut = async () => {
+    await logout();
+    history.push("/login");
+  };
+
   const displayName = name || user?.name || user?.email || "User";
 
   const readOnlyNameLabel =
     originalName.trim() || user?.name?.trim() || user?.email || "Add your name";
+
+  const joinedLabel =
+    user?.joinedAt != null && user.joinedAt !== ""
+      ? new Intl.DateTimeFormat(undefined, {
+          dateStyle: "medium",
+        }).format(new Date(user.joinedAt))
+      : null;
 
   return (
     <IonPage className="profile-page">
@@ -183,6 +193,17 @@ const Profile: React.FC = () => {
               {user.email}
             </IonText>
           )}
+          {joinedLabel != null ? (
+            <div style={{ marginTop: 12, width: "100%" }}>
+              <span className="profile-name-caption">Joined</span>
+              <IonText
+                color="medium"
+                style={{ display: "block", fontSize: 14, marginTop: 4 }}
+              >
+                {joinedLabel}
+              </IonText>
+            </div>
+          ) : null}
         </div>
 
         <p className="profile-section-label">Browse</p>
@@ -196,6 +217,21 @@ const Profile: React.FC = () => {
                 </h2>
                 <p style={{ margin: "4px 0 0", fontSize: "0.875rem" }}>
                   All community recipes
+                </p>
+              </IonLabel>
+            </IonItem>
+            <IonItem button detail routerLink="/myrecipes">
+              <IonIcon
+                icon={listCircleOutline}
+                slot="start"
+                color="secondary"
+              />
+              <IonLabel>
+                <h2 style={{ fontSize: "1rem", fontWeight: 600, margin: 0 }}>
+                  My recipes
+                </h2>
+                <p style={{ margin: "4px 0 0", fontSize: "0.875rem" }}>
+                  Recipes you created
                 </p>
               </IonLabel>
             </IonItem>
@@ -228,74 +264,74 @@ const Profile: React.FC = () => {
           </IonList>
         </div>
 
-        <p className="profile-section-label" style={{ marginTop: 20 }}>
-          Account
-        </p>
-        <IonList lines="none">
-          <IonItem
-            button
-            detail={false}
-            onClick={handleLogout}
-            style={{ "--border-radius": "12px" }}
-          >
-            <IonIcon icon={logOutOutline} slot="start" color="danger" />
-            <IonLabel color="danger">Sign out</IonLabel>
-          </IonItem>
-          <IonItem
-            button
-            detail={false}
-            disabled={deleteLoading}
-            onClick={() => setDeleteAlertOpen(true)}
-            style={{ "--border-radius": "12px", marginTop: 8 }}
-          >
-            <IonIcon icon={trashOutline} slot="start" color="danger" />
-            <IonLabel color="danger">Delete account</IonLabel>
-          </IonItem>
-        </IonList>
+        {user ? (
+          <>
+            <p className="profile-section-label">Account</p>
+            <IonList lines="none">
+              <IonItem
+                button
+                detail={false}
+                onClick={() => {
+                  void signOut();
+                }}
+              >
+                <IonIcon icon={logOutOutline} slot="start" color="primary" />
+                <IonLabel>Sign out</IonLabel>
+              </IonItem>
+              <IonItem
+                button
+                detail={false}
+                disabled={deleteLoading}
+                onClick={() => setDeleteAlertOpen(true)}
+              >
+                <IonIcon icon={trashOutline} slot="start" color="danger" />
+                <IonLabel color="danger">Delete account</IonLabel>
+              </IonItem>
+            </IonList>
 
-        <IonAlert
-          isOpen={deleteAlertOpen}
-          onDidDismiss={() => {
-            if (!deleteLoading) setDeleteAlertOpen(false);
-          }}
-          header="Delete your account?"
-          message="We'll delete your account and everything tied to it (your recipes, favorites, and activity). You can't undo this."
-          buttons={[
-            {
-              text: "Cancel",
-              role: "cancel",
-              handler: () => {
-                setDeleteAlertOpen(false);
-              },
-            },
-            {
-              text: deleteLoading ? "Deleting…" : "Delete my account",
-              role: "destructive",
-              handler: () => {
-                void (async () => {
-                  setDeleteLoading(true);
-                  try {
-                    await deleteAccount();
-                    setDeleteAlertOpen(false);
-                    ionRouter.push("/login", "root", "replace");
-                  } catch (e) {
-                    setShowToast({
-                      show: true,
-                      message:
-                        e instanceof Error
-                          ? e.message
-                          : "Could not delete account. If this keeps happening, contact support.",
-                      color: "danger",
-                    });
-                  } finally {
-                    setDeleteLoading(false);
-                  }
-                })();
-                return false;
-              },
-            },
-          ]}
-        />
+            <IonAlert
+              isOpen={deleteAlertOpen}
+              onDidDismiss={() => {
+                if (!deleteLoading) setDeleteAlertOpen(false);
+              }}
+              header="Delete your account?"
+              message="We'll delete your account and everything tied to it (your recipes, favorites, and activity). You can't undo this."
+              buttons={[
+                {
+                  text: "Cancel",
+                  role: "cancel",
+                  handler: () => setDeleteAlertOpen(false),
+                },
+                {
+                  text: deleteLoading ? "Deleting…" : "Delete my account",
+                  role: "destructive",
+                  handler: () => {
+                    void (async () => {
+                      setDeleteLoading(true);
+                      try {
+                        await deleteAccount();
+                        setDeleteAlertOpen(false);
+                        ionRouter.push("/login", "root", "replace");
+                      } catch (e) {
+                        setShowToast({
+                          show: true,
+                          message:
+                            e instanceof Error
+                              ? e.message
+                              : "Could not delete account. If this keeps happening, contact support.",
+                          color: "danger",
+                        });
+                      } finally {
+                        setDeleteLoading(false);
+                      }
+                    })();
+                    return false;
+                  },
+                },
+              ]}
+            />
+          </>
+        ) : null}
 
         <IonToast
           isOpen={showToast.show}

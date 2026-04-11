@@ -22,6 +22,7 @@ import TotalTimeRecipeList from './pages/TotalTimeRecipeList';
 import Favorites from './pages/Favorites';
 import Profile from './pages/Profile';
 import Activity from './pages/Activity';
+import MyRecipes from './pages/MyRecipes';
 import { RecipeProvider } from './contexts/RecipeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 
@@ -97,9 +98,10 @@ const AppRoutes: React.FC = () => {
           </Route>
         </IonRouterOutlet>
       ) : (
-        <IonTabs>
-          <IonRouterOutlet>
-            {user
+        <>
+          <IonTabs>
+            <IonRouterOutlet>
+              {user
               ? [
                   <Route
                     key="u-recipes"
@@ -151,6 +153,12 @@ const AppRoutes: React.FC = () => {
                     component={Activity}
                   />,
                   <Route
+                    key="u-myrecipes"
+                    exact
+                    path="/:tab(myrecipes)"
+                    component={MyRecipes}
+                  />,
+                  <Route
                     key="u-profile"
                     exact
                     path="/:tab(profile)"
@@ -200,6 +208,12 @@ const AppRoutes: React.FC = () => {
                     component={SignInGatePage}
                   />,
                   <Route
+                    key="g-myrecipes"
+                    exact
+                    path="/:tab(myrecipes)"
+                    component={SignInGatePage}
+                  />,
+                  <Route
                     key="g-add"
                     exact
                     path="/:tab(recipes)/add"
@@ -235,10 +249,11 @@ const AppRoutes: React.FC = () => {
                     <Redirect to="/recipes" />
                   </Route>,
                 ]}
-          </IonRouterOutlet>
+            </IonRouterOutlet>
 
-          <Tabs />
-        </IonTabs>
+            <Tabs />
+          </IonTabs>
+        </>
       )}
     </IonReactRouter>
   );
