@@ -1,9 +1,18 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { IonContent, IonPage } from "@ionic/react";
-import { useParams } from "react-router-dom";
+import {
+  IonContent,
+  IonFab,
+  IonFabButton,
+  IonIcon,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+} from "@ionic/react";
+import { add } from "ionicons/icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useRecipes } from "../contexts/RecipeContext";
-import { fetchRecipesByServings } from "../lib/recipeSupabase";
+import { fetchRecipesOwnedByUser } from "../lib/recipeSupabase";
+import { supabase } from "../lib/supabase";
 import {
   emptyDeleteRecipeAlertState,
   emptyRecipeMenuPopoverState,
@@ -21,24 +30,21 @@ import type { Recipe } from "../types/Recipe";
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA === "true";
 const MOCK_RECIPES_KEY = "recipe-logger-recipes";
 
-function readMockRecipesByServings(servings: number): Recipe[] {
+function readMockMyRecipes(userId: string): Recipe[] {
   try {
     const stored = localStorage.getItem(MOCK_RECIPES_KEY);
     const all = stored ? (JSON.parse(stored) as Recipe[]) : [];
     if (!Array.isArray(all)) return [];
     return all
-      .filter((r) => Number(r.servings) === servings)
+      .filter((r) => r.userId === userId)
       .slice()
-      .sort((a, b) =>
-        (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
-      );
+      .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
   } catch {
     return [];
   }
 }
 
-const ServingsRecipeList: React.FC = () => {
-  const { servings: servingsParam } = useParams<{ servings: string }>();
+const MyRecipes: React.FC = () => {
   const { user } = useAuth();
   const { toggleFavorite, shareRecipe, deleteRecipe } = useRecipes();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -49,11 +55,8 @@ const ServingsRecipeList: React.FC = () => {
   );
   const [popoverOpen, setPopoverOpen] = useState(emptyRecipeMenuPopoverState);
 
-  const servings = servingsParam ? parseInt(servingsParam, 10) : NaN;
-  const servingsValid = Number.isFinite(servings) && servings > 0;
-
   const load = useCallback(async () => {
-    if (!servingsValid) {
+    if (!user?.id) {
       setRecipes([]);
       setLoading(false);
       return;
@@ -61,14 +64,17 @@ const ServingsRecipeList: React.FC = () => {
     setLoading(true);
     try {
       if (useMockData) {
-        setRecipes(readMockRecipesByServings(servings));
+        setRecipes(readMockMyRecipes(user.id));
         return;
       }
-      if (!user?.id) {
+      // Ensure persisted session is applied on the client before RLS-scoped queries.
+      const { data: sessionData } = await supabase.auth.getSession();
+      const sessionUserId = sessionData.session?.user?.id;
+      if (!sessionUserId) {
         setRecipes([]);
         return;
       }
-      const list = await fetchRecipesByServings(servings, user.id);
+      const list = await fetchRecipesOwnedByUser(sessionUserId, sessionUserId);
       setRecipes(list);
     } catch (e) {
       console.error(e);
@@ -76,31 +82,31 @@ const ServingsRecipeList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [servings, servingsValid, user?.id]);
+  }, [user?.id]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const servingsTitle = servingsValid
-    ? `${servings} ${servings === 1 ? "serving" : "servings"}`
-    : undefined;
-
   return (
     <IonPage>
-      <AppHeader showBackButton title={servingsTitle} />
+      <AppHeader title="My recipes" />
       <IonContent fullscreen>
+        <IonRefresher
+          slot="fixed"
+          onIonRefresh={async (e) => {
+            await load();
+            await (e.target as HTMLIonRefresherElement).complete();
+          }}
+        >
+          <IonRefresherContent pullingText="Pull to refresh" />
+        </IonRefresher>
         {loading ? (
           <RecipeListLoadingBlock />
-        ) : !servingsValid ? (
-          <NoData
-            title="Invalid servings"
-            description="This link doesn’t include a valid serving count."
-          />
         ) : recipes.length === 0 ? (
           <NoData
-            title="No recipes for this size"
-            description={`Nobody has published a recipe for ${servings} ${servings === 1 ? "serving" : "servings"} yet.`}
+            title="No recipes yet"
+            description="Tap the + button to create your first recipe. It will show up here."
           />
         ) : (
           <div style={{ paddingBottom: "80px", paddingTop: 8 }}>
@@ -122,7 +128,7 @@ const ServingsRecipeList: React.FC = () => {
                 onMenuClick={(event, recipeId) =>
                   setPopoverOpen({ isOpen: true, event, recipeId })
                 }
-                showMenu={recipe.userId === user?.id}
+                showMenu
               />
             ))}
           </div>
@@ -154,9 +160,15 @@ const ServingsRecipeList: React.FC = () => {
           message={toast.message}
           onDidDismiss={() => setToast((t) => ({ ...t, show: false }))}
         />
+
+        <IonFab vertical="bottom" horizontal="end" slot="fixed">
+          <IonFabButton routerLink="/recipes/add" color="secondary">
+            <IonIcon icon={add} />
+          </IonFabButton>
+        </IonFab>
       </IonContent>
     </IonPage>
   );
 };
 
-export default ServingsRecipeList;
+export default MyRecipes;

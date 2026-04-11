@@ -108,7 +108,7 @@ const Activity: React.FC = () => {
           >
             <IonText color="medium">
               <p style={{ margin: 0, fontSize: "0.9375rem", lineHeight: 1.5 }}>
-                When someone favorites your recipe, you’ll see it here.
+                No activity yet. Updates about your recipes will show up here.
               </p>
             </IonText>
           </div>

@@ -4,7 +4,6 @@ import { useParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useRecipes } from "../contexts/RecipeContext";
 import { fetchRecipesByTag } from "../lib/recipeSupabase";
-import { formatRecipeListCount } from "../lib/recipeUi";
 import {
   emptyDeleteRecipeAlertState,
   emptyRecipeMenuPopoverState,
@@ -15,7 +14,6 @@ import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
 import DangerToast from "../components/DangerToast";
 import RecipeListLoadingBlock from "../components/RecipeListLoadingBlock";
-import FilteredRecipeListPageIntro from "../components/FilteredRecipeListPageIntro";
 import RecipeOwnerMenuPopover from "../components/RecipeOwnerMenuPopover";
 import DeleteRecipeConfirmAlert from "../components/DeleteRecipeConfirmAlert";
 import type { Recipe } from "../types/Recipe";
@@ -98,44 +96,27 @@ const TagRecipeList: React.FC = () => {
 
   const tagDisplay = tagLabel.trim();
 
-  const pageIntro =
-    tagDisplay ? (
-      <FilteredRecipeListPageIntro
-        eyebrow="Recipes for this tag"
-        title={tagDisplay}
-        countLine={
-          !loading && recipes.length > 0
-            ? formatRecipeListCount(recipes.length)
-            : null
-        }
-      />
-    ) : null;
-
   return (
     <IonPage>
-      <AppHeader showBackButton />
+      <AppHeader
+        showBackButton
+        title={tagDisplay ? tagDisplay : undefined}
+      />
       <IonContent fullscreen>
         {loading ? (
-          <>
-            {pageIntro}
-            <RecipeListLoadingBlock />
-          </>
+          <RecipeListLoadingBlock />
         ) : !tagDisplay ? (
           <NoData
             title="Invalid tag"
             description="This link doesn’t include a valid tag."
           />
         ) : recipes.length === 0 ? (
-          <>
-            {pageIntro}
-            <NoData
-              title="No recipes with this tag"
-              description={`Nobody has tagged a recipe “${tagDisplay}” yet.`}
-            />
-          </>
+          <NoData
+            title="No recipes with this tag"
+            description={`Nobody has tagged a recipe “${tagDisplay}” yet.`}
+          />
         ) : (
-          <div style={{ paddingBottom: "80px" }}>
-            {pageIntro}
+          <div style={{ paddingBottom: "80px", paddingTop: 8 }}>
             {recipes.map((recipe) => (
               <RecipeCard
                 key={recipe.id}

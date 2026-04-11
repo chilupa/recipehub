@@ -28,6 +28,8 @@ export interface User {
   name: string;
   email?: string;
   avatarUrl?: string;
+  /** ISO timestamp from Supabase Auth (`user.created_at`). */
+  joinedAt?: string;
 }
 
 type AuthContextType = {
@@ -53,6 +55,7 @@ const defaultMockUser: User = {
   name: "Demo Chef",
   email: "demo@example.com",
   avatarUrl: undefined,
+  joinedAt: "2024-06-01T12:00:00.000Z",
 };
 
 const loadMockUser = (): User | null => {
@@ -89,6 +92,7 @@ function mapAuthUser(
     name,
     email: supabaseUser.email ?? undefined,
     avatarUrl: profile?.avatar_url ?? supabaseUser.user_metadata?.avatar_url ?? undefined,
+    joinedAt: supabaseUser.created_at,
   };
 }
 

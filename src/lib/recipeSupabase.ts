@@ -138,6 +138,28 @@ export async function fetchVisibleRecipeCount(): Promise<number> {
   return count ?? 0;
 }
 
+/** All recipes owned by `ownerId`, visible to `viewerId` under RLS (typically the same user). */
+export async function fetchRecipesOwnedByUser(
+  ownerId: string,
+  viewerId: string,
+): Promise<Recipe[]> {
+  if (!ownerId.trim()) return [];
+
+  const { data: rows, error } = await supabase
+    .from("recipes")
+    .select("*")
+    .eq("user_id", ownerId)
+    .order("created_at", { ascending: false })
+    .limit(500);
+
+  if (error) {
+    console.error("fetchRecipesOwnedByUser:", error);
+    return [];
+  }
+  if (!rows?.length) return [];
+  return enrichRecipeRows(rows as RecipeRow[], viewerId);
+}
+
 export async function fetchRecipesByTag(
   tag: string,
   userId: string,

@@ -4,7 +4,6 @@ import { useParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useRecipes } from "../contexts/RecipeContext";
 import { fetchRecipesByTotalMinutes } from "../lib/recipeSupabase";
-import { formatRecipeListCount } from "../lib/recipeUi";
 import {
   emptyDeleteRecipeAlertState,
   emptyRecipeMenuPopoverState,
@@ -15,7 +14,6 @@ import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
 import DangerToast from "../components/DangerToast";
 import RecipeListLoadingBlock from "../components/RecipeListLoadingBlock";
-import FilteredRecipeListPageIntro from "../components/FilteredRecipeListPageIntro";
 import RecipeOwnerMenuPopover from "../components/RecipeOwnerMenuPopover";
 import DeleteRecipeConfirmAlert from "../components/DeleteRecipeConfirmAlert";
 import type { Recipe } from "../types/Recipe";
@@ -87,44 +85,26 @@ const TotalTimeRecipeList: React.FC = () => {
     void load();
   }, [load]);
 
-  const pageIntro =
-    minutesValid ? (
-      <FilteredRecipeListPageIntro
-        eyebrow="Recipes with total time"
-        title={`${totalMinutes} min`}
-        countLine={
-          !loading && recipes.length > 0
-            ? formatRecipeListCount(recipes.length)
-            : null
-        }
-      />
-    ) : null;
+  const timeTitle = minutesValid ? `${totalMinutes} min` : undefined;
 
   return (
     <IonPage>
-      <AppHeader showBackButton />
+      <AppHeader showBackButton title={timeTitle} />
       <IonContent fullscreen>
         {loading ? (
-          <>
-            {pageIntro}
-            <RecipeListLoadingBlock />
-          </>
+          <RecipeListLoadingBlock />
         ) : !minutesValid ? (
           <NoData
             title="Invalid time"
             description="This link doesn’t include a valid total time in minutes."
           />
         ) : recipes.length === 0 ? (
-          <>
-            {pageIntro}
-            <NoData
-              title="No recipes for this time"
-              description={`Nobody has published a recipe with ${totalMinutes} minutes total (prep + cook) yet.`}
-            />
-          </>
+          <NoData
+            title="No recipes for this time"
+            description={`Nobody has published a recipe with ${totalMinutes} minutes total (prep + cook) yet.`}
+          />
         ) : (
-          <div style={{ paddingBottom: "80px" }}>
-            {pageIntro}
+          <div style={{ paddingBottom: "80px", paddingTop: 8 }}>
             {recipes.map((recipe) => (
               <RecipeCard
                 key={recipe.id}

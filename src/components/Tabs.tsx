@@ -1,5 +1,11 @@
-import { IonBadge, IonIcon, IonLabel, IonTabBar, IonTabButton } from "@ionic/react";
-import { heart, home, notifications, person } from "ionicons/icons";
+import { IonBadge, IonIcon, IonTabBar, IonTabButton } from "@ionic/react";
+import {
+  heart,
+  home,
+  listCircle,
+  notifications,
+  personCircleOutline,
+} from "ionicons/icons";
 import { useNotifications } from "../contexts/NotificationContext";
 
 const Tabs = () => {
@@ -7,24 +13,23 @@ const Tabs = () => {
 
   return (
     <IonTabBar slot="bottom">
-      <IonTabButton tab="recipes" href="/recipes">
+      <IonTabButton tab="recipes" href="/recipes" aria-label="Recipes">
         <IonIcon aria-hidden="true" icon={home} />
-        <IonLabel>Recipes</IonLabel>
       </IonTabButton>
-      <IonTabButton tab="favorites" href="/favorites">
+      <IonTabButton tab="myrecipes" href="/myrecipes" aria-label="My recipes">
+        <IonIcon aria-hidden="true" icon={listCircle} />
+      </IonTabButton>
+      <IonTabButton tab="favorites" href="/favorites" aria-label="Favorites">
         <IonIcon aria-hidden="true" icon={heart} />
-        <IonLabel>Favorites</IonLabel>
       </IonTabButton>
-      <IonTabButton tab="activity" href="/activity">
+      <IonTabButton tab="activity" href="/activity" aria-label="Activity">
         <IonIcon aria-hidden="true" icon={notifications} />
-        <IonLabel>Activity</IonLabel>
         {unreadCount > 0 ? (
           <IonBadge color="danger">{unreadCount > 99 ? "99+" : unreadCount}</IonBadge>
         ) : null}
       </IonTabButton>
-      <IonTabButton tab="profile" href="/profile">
-        <IonIcon aria-hidden="true" icon={person} />
-        <IonLabel>Profile</IonLabel>
+      <IonTabButton tab="profile" href="/profile" aria-label="Profile">
+        <IonIcon aria-hidden="true" icon={personCircleOutline} />
       </IonTabButton>
     </IonTabBar>
   );
