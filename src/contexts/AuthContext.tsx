@@ -76,6 +76,24 @@ const saveMockUser = (u: User) => {
   }
 };
 
+function formatProviderAuthError(
+  error: unknown,
+  providerLabel: string,
+): string {
+  const fallback = `${providerLabel} sign-in failed.`;
+  const rawMessage = error instanceof Error ? error.message : "";
+  const lowered = rawMessage.toLowerCase();
+  if (
+    lowered.includes("failed to fetch") ||
+    lowered.includes("network") ||
+    lowered.includes("dns") ||
+    lowered.includes("timed out")
+  ) {
+    return `Sign-in is temporarily unavailable due to a network or auth provider issue. Please try again shortly, or continue as guest.`;
+  }
+  return rawMessage || fallback;
+}
+
 function mapAuthUser(
   supabaseUser: SupabaseUser | null,
   profile: { display_name?: string | null; avatar_url?: string | null } | null,
@@ -315,8 +333,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         window.location.assign(data.url);
       }
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : `${errorLabel} sign-in failed.`;
+      const message = formatProviderAuthError(error, errorLabel);
       setAuthError(message);
     } finally {
       setIsLoading(false);

@@ -5,8 +5,6 @@ import {
   IonFabButton,
   IonIcon,
   IonPage,
-  IonRefresher,
-  IonRefresherContent,
 } from "@ionic/react";
 import { add } from "ionicons/icons";
 import { useAuth } from "../contexts/AuthContext";
@@ -23,6 +21,7 @@ import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
 import DangerToast from "../components/DangerToast";
 import RecipeListLoadingBlock from "../components/RecipeListLoadingBlock";
+import ListPageShell from "../components/ListPageShell";
 import RecipeOwnerMenuPopover from "../components/RecipeOwnerMenuPopover";
 import DeleteRecipeConfirmAlert from "../components/DeleteRecipeConfirmAlert";
 import type { Recipe } from "../types/Recipe";
@@ -90,26 +89,20 @@ const MyRecipes: React.FC = () => {
 
   return (
     <IonPage>
-      <AppHeader title="My recipes" />
+      <AppHeader />
       <IonContent fullscreen>
-        <IonRefresher
-          slot="fixed"
-          onIonRefresh={async (e) => {
-            await load();
-            await (e.target as HTMLIonRefresherElement).complete();
-          }}
+        <ListPageShell
+          loading={loading}
+          isEmpty={recipes.length === 0}
+          onRefresh={load}
+          loadingView={<RecipeListLoadingBlock />}
+          emptyView={
+            <NoData
+              title="No recipes yet"
+              description="Tap the + button to create your first recipe. It will show up here."
+            />
+          }
         >
-          <IonRefresherContent pullingText="Pull to refresh" />
-        </IonRefresher>
-        {loading ? (
-          <RecipeListLoadingBlock />
-        ) : recipes.length === 0 ? (
-          <NoData
-            title="No recipes yet"
-            description="Tap the + button to create your first recipe. It will show up here."
-          />
-        ) : (
-          <div style={{ paddingBottom: "80px", paddingTop: 8 }}>
             {recipes.map((recipe) => (
               <RecipeCard
                 key={recipe.id}
@@ -131,8 +124,7 @@ const MyRecipes: React.FC = () => {
                 showMenu
               />
             ))}
-          </div>
-        )}
+        </ListPageShell>
 
         <RecipeOwnerMenuPopover
           state={popoverOpen}

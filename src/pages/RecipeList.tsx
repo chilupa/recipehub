@@ -1,11 +1,9 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   IonContent,
   IonPage,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
-  IonRefresher,
-  IonRefresherContent,
   IonFab,
   IonFabButton,
   IonIcon,
@@ -20,6 +18,7 @@ import NoData from "../components/NoData";
 import DangerToast from "../components/DangerToast";
 import SignInPromptAlert from "../components/SignInPromptAlert";
 import RecipeListSkeleton from "../components/RecipeListSkeleton";
+import ListPageShell from "../components/ListPageShell";
 import RecipeOwnerMenuPopover from "../components/RecipeOwnerMenuPopover";
 import DeleteRecipeConfirmAlert from "../components/DeleteRecipeConfirmAlert";
 import {
@@ -49,34 +48,31 @@ const RecipeList: React.FC = () => {
   const [signInAlertOpen, setSignInAlertOpen] = useState(false);
 
   const promptSignIn = () => setSignInAlertOpen(true);
+  const visibleRecipes = useMemo(() => recipes, [recipes]);
+
+  const emptyView = (
+    <NoData
+      title={isGuest ? "Nothing to show yet" : "No recipes yet!"}
+      description={
+        isGuest
+          ? "There are no public recipes to preview right now, or your connection had trouble loading them."
+          : "Tap the + button to add your first recipe."
+      }
+    />
+  );
 
   return (
     <IonPage>
       <AppHeader />
       <IonContent fullscreen>
-        <IonRefresher
-          slot="fixed"
-          onIonRefresh={async (e) => {
-            await refreshRecipes();
-            await (e.target as HTMLIonRefresherElement).complete();
-          }}
+        <ListPageShell
+          loading={recipesLoading}
+          isEmpty={visibleRecipes.length === 0}
+          onRefresh={refreshRecipes}
+          loadingView={<RecipeListSkeleton />}
+          emptyView={emptyView}
         >
-          <IonRefresherContent pullingText="Pull to refresh" />
-        </IonRefresher>
-        {recipesLoading ? (
-          <RecipeListSkeleton />
-        ) : recipes.length === 0 ? (
-          <NoData
-            title={isGuest ? "Nothing to show yet" : "No recipes yet!"}
-            description={
-              isGuest
-                ? "There are no public recipes to preview right now, or your connection had trouble loading them."
-                : "Tap the + button to add your first recipe."
-            }
-          />
-        ) : (
-          <div style={{ paddingBottom: "80px", paddingTop: 8 }}>
-            {recipes.map((recipe) => (
+            {visibleRecipes.map((recipe) => (
               <RecipeCard
                 key={recipe.id}
                 recipe={recipe}
@@ -115,12 +111,11 @@ const RecipeList: React.FC = () => {
             >
               <IonInfiniteScrollContent loadingText="Loading more recipes…" />
             </IonInfiniteScroll>
-          </div>
-        )}
+        </ListPageShell>
 
         <RecipeOwnerMenuPopover
           state={popoverOpen}
-          recipes={recipes}
+          recipes={visibleRecipes}
           onDismiss={() => setPopoverOpen(emptyRecipeMenuPopoverState)}
           onRequestDelete={(recipeId, displayName) =>
             setDeleteAlert({
@@ -135,6 +130,7 @@ const RecipeList: React.FC = () => {
           state={deleteAlert}
           onDismiss={() => setDeleteAlert(emptyDeleteRecipeAlertState)}
           deleteRecipe={deleteRecipe}
+          afterDelete={refreshRecipes}
           onError={(message) => setToast({ show: true, message })}
         />
 

@@ -14,6 +14,7 @@ import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
 import DangerToast from "../components/DangerToast";
 import RecipeListLoadingBlock from "../components/RecipeListLoadingBlock";
+import ListPageShell from "../components/ListPageShell";
 import RecipeOwnerMenuPopover from "../components/RecipeOwnerMenuPopover";
 import DeleteRecipeConfirmAlert from "../components/DeleteRecipeConfirmAlert";
 import type { Recipe } from "../types/Recipe";
@@ -91,20 +92,24 @@ const TotalTimeRecipeList: React.FC = () => {
     <IonPage>
       <AppHeader showBackButton title={timeTitle} />
       <IonContent fullscreen>
-        {loading ? (
-          <RecipeListLoadingBlock />
-        ) : !minutesValid ? (
-          <NoData
-            title="Invalid time"
-            description="This link doesn’t include a valid total time in minutes."
-          />
-        ) : recipes.length === 0 ? (
-          <NoData
-            title="No recipes for this time"
-            description={`Nobody has published a recipe with ${totalMinutes} minutes total (prep + cook) yet.`}
-          />
-        ) : (
-          <div style={{ paddingBottom: "80px", paddingTop: 8 }}>
+        <ListPageShell
+          loading={loading}
+          isEmpty={!minutesValid || recipes.length === 0}
+          loadingView={<RecipeListLoadingBlock />}
+          emptyView={
+            !minutesValid ? (
+              <NoData
+                title="Invalid time"
+                description="This link doesn’t include a valid total time in minutes."
+              />
+            ) : (
+              <NoData
+                title="No recipes for this time"
+                description={`Nobody has published a recipe with ${totalMinutes} minutes total (prep + cook) yet.`}
+              />
+            )
+          }
+        >
             {recipes.map((recipe) => (
               <RecipeCard
                 key={recipe.id}
@@ -126,8 +131,7 @@ const TotalTimeRecipeList: React.FC = () => {
                 showMenu={recipe.userId === user?.id}
               />
             ))}
-          </div>
-        )}
+        </ListPageShell>
 
         <RecipeOwnerMenuPopover
           state={popoverOpen}

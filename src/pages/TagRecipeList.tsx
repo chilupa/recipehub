@@ -14,6 +14,7 @@ import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
 import DangerToast from "../components/DangerToast";
 import RecipeListLoadingBlock from "../components/RecipeListLoadingBlock";
+import ListPageShell from "../components/ListPageShell";
 import RecipeOwnerMenuPopover from "../components/RecipeOwnerMenuPopover";
 import DeleteRecipeConfirmAlert from "../components/DeleteRecipeConfirmAlert";
 import type { Recipe } from "../types/Recipe";
@@ -103,20 +104,24 @@ const TagRecipeList: React.FC = () => {
         title={tagDisplay ? tagDisplay : undefined}
       />
       <IonContent fullscreen>
-        {loading ? (
-          <RecipeListLoadingBlock />
-        ) : !tagDisplay ? (
-          <NoData
-            title="Invalid tag"
-            description="This link doesn’t include a valid tag."
-          />
-        ) : recipes.length === 0 ? (
-          <NoData
-            title="No recipes with this tag"
-            description={`Nobody has tagged a recipe “${tagDisplay}” yet.`}
-          />
-        ) : (
-          <div style={{ paddingBottom: "80px", paddingTop: 8 }}>
+        <ListPageShell
+          loading={loading}
+          isEmpty={!tagDisplay || recipes.length === 0}
+          loadingView={<RecipeListLoadingBlock />}
+          emptyView={
+            !tagDisplay ? (
+              <NoData
+                title="Invalid tag"
+                description="This link doesn’t include a valid tag."
+              />
+            ) : (
+              <NoData
+                title="No recipes with this tag"
+                description={`Nobody has tagged a recipe “${tagDisplay}” yet.`}
+              />
+            )
+          }
+        >
             {recipes.map((recipe) => (
               <RecipeCard
                 key={recipe.id}
@@ -138,8 +143,7 @@ const TagRecipeList: React.FC = () => {
                 showMenu={recipe.userId === user?.id}
               />
             ))}
-          </div>
-        )}
+        </ListPageShell>
 
         <RecipeOwnerMenuPopover
           state={popoverOpen}

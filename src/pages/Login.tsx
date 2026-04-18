@@ -13,6 +13,9 @@ import { logoApple, logoGoogle } from "ionicons/icons";
 import "./Login.css";
 
 const useMockAuth = import.meta.env.VITE_USE_MOCK_AUTH === "true";
+const showSigninStatusBannerFromEnv =
+  String(import.meta.env.VITE_SHOW_SIGNIN_STATUS_BANNER ?? "").toLowerCase() ===
+  "true";
 
 const sanitizeRedirectPath = (value: string | null): string => {
   if (!value) return "/recipes";
@@ -33,6 +36,7 @@ const Login: React.FC = () => {
   } = useAuth();
   const history = useHistory();
   const location = useLocation();
+  const showServiceNotice = !useMockAuth && showSigninStatusBannerFromEnv;
 
   useEffect(() => {
     if (user) {
@@ -53,14 +57,25 @@ const Login: React.FC = () => {
           <IonCard className="login-card">
             <IonCardContent>
               <header className="login-hero">
-                <h1 style={{ color: "var(--ion-color-primary)", fontWeight: 600 }} className="login-title">RecipeHub</h1>
-                <p style={{marginTop: 8}} className="login-subtitle">
+                <h1
+                  style={{ color: "var(--ion-color-primary)", fontWeight: 600 }}
+                  className="login-title"
+                >
+                  RecipeHub
+                </h1>
+                <p style={{ marginTop: 8 }} className="login-subtitle">
                   Create, save, and edit your recipes, favorite others’ dishes,
                   and keep everything in sync across your devices.
                 </p>
               </header>
 
               <div className="login-signin-block">
+                {showServiceNotice ? (
+                  <p className="login-service-notice" role="status">
+                    Sign-in may be temporarily degraded. You can continue as
+                    guest and retry later.
+                  </p>
+                ) : null}
                 <button
                   type="button"
                   className="login-google-btn"
@@ -74,7 +89,10 @@ const Login: React.FC = () => {
                     />
                   ) : (
                     <>
-                      <IonIcon icon={logoGoogle} className="login-google-icon" />
+                      <IonIcon
+                        icon={logoGoogle}
+                        className="login-google-icon"
+                      />
                       <span className="login-google-label">
                         Continue with Google
                       </span>
@@ -101,9 +119,9 @@ const Login: React.FC = () => {
                     </>
                   )}
                 </button>
-                <p style={{marginTop: 8}} className="login-privacy">
-                  We only use your sign-in provider to identify you and sync your
-                  data - no ads, no extra permissions.
+                <p style={{ marginTop: 8 }} className="login-privacy">
+                  We only use your sign-in provider to identify you and sync
+                  your data - no ads, no extra permissions.
                 </p>
                 {!useMockAuth ? (
                   <button
@@ -117,9 +135,7 @@ const Login: React.FC = () => {
                 ) : null}
               </div>
 
-              {authError ? (
-                <p className="login-error">{authError}</p>
-              ) : null}
+              {authError ? <p className="login-error">{authError}</p> : null}
             </IonCardContent>
           </IonCard>
         </div>
