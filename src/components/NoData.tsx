@@ -13,7 +13,7 @@ const NoData = ({
   description: customDescription,
 }: NoDataProps) => {
   return (
-    <div style={{ textAlign: "center", marginTop: "50px" }}>
+    <div style={{ textAlign: "center", marginTop: "50px", padding: "0 12px" }}>
       <IonText>
         <h4 style={{ color: "var(--ion-color-dark)" }}>
           {customTitle || title}
