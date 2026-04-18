@@ -83,7 +83,10 @@ const SearchRecipes: React.FC = () => {
   const loadingCards = useMemo(
     () =>
       Array.from({ length: LOADING_CARD_COUNT }, (_, index) => (
-        <IonCard className="search-recipes-card search-recipes-card--skeleton" key={index}>
+        <IonCard
+          className="search-recipes-card search-recipes-card--skeleton"
+          key={index}
+        >
           <div className="search-recipes-skeleton-line search-recipes-skeleton-line--title" />
           <div className="search-recipes-skeleton-line" />
           <div className="search-recipes-skeleton-line search-recipes-skeleton-line--short" />
@@ -113,15 +116,15 @@ const SearchRecipes: React.FC = () => {
               setInputValue("");
               setSubmittedQuery("");
             }}
-            placeholder="Search recipes (press Enter)"
+            placeholder="What sounds good?"
             showClearButton="focus"
           />
         </div>
 
         {!hasSubmittedSearch ? (
           <NoData
-            title="Find your next recipe"
-            description="Type a search and press Enter to explore."
+            title="Discover your next meal"
+            description="We look at titles, tags, and what cooks wrote in the description, then rank what fits best."
           />
         ) : searching ? (
           <div
@@ -173,13 +176,18 @@ const SearchRecipes: React.FC = () => {
                                 ? {
                                     ...item,
                                     isLiked: !item.isLiked,
-                                    likes: item.isLiked ? Math.max(0, item.likes - 1) : item.likes + 1,
+                                    likes: item.isLiked
+                                      ? Math.max(0, item.likes - 1)
+                                      : item.likes + 1,
                                   }
                                 : item,
                             ),
                           );
                         } catch {
-                          setToast({ show: true, message: "Could not update favorite." });
+                          setToast({
+                            show: true,
+                            message: "Could not update favorite.",
+                          });
                         }
                       }}
                     >
@@ -218,7 +226,9 @@ const SearchRecipes: React.FC = () => {
         <DangerToast
           isOpen={toast.show}
           message={toast.message}
-          onDidDismiss={() => setToast((current) => ({ ...current, show: false }))}
+          onDidDismiss={() =>
+            setToast((current) => ({ ...current, show: false }))
+          }
         />
       </IonContent>
     </IonPage>
