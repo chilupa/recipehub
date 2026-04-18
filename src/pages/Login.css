@@ -95,6 +95,18 @@
   border: 1px solid rgba(184, 69, 26, 0.08);
 }
 
+.login-service-notice {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 193, 7, 0.14);
+  border: 1px solid rgba(255, 193, 7, 0.45);
+  color: #7b5a00;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  text-align: left;
+}
+
 .login-google-btn {
   width: 100%;
   display: flex;
@@ -280,6 +292,12 @@
   .login-signin-block {
     background: rgba(0, 0, 0, 0.2);
     border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .login-service-notice {
+    background: rgba(255, 193, 7, 0.16);
+    border-color: rgba(255, 193, 7, 0.5);
+    color: #f7d977;
   }
 
   .login-privacy {

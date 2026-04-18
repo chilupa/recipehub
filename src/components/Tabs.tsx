@@ -3,6 +3,7 @@ import {
   heart,
   home,
   listCircle,
+  search,
   notifications,
   personCircleOutline,
 } from "ionicons/icons";
@@ -18,6 +19,9 @@ const Tabs = () => {
       </IonTabButton>
       <IonTabButton tab="myrecipes" href="/myrecipes" aria-label="My recipes">
         <IonIcon aria-hidden="true" icon={listCircle} />
+      </IonTabButton>
+      <IonTabButton tab="search" href="/search" aria-label="Search recipes">
+        <IonIcon aria-hidden="true" icon={search} />
       </IonTabButton>
       <IonTabButton tab="favorites" href="/favorites" aria-label="Favorites">
         <IonIcon aria-hidden="true" icon={heart} />

@@ -44,6 +44,15 @@ type Row = {
   recipes: { title: string } | { title: string }[] | null;
 };
 
+type ProfileNameRow = {
+  id: string;
+  display_name: string | null;
+};
+
+function toNotificationRows(data: unknown): Row[] {
+  return Array.isArray(data) ? (data as Row[]) : [];
+}
+
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -75,8 +84,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      const rows = data as Row[] | null;
-      const actorIds = [...new Set((rows ?? []).map((r) => r.actor_id))];
+      const rows = toNotificationRows(data);
+      const actorIds = [...new Set(rows.map((r) => r.actor_id))];
       let actorNames = new Map<string, string>();
 
       if (actorIds.length > 0) {
@@ -85,10 +94,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
           .select("id, display_name")
           .in("id", actorIds);
 
+        const profileRows = (profs ?? []) as ProfileNameRow[];
         actorNames = new Map(
-          (profs ?? []).map((p) => [
+          profileRows.map((p) => [
             p.id,
-            (p.display_name as string)?.trim() || "Chef",
+            p.display_name?.trim() || "Chef",
           ]),
         );
       }
@@ -101,7 +111,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
       };
 
       setItems(
-        (rows ?? []).map((r) => ({
+        rows.map((r) => ({
           id: r.id,
           read: r.read,
           createdAt: r.created_at,

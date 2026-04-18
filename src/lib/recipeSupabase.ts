@@ -16,6 +16,19 @@ export type RecipeRow = {
   updated_at: string;
 };
 
+type ProfileDisplayNameRow = {
+  id: string;
+  display_name: string | null;
+};
+
+type FavoriteRecipeIdRow = {
+  recipe_id: string;
+};
+
+function toRecipeRows(data: unknown): RecipeRow[] {
+  return Array.isArray(data) ? (data as RecipeRow[]) : [];
+}
+
 export function rowToRecipe(
   row: RecipeRow,
   author: string,
@@ -54,9 +67,8 @@ export async function enrichRecipeRows(
     .select("id, display_name")
     .in("id", userIds);
 
-  const profileMap = new Map(
-    (profiles ?? []).map((p) => [p.id, p.display_name ?? "Chef"]),
-  );
+  const profileRows = (profiles ?? []) as ProfileDisplayNameRow[];
+  const profileMap = new Map(profileRows.map((p) => [p.id, p.display_name ?? "Chef"]));
 
   const recipeIds = recipeList.map((r) => r.id);
 
@@ -73,13 +85,16 @@ export async function enrichRecipeRows(
 
   const favoriteCounts = new Map<string, number>();
   const userFavoriteIds = new Set<string>();
-  (favRows ?? []).forEach((f: { recipe_id: string }) => {
+  const allFavoriteRows = (favRows ?? []) as FavoriteRecipeIdRow[];
+  const userFavoriteRows = (userFavRows ?? []) as FavoriteRecipeIdRow[];
+
+  allFavoriteRows.forEach((f) => {
     favoriteCounts.set(
       f.recipe_id,
       (favoriteCounts.get(f.recipe_id) ?? 0) + 1,
     );
   });
-  (userFavRows ?? []).forEach((f: { recipe_id: string }) => {
+  userFavoriteRows.forEach((f) => {
     userFavoriteIds.add(f.recipe_id);
   });
 
@@ -118,7 +133,8 @@ export async function fetchFavoriteRecipesList(
 
   if (favErr || !favRows?.length) return [];
 
-  const ids = favRows.map((f) => f.recipe_id);
+  const favoriteRows = favRows as FavoriteRecipeIdRow[];
+  const ids = favoriteRows.map((f) => f.recipe_id);
   const { data: rows, error: rowErr } = await supabase
     .from("recipes")
     .select("*")
@@ -126,7 +142,7 @@ export async function fetchFavoriteRecipesList(
     .order("created_at", { ascending: false });
 
   if (rowErr || !rows?.length) return [];
-  return enrichRecipeRows(rows as RecipeRow[], userId);
+  return enrichRecipeRows(toRecipeRows(rows), userId);
 }
 
 export async function fetchVisibleRecipeCount(): Promise<number> {
@@ -157,7 +173,7 @@ export async function fetchRecipesOwnedByUser(
     return [];
   }
   if (!rows?.length) return [];
-  return enrichRecipeRows(rows as RecipeRow[], viewerId);
+  return enrichRecipeRows(toRecipeRows(rows), viewerId);
 }
 
 export async function fetchRecipesByTag(
@@ -179,7 +195,7 @@ export async function fetchRecipesByTag(
     return [];
   }
   if (!rows?.length) return [];
-  return enrichRecipeRows(rows as RecipeRow[], userId);
+  return enrichRecipeRows(toRecipeRows(rows), userId);
 }
 
 export async function fetchRecipesByServings(
@@ -200,7 +216,7 @@ export async function fetchRecipesByServings(
     return [];
   }
   if (!rows?.length) return [];
-  return enrichRecipeRows(rows as RecipeRow[], userId);
+  return enrichRecipeRows(toRecipeRows(rows), userId);
 }
 
 export async function fetchRecipesByTotalMinutes(
@@ -217,7 +233,79 @@ export async function fetchRecipesByTotalMinutes(
     console.error("fetchRecipesByTotalMinutes:", error);
     return [];
   }
-  const rows = (data ?? []) as RecipeRow[];
+  const rows = toRecipeRows(data);
   if (rows.length === 0) return [];
   return enrichRecipeRows(rows, userId);
+}
+
+type SearchRecipesEnrichedRpcRow = {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  ingredients: unknown;
+  instructions: unknown;
+  prep_time: number | null;
+  cook_time: number | null;
+  servings: number | null;
+  tags: unknown;
+  created_at: string;
+  updated_at: string;
+  author: string | null;
+  likes: number | string | null;
+  is_liked: boolean | null;
+};
+
+function rpcJsonbToStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map((v) => String(v));
+  return [];
+}
+
+function rpcRowToRecipeRow(row: SearchRecipesEnrichedRpcRow): RecipeRow {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    title: row.title,
+    description: row.description,
+    ingredients: rpcJsonbToStringArray(row.ingredients),
+    instructions: rpcJsonbToStringArray(row.instructions),
+    prep_time: row.prep_time ?? 0,
+    cook_time: row.cook_time ?? 0,
+    servings: row.servings ?? 0,
+    tags: rpcJsonbToStringArray(row.tags),
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+/**
+ * Server-side search via `search_recipes_enriched` RPC (one round trip).
+ * Deploy SQL from `supabase/migrations/20260218120000_search_recipes_enriched.sql`.
+ */
+export async function searchRecipesByQuery(
+  query: string,
+  userId: string,
+): Promise<Recipe[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  const { data, error } = await supabase.rpc("search_recipes_enriched", {
+    p_query: trimmed,
+    p_viewer_id: userId,
+  });
+
+  if (error) {
+    console.error("searchRecipesByQuery RPC:", error);
+    return [];
+  }
+
+  const rows = (data ?? []) as SearchRecipesEnrichedRpcRow[];
+  return rows.map((row) =>
+    rowToRecipe(
+      rpcRowToRecipeRow(row),
+      row.author?.trim() || "Chef",
+      Number(row.likes ?? 0),
+      Boolean(row.is_liked),
+    ),
+  );
 }

@@ -60,6 +60,7 @@ import Login from './pages/Login';
 import SignInGatePage from './pages/SignInGatePage';
 import Tabs from './components/Tabs';
 import Intro, { hasSeenIntro } from './pages/Intro';
+import SearchRecipes from './pages/SearchRecipes';
 
 setupIonicReact();
 
@@ -159,6 +160,12 @@ const AppRoutes: React.FC = () => {
                     component={MyRecipes}
                   />,
                   <Route
+                    key="u-search"
+                    exact
+                    path="/:tab(search)"
+                    component={SearchRecipes}
+                  />,
+                  <Route
                     key="u-profile"
                     exact
                     path="/:tab(profile)"
@@ -212,6 +219,12 @@ const AppRoutes: React.FC = () => {
                     exact
                     path="/:tab(myrecipes)"
                     component={SignInGatePage}
+                  />,
+                  <Route
+                    key="g-search"
+                    exact
+                    path="/:tab(search)"
+                    component={SearchRecipes}
                   />,
                   <Route
                     key="g-add"
