@@ -13,10 +13,10 @@ import { supabase } from "../lib/supabase";
 import {
   type RecipeRow,
   rowToRecipe,
-  enrichRecipeRows,
   fetchRecipeById,
   fetchFavoriteRecipesList,
   fetchVisibleRecipeCount,
+  fetchFeedRecipesPage,
 } from "../lib/recipeSupabase";
 import { GUEST_VIEWER_ID } from "../lib/guestBrowse";
 
@@ -248,38 +248,21 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       try {
-        const [countRes, pageRes] = await Promise.all([
-          fetchVisibleRecipeCount(),
-          supabase
-            .from("recipes")
-            .select("*")
-            .order("created_at", { ascending: false })
-            .range(0, PAGE_SIZE - 1),
-        ]);
-
-        if (gen !== loadGenerationRef.current) return;
-
-        setRecipesTotalCount(countRes);
-
-        if (pageRes.error) {
-          console.error("Error loading recipes:", pageRes.error);
-          setRecipes([]);
-          setHasMoreRecipes(false);
-          return;
-        }
-
-        const recipeList = (pageRes.data ?? []) as RecipeRow[];
-        if (recipeList.length === 0) {
-          setRecipes([]);
-          setHasMoreRecipes(false);
-          return;
-        }
-
-        const list = await enrichRecipeRows(recipeList, viewerId);
+        const list = await fetchFeedRecipesPage(PAGE_SIZE, 0, viewerId);
         if (gen !== loadGenerationRef.current) return;
 
         setRecipes(list);
-        setHasMoreRecipes(recipeList.length === PAGE_SIZE);
+        setHasMoreRecipes(list.length === PAGE_SIZE);
+
+        void (async () => {
+          try {
+            const countRes = await fetchVisibleRecipeCount();
+            if (gen !== loadGenerationRef.current) return;
+            setRecipesTotalCount(countRes);
+          } catch {
+            // total is non-critical for first paint
+          }
+        })();
       } catch (error) {
         console.error("Error loading recipes:", error);
         if (gen !== loadGenerationRef.current) return;
@@ -321,24 +304,12 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
     const offset = recipesRef.current.length;
 
     try {
-      const { data: rows, error } = await supabase
-        .from("recipes")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(offset, offset + PAGE_SIZE - 1);
-
-      if (error) {
-        console.error("Error loading more recipes:", error);
-        return;
-      }
-
-      const recipeList = (rows ?? []) as RecipeRow[];
-      if (recipeList.length === 0) {
+      const list = await fetchFeedRecipesPage(PAGE_SIZE, offset, viewerId);
+      if (list.length === 0) {
         setHasMoreRecipes(false);
         return;
       }
 
-      const list = await enrichRecipeRows(recipeList, viewerId);
       setRecipes((prev) => {
         const seen = new Set(prev.map((r) => r.id));
         const merged = [...prev];
@@ -350,7 +321,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         return merged;
       });
-      setHasMoreRecipes(recipeList.length === PAGE_SIZE);
+      setHasMoreRecipes(list.length === PAGE_SIZE);
     } catch (e) {
       console.error("Error loading more recipes:", e);
     } finally {
@@ -397,7 +368,10 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
       setFavoriteRecipes([]);
       return;
     }
-    void loadFavorites();
+    const t = window.setTimeout(() => {
+      void loadFavorites();
+    }, 0);
+    return () => clearTimeout(t);
   }, [user?.id, loadFavorites]);
 
   useEffect(() => {

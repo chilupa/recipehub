@@ -1,25 +1,24 @@
 import { IonText } from "@ionic/react";
+import { emptyStateFallback } from "../lib/emptyStateMessages";
+import "./NoData.css";
 
 interface NoDataProps {
   title?: string;
   description?: string;
 }
 
-const title = "No Data Available";
-const description = "There is no data to display at the moment.";
-
 const NoData = ({
   title: customTitle,
   description: customDescription,
 }: NoDataProps) => {
   return (
-    <div style={{ textAlign: "center", marginTop: "50px", padding: "0 12px" }}>
+    <div className="no-data-block">
       <IonText>
-        <h4 style={{ color: "var(--ion-color-dark)" }}>
-          {customTitle || title}
+        <h4>
+          {customTitle ?? emptyStateFallback.title}
         </h4>
         <p style={{ color: "var(--ion-color-medium)" }}>
-          {customDescription || description}
+          {customDescription ?? emptyStateFallback.description}
         </p>
       </IonText>
     </div>

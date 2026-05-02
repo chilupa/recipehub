@@ -1,0 +1,4 @@
+/* Slightly smaller tab icons than Ionic defaults (~24px) for a lighter bar */
+.app-tab-bar ion-icon {
+  font-size: 1.25rem;
+}

@@ -15,6 +15,8 @@ import {
 import { heart } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 import AppHeader from "../components/AppHeader";
+import NoData from "../components/NoData";
+import { emptyActivity } from "../lib/emptyStateMessages";
 import { useNotifications } from "../contexts/NotificationContext";
 const formatWhen = (iso: string): string => {
   const d = new Date(iso);
@@ -106,11 +108,7 @@ const Activity: React.FC = () => {
               marginInline: "auto",
             }}
           >
-            <IonText color="medium">
-              <p style={{ margin: 0, fontSize: "0.9375rem", lineHeight: 1.5 }}>
-                No activity yet. Updates about your recipes will show up here.
-              </p>
-            </IonText>
+            <NoData {...emptyActivity} />
           </div>
         ) : (
           <IonList lines="full" className="ion-no-padding">

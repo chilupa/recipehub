@@ -8,12 +8,13 @@ import {
   personCircleOutline,
 } from "ionicons/icons";
 import { useNotifications } from "../contexts/NotificationContext";
+import "./Tabs.css";
 
 const Tabs = () => {
   const { unreadCount } = useNotifications();
 
   return (
-    <IonTabBar slot="bottom">
+    <IonTabBar slot="bottom" className="app-tab-bar">
       <IonTabButton tab="recipes" href="/recipes" aria-label="Recipes">
         <IonIcon aria-hidden="true" icon={home} />
       </IonTabButton>

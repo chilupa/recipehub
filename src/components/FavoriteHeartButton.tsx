@@ -35,7 +35,7 @@ const FavoriteHeartButton: React.FC<FavoriteHeartButtonProps> = ({
     prevLiked.current = isLiked;
     if (isLiked && !wasLiked) {
       setAnim("pop");
-      const t = window.setTimeout(() => setAnim(null), 400);
+      const t = window.setTimeout(() => setAnim(null), 800);
       return () => clearTimeout(t);
     }
     if (!isLiked && wasLiked) {
@@ -52,9 +52,12 @@ const FavoriteHeartButton: React.FC<FavoriteHeartButtonProps> = ({
         ? "favorite-heart-ion--out"
         : undefined;
 
+  const hasCountLabel =
+    children != null && children !== false;
+
   return (
     <div
-      className={`favorite-heart-wrap ${className}`.trim()}
+      className={`favorite-heart-wrap${hasCountLabel ? " favorite-heart-wrap--with-count" : ""}${anim === "pop" ? " favorite-heart-wrap--celebrate" : ""}${className ? ` ${className}` : ""}`.trim()}
       style={style}
     >
       <IonButton
@@ -78,7 +81,7 @@ const FavoriteHeartButton: React.FC<FavoriteHeartButtonProps> = ({
       </IonButton>
       {children != null && children !== false ? (
         <span
-          className={`favorite-heart-count${isLiked ? " favorite-heart-count--liked" : ""}`}
+          className={`favorite-heart-count${isLiked ? " favorite-heart-count--liked" : ""}${anim === "pop" ? " favorite-heart-count--bump" : ""}`}
         >
           {children}
         </span>

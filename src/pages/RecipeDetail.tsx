@@ -196,15 +196,19 @@ const RecipeDetail: React.FC = () => {
 
           <IonText color="medium">
             <p className="recipe-detail-chip-hint">
-              Tap chips to explore similar recipes
+              Tap to explore similar recipes
             </p>
           </IonText>
 
-          <div className="recipe-detail-meta-chips">
+          <div
+            className="recipe-detail-chips-scroll"
+            role="region"
+            aria-label="Recipe tags and quick facts"
+          >
             {totalMinutes > 0 && (
               <IonChip
                 color="primary"
-                className="recipe-detail-chip-clickable"
+                className="recipe-detail-chip-clickable recipe-detail-chip-scroll-item"
                 onClick={goToTotalTime}
                 role="button"
                 tabIndex={0}
@@ -223,7 +227,7 @@ const RecipeDetail: React.FC = () => {
             {recipe.servings > 0 && (
               <IonChip
                 color="secondary"
-                className="recipe-detail-chip-clickable"
+                className="recipe-detail-chip-clickable recipe-detail-chip-scroll-item"
                 onClick={goToServings}
                 role="button"
                 tabIndex={0}
@@ -238,14 +242,12 @@ const RecipeDetail: React.FC = () => {
                 <IonLabel>{recipe.servings} servings</IonLabel>
               </IonChip>
             )}
-          </div>
 
-          <div className="recipe-detail-tag-row">
             {recipe.tags.map((tag) => (
               <IonChip
                 key={tag}
                 color="tertiary"
-                className="recipe-detail-chip-clickable"
+                className="recipe-detail-chip-clickable recipe-detail-chip-scroll-item"
                 onClick={() => goToTag(tag)}
                 role="button"
                 tabIndex={0}
@@ -263,7 +265,7 @@ const RecipeDetail: React.FC = () => {
 
           <div className="recipe-detail-author-row">
             <div className="recipe-detail-author-block">
-              <UserAvatar color="tertiary" name={recipe.author} size={20} />
+              <UserAvatar name={recipe.author} size={20} color="primary" />
               <IonText color="medium">
                 <p className="recipe-detail-author-name">{recipe.author}</p>
               </IonText>

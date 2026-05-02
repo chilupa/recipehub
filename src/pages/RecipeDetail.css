@@ -39,18 +39,32 @@
   margin: 0 0 12px 0;
 }
 
-.recipe-detail-meta-chips {
+.recipe-detail-chips-scroll {
   display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 8px;
   margin-bottom: 10px;
-  flex-wrap: wrap;
+  margin-inline: -4px;
+  padding-inline: 4px 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
 }
 
-.recipe-detail-tag-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 10px;
+.recipe-detail-chips-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.recipe-detail-chips-scroll::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background: rgba(var(--ion-color-medium-rgb), 0.45);
+}
+
+.recipe-detail-chip-scroll-item {
+  flex-shrink: 0;
 }
 
 .recipe-detail-chip-clickable {

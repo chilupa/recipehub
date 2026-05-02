@@ -15,6 +15,7 @@ import { useAuth } from "../contexts/AuthContext";
 import RecipeCard from "../components/RecipeCard";
 import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
+import { emptyFeedGuest, emptyFeedSignedIn } from "../lib/emptyStateMessages";
 import DangerToast from "../components/DangerToast";
 import SignInPromptAlert from "../components/SignInPromptAlert";
 import RecipeListSkeleton from "../components/RecipeListSkeleton";
@@ -51,14 +52,7 @@ const RecipeList: React.FC = () => {
   const visibleRecipes = useMemo(() => recipes, [recipes]);
 
   const emptyView = (
-    <NoData
-      title={isGuest ? "Nothing to show yet" : "No recipes yet!"}
-      description={
-        isGuest
-          ? "There are no public recipes to preview right now, or your connection had trouble loading them."
-          : "Tap the + button to add your first recipe."
-      }
-    />
+    <NoData {...(isGuest ? emptyFeedGuest : emptyFeedSignedIn)} />
   );
 
   return (

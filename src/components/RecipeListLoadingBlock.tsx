@@ -1,24 +1,18 @@
 import React from "react";
 import { IonSpinner, IonText } from "@ionic/react";
+import "./ListPageShell.css";
 
 type Props = {
-  /** Vertical offset for the block (main feed uses more top space). */
-  paddingTop?: number;
+  message?: string;
 };
 
-const RecipeListLoadingBlock: React.FC<Props> = ({ paddingTop = 24 }) => (
-  <div
-    className="ion-padding"
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      paddingTop,
-    }}
-  >
+const RecipeListLoadingBlock: React.FC<Props> = ({
+  message = "Loading recipes…",
+}) => (
+  <div className="recipe-list-loading-block">
     <IonSpinner name="crescent" />
     <IonText color="medium">
-      <p style={{ marginTop: 12, textAlign: "center" }}>Loading recipes…</p>
+      <p className="recipe-list-loading-block__hint">{message}</p>
     </IonText>
   </div>
 );

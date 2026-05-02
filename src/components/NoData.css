@@ -1,0 +1,8 @@
+.no-data-block {
+  text-align: center;
+  padding: 0 var(--recipe-card-grid-pad-x);
+}
+
+.no-data-block h4 {
+  color: var(--ion-text-color, var(--ion-color-dark));
+}

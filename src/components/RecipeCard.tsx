@@ -47,55 +47,36 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   onMenuClick,
   showMenu = false,
 }) => {
+  const totalMinutes = (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
+  const titleId = `recipe-card-title-${recipe.id}`;
+  const createdAtDate = new Date(recipe.createdAt);
+  const createdAtTooltip = Number.isNaN(createdAtDate.getTime())
+    ? undefined
+    : createdAtDate.toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+
   return (
-    <IonCard className="recipe-card" button routerLink={`/recipes/recipe/${recipe.id}`}>
-      <div style={{ padding: "12px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: "8px",
-            gap: "8px",
-          }}
-        >
-          <div
-            style={{
-              minWidth: 0,
-              flex: 1,
-            }}
-          >
-            <h4
-              style={{
-                color: "var(--ion-color-dark)",
-                margin: "0 0 4px 0",
-                overflow: "hidden",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                wordBreak: "break-word",
-              }}
-            >
+    <IonCard
+      className="recipe-card"
+      button
+      routerLink={`/recipes/recipe/${recipe.id}`}
+      aria-labelledby={titleId}
+    >
+      <div className="recipe-card__body">
+        <div className="recipe-card__head">
+          <div className="recipe-card__text">
+            <h4 id={titleId} className="recipe-card__title">
               {recipe.title}
             </h4>
             {recipe.description ? (
-              <p
-                style={{
-                  margin: "8px 0 0 0",
-                  color: "var(--ion-color-medium)",
-                  overflow: "hidden",
-                  display: "-webkit-box",
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: "vertical",
-                  wordBreak: "break-word",
-                }}
-              >
-                {recipe.description}
-              </p>
+              <p className="recipe-card__description">{recipe.description}</p>
             ) : null}
           </div>
           {showMenu && onMenuClick && (
             <IonButton
+              className="recipe-card__menu-btn"
               fill="clear"
               color="medium"
               size="small"
@@ -105,101 +86,84 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
                 e.preventDefault();
                 onMenuClick(e.nativeEvent, recipe.id);
               }}
-              style={{ margin: "0", minHeight: "32px" }}
             >
               <IonIcon icon={ellipsisVertical} />
             </IonButton>
           )}
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "4px",
-            marginBottom: "8px",
-            overflow: "hidden",
-          }}
-        >
-          {(recipe.prepTime ?? 0) + (recipe.cookTime ?? 0) > 0 && <IonChip color="primary" style={{ height: "24px", fontSize: "12px" }}>
-            <IonIcon icon={time} style={{ fontSize: "14px" }} />
-            <IonLabel>{(recipe.prepTime ?? 0) + (recipe.cookTime ?? 0)} min</IonLabel>
-          </IonChip>}
-          {recipe.servings > 0 && 
-          <>
-          <IonChip
-            color="secondary"
-            style={{ height: "24px", fontSize: "12px" }}
+        <div className="recipe-card__chips">
+          {totalMinutes > 0 && (
+            <IonChip
+              className="recipe-card__chip"
+              color="primary"
+              aria-label={`${totalMinutes} minutes total`}
             >
-            <IonIcon icon={people} style={{ fontSize: "14px" }} />
-            <IonLabel>{recipe.servings}</IonLabel>
+              <IonIcon className="recipe-card__chip-icon" icon={time} />
+              <IonLabel>{totalMinutes} min</IonLabel>
             </IonChip>
-          </>}
+          )}
+          {recipe.servings > 0 && (
+            <IonChip
+              className="recipe-card__chip"
+              color="secondary"
+              aria-label={
+                recipe.servings === 1
+                  ? "1 serving"
+                  : `${recipe.servings} servings`
+              }
+            >
+              <IonIcon className="recipe-card__chip-icon" icon={people} />
+              <IonLabel>{recipe.servings}</IonLabel>
+            </IonChip>
+          )}
           {recipe.tags.slice(0, 1).map((tag, index) => (
             <IonChip
               key={index}
+              className="recipe-card__chip recipe-card__chip--tag"
               color="tertiary"
-              style={{
-                height: "24px",
-                fontSize: "12px",
-                maxWidth: "100px",
-              }}
+              aria-label={`Tag: ${tag}`}
             >
-              <IonLabel
-                style={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <IonLabel className="recipe-card__chip-label--ellipsis">
                 {tag}
               </IonLabel>
             </IonChip>
           ))}
           {recipe.tags.length > 1 && (
-            <IonChip color="light" style={{ height: "24px", fontSize: "12px" }}>
+            <IonChip
+              className="recipe-card__chip"
+              color="light"
+              title={`${recipe.tags.length - 1} more tags`}
+              aria-label={`${recipe.tags.length - 1} more tags`}
+            >
               <IonLabel>+{recipe.tags.length - 1}</IonLabel>
             </IonChip>
           )}
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <UserAvatar color="tertiary" name={recipe.author} size={20} />
-            <IonText
-              color="dark"
-              style={{
-                fontSize: "12px",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              <span
-                style={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  maxWidth: "120px",
-                }}
-              >
-                {recipe.author}
+        <div className="recipe-card__footer">
+          <div className="recipe-card__byline">
+            <UserAvatar name={recipe.author} size={20} color="primary" />
+            <IonText color="dark" className="recipe-card__byline-text">
+              <span className="recipe-card__author">{recipe.author}</span>
+              <span className="recipe-card__byline-sep" aria-hidden="true">
+                •
               </span>
-              <span>•</span>
-              <span>{formatTimeAgo(recipe.createdAt)}</span>
+              <time
+                className="recipe-card__age"
+                dateTime={recipe.createdAt}
+                title={createdAtTooltip}
+              >
+                {formatTimeAgo(recipe.createdAt)}
+              </time>
             </IonText>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <div className="recipe-card__actions">
             <FavoriteHeartButton
               isLiked={recipe.isLiked}
               size="small"
               stopEventPropagation
-              style={{ margin: "0", minHeight: "32px" }}
+              className="recipe-card__favorite"
               onToggle={() => onFavorite(recipe.id).catch(() => {})}
             >
               {recipe.likes > 0 && formatFavorites(recipe.likes)}

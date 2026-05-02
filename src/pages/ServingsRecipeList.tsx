@@ -12,6 +12,10 @@ import type { DeleteRecipeAlertState } from "../lib/recipeListOwnerState";
 import RecipeCard from "../components/RecipeCard";
 import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
+import {
+  emptyServingsFilter,
+  invalidServingsLink,
+} from "../lib/emptyStateMessages";
 import DangerToast from "../components/DangerToast";
 import RecipeListLoadingBlock from "../components/RecipeListLoadingBlock";
 import ListPageShell from "../components/ListPageShell";
@@ -97,15 +101,9 @@ const ServingsRecipeList: React.FC = () => {
           loadingView={<RecipeListLoadingBlock />}
           emptyView={
             !servingsValid ? (
-              <NoData
-                title="Invalid servings"
-                description="This link doesn’t include a valid serving count."
-              />
+              <NoData {...invalidServingsLink} />
             ) : (
-              <NoData
-                title="No recipes for this size"
-                description={`Nobody has published a recipe for ${servings} ${servings === 1 ? "serving" : "servings"} yet.`}
-              />
+              <NoData {...emptyServingsFilter(servings)} />
             )
           }
         >

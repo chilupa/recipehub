@@ -4,7 +4,7 @@ import "./RecipeCard.css";
 
 const RecipeCardSkeleton: React.FC = () => (
   <IonCard className="recipe-card recipe-card-skeleton">
-    <div style={{ padding: 12 }}>
+    <div className="recipe-card__body">
       <div
         style={{
           display: "flex",

@@ -309,3 +309,55 @@ export async function searchRecipesByQuery(
     ),
   );
 }
+
+function mapEnrichedRpcRowsToRecipes(
+  rows: SearchRecipesEnrichedRpcRow[],
+): Recipe[] {
+  return rows.map((row) =>
+    rowToRecipe(
+      rpcRowToRecipeRow(row),
+      row.author?.trim() || "Chef",
+      Number(row.likes ?? 0),
+      Boolean(row.is_liked),
+    ),
+  );
+}
+
+/**
+ * Home feed page via `list_recipes_feed` RPC (one round trip).
+ * Falls back to select + enrich if RPC is missing (e.g. migration not applied).
+ */
+export async function fetchFeedRecipesPage(
+  limit: number,
+  offset: number,
+  viewerId: string,
+): Promise<Recipe[]> {
+  const safeLimit = Math.min(Math.max(1, Math.floor(limit)), 50);
+  const safeOffset = Math.max(0, Math.floor(offset));
+
+  const { data, error } = await supabase.rpc("list_recipes_feed", {
+    p_limit: safeLimit,
+    p_offset: safeOffset,
+    p_viewer_id: viewerId,
+  });
+
+  if (!error && data != null) {
+    return mapEnrichedRpcRowsToRecipes((data ?? []) as SearchRecipesEnrichedRpcRow[]);
+  }
+
+  console.warn("fetchFeedRecipesPage: RPC unavailable, using legacy path:", error);
+
+  const { data: rows, error: qErr } = await supabase
+    .from("recipes")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .range(safeOffset, safeOffset + safeLimit - 1);
+
+  if (qErr) {
+    console.error("fetchFeedRecipesPage legacy:", qErr);
+    return [];
+  }
+  const recipeList = toRecipeRows(rows);
+  if (recipeList.length === 0) return [];
+  return enrichRecipeRows(recipeList, viewerId);
+}

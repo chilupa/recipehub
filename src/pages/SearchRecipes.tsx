@@ -13,6 +13,10 @@ import AppHeader from "../components/AppHeader";
 import DangerToast from "../components/DangerToast";
 import FavoriteHeartButton from "../components/FavoriteHeartButton";
 import NoData from "../components/NoData";
+import {
+  emptySearchNoResults,
+  emptySearchPrompt,
+} from "../lib/emptyStateMessages";
 import SignInPromptAlert from "../components/SignInPromptAlert";
 import { useAuth } from "../contexts/AuthContext";
 import { useRecipes } from "../contexts/RecipeContext";
@@ -122,10 +126,9 @@ const SearchRecipes: React.FC = () => {
         </div>
 
         {!hasSubmittedSearch ? (
-          <NoData
-            title="Discover your next meal"
-            description="We look at titles, tags, and what cooks wrote in the description, then rank what fits best."
-          />
+          <div className="search-recipes-tab-empty">
+            <NoData {...emptySearchPrompt} />
+          </div>
         ) : searching ? (
           <div
             className="search-recipes-grid search-recipes-grid--loading"
@@ -135,10 +138,9 @@ const SearchRecipes: React.FC = () => {
             {loadingCards}
           </div>
         ) : results.length === 0 ? (
-          <NoData
-            title="No matches found"
-            description={`No recipes match "${submittedQuery.trim()}" yet.`}
-          />
+          <div className="search-recipes-tab-empty">
+            <NoData {...emptySearchNoResults(submittedQuery)} />
+          </div>
         ) : (
           <div className="search-recipes-grid">
             {results.map((recipe) => {

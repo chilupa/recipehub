@@ -19,6 +19,7 @@ import type { DeleteRecipeAlertState } from "../lib/recipeListOwnerState";
 import RecipeCard from "../components/RecipeCard";
 import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
+import { emptyMyRecipes } from "../lib/emptyStateMessages";
 import DangerToast from "../components/DangerToast";
 import RecipeListLoadingBlock from "../components/RecipeListLoadingBlock";
 import ListPageShell from "../components/ListPageShell";
@@ -96,12 +97,7 @@ const MyRecipes: React.FC = () => {
           isEmpty={recipes.length === 0}
           onRefresh={load}
           loadingView={<RecipeListLoadingBlock />}
-          emptyView={
-            <NoData
-              title="No recipes yet"
-              description="Tap the + button to create your first recipe. It will show up here."
-            />
-          }
+          emptyView={<NoData {...emptyMyRecipes} />}
         >
             {recipes.map((recipe) => (
               <RecipeCard
