@@ -127,8 +127,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [user?.id, enabled]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (!user || !enabled) {
+      void load();
+      return;
+    }
+    const t = window.setTimeout(() => {
+      void load();
+    }, 0);
+    return () => clearTimeout(t);
+  }, [load, user, enabled]);
 
   useEffect(() => {
     if (!user?.id || !enabled) return;
