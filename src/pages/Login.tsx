@@ -57,12 +57,16 @@ const Login: React.FC = () => {
           <IonCard className="login-card">
             <IonCardContent>
               <header className="login-hero">
-                <h1
-                  style={{ color: "var(--ion-color-primary)", fontWeight: 600 }}
-                  className="login-title"
-                >
-                  RecipeHub
-                </h1>
+                <div className="login-brand-mark">
+                  <img
+                    src="/AppIcon.png"
+                    alt=""
+                    width={64}
+                    height={64}
+                    decoding="async"
+                  />
+                </div>
+                <h1 className="login-title">RecipeHub</h1>
                 <p style={{ marginTop: 8 }} className="login-subtitle">
                   Create, save, and edit your recipes, favorite others’ dishes,
                   and keep everything in sync across your devices.

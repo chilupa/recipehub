@@ -52,31 +52,53 @@ const RecipeDetailSkeleton: React.FC = () => (
       />
 
       <div
-        className="recipe-detail-meta-chips"
+        className="recipe-detail-chips-scroll"
         style={{ marginBottom: 10 }}
       >
         <IonSkeletonText
           animated
-          style={{ width: 88, height: 32, borderRadius: 16 }}
+          style={{
+            width: 88,
+            height: 32,
+            borderRadius: 16,
+            flexShrink: 0,
+          }}
         />
         <IonSkeletonText
           animated
-          style={{ width: 112, height: 32, borderRadius: 16 }}
-        />
-      </div>
-
-      <div className="recipe-detail-tag-row" style={{ marginBottom: 10 }}>
-        <IonSkeletonText
-          animated
-          style={{ width: 72, height: 32, borderRadius: 16 }}
+          style={{
+            width: 112,
+            height: 32,
+            borderRadius: 16,
+            flexShrink: 0,
+          }}
         />
         <IonSkeletonText
           animated
-          style={{ width: 96, height: 32, borderRadius: 16 }}
+          style={{
+            width: 72,
+            height: 32,
+            borderRadius: 16,
+            flexShrink: 0,
+          }}
         />
         <IonSkeletonText
           animated
-          style={{ width: 64, height: 32, borderRadius: 16 }}
+          style={{
+            width: 96,
+            height: 32,
+            borderRadius: 16,
+            flexShrink: 0,
+          }}
+        />
+        <IonSkeletonText
+          animated
+          style={{
+            width: 64,
+            height: 32,
+            borderRadius: 16,
+            flexShrink: 0,
+          }}
         />
       </div>
 

@@ -12,6 +12,10 @@ import type { DeleteRecipeAlertState } from "../lib/recipeListOwnerState";
 import RecipeCard from "../components/RecipeCard";
 import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
+import {
+  emptyTagFilter,
+  invalidTagLink,
+} from "../lib/emptyStateMessages";
 import DangerToast from "../components/DangerToast";
 import RecipeListLoadingBlock from "../components/RecipeListLoadingBlock";
 import ListPageShell from "../components/ListPageShell";
@@ -110,15 +114,9 @@ const TagRecipeList: React.FC = () => {
           loadingView={<RecipeListLoadingBlock />}
           emptyView={
             !tagDisplay ? (
-              <NoData
-                title="Invalid tag"
-                description="This link doesn’t include a valid tag."
-              />
+              <NoData {...invalidTagLink} />
             ) : (
-              <NoData
-                title="No recipes with this tag"
-                description={`Nobody has tagged a recipe “${tagDisplay}” yet.`}
-              />
+              <NoData {...emptyTagFilter(tagDisplay)} />
             )
           }
         >

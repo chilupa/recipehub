@@ -39,7 +39,17 @@ const ListPageShell: React.FC<Props> = ({
         </IonRefresher>
       ) : null}
 
-      {loading ? loadingView : isEmpty ? emptyView : <div className={listClasses}>{children}</div>}
+      {loading ? (
+        <div className="list-page-shell__state list-page-shell__state--loading">
+          {loadingView}
+        </div>
+      ) : isEmpty ? (
+        <div className="list-page-shell__state list-page-shell__state--empty">
+          {emptyView}
+        </div>
+      ) : (
+        <div className={listClasses}>{children}</div>
+      )}
     </>
   );
 };

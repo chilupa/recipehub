@@ -1,18 +1,19 @@
 import React, { useState } from "react";
+import "../components/ListPageShell.css";
+import RecipeListLoadingBlock from "../components/RecipeListLoadingBlock";
 import {
   IonContent,
   IonPage,
   IonGrid,
   IonRow,
   IonCol,
-  IonText,
   IonToast,
-  IonSpinner,
 } from "@ionic/react";
 import { useRecipes } from "../contexts/RecipeContext";
 import RecipeCard from "../components/RecipeCard";
 import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
+import { emptyFavorites } from "../lib/emptyStateMessages";
 
 const Favorites: React.FC = () => {
   const { favoriteRecipes, favoritesLoading, toggleFavorite, shareRecipe } =
@@ -22,29 +23,15 @@ const Favorites: React.FC = () => {
   return (
     <IonPage>
       <AppHeader title="RecipeHub" />
-      <IonContent fullscreen>
+      <IonContent fullscreen className="page-ion-content--list-rhythm">
         {favoritesLoading ? (
-          <div
-            className="ion-padding"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              paddingTop: 48,
-            }}
-          >
-            <IonSpinner name="crescent" />
-            <IonText color="medium">
-              <p style={{ marginTop: 12, textAlign: "center" }}>
-                Loading favorites…
-              </p>
-            </IonText>
+          <div className="list-page-shell__state list-page-shell__state--loading">
+            <RecipeListLoadingBlock message="Loading favorites…" />
           </div>
         ) : favoriteRecipes.length === 0 ? (
-          <NoData
-            title="No favorites yet!"
-            description="Save some recipes to see them here."
-          />
+          <div className="list-page-shell__state list-page-shell__state--empty">
+            <NoData {...emptyFavorites} />
+          </div>
         ) : (
           <IonGrid className="ion-no-padding recipe-favorites-grid">
             <IonRow>

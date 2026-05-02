@@ -12,6 +12,10 @@ import type { DeleteRecipeAlertState } from "../lib/recipeListOwnerState";
 import RecipeCard from "../components/RecipeCard";
 import AppHeader from "../components/AppHeader";
 import NoData from "../components/NoData";
+import {
+  emptyTotalTimeFilter,
+  invalidTimeLink,
+} from "../lib/emptyStateMessages";
 import DangerToast from "../components/DangerToast";
 import RecipeListLoadingBlock from "../components/RecipeListLoadingBlock";
 import ListPageShell from "../components/ListPageShell";
@@ -98,15 +102,9 @@ const TotalTimeRecipeList: React.FC = () => {
           loadingView={<RecipeListLoadingBlock />}
           emptyView={
             !minutesValid ? (
-              <NoData
-                title="Invalid time"
-                description="This link doesn’t include a valid total time in minutes."
-              />
+              <NoData {...invalidTimeLink} />
             ) : (
-              <NoData
-                title="No recipes for this time"
-                description={`Nobody has published a recipe with ${totalMinutes} minutes total (prep + cook) yet.`}
-              />
+              <NoData {...emptyTotalTimeFilter(totalMinutes)} />
             )
           }
         >

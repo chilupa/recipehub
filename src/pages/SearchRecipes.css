@@ -1,12 +1,12 @@
 .search-recipes-content {
-  --padding-bottom: 88px;
+  --padding-bottom: var(--list-page-pad-bottom);
 }
 
 .search-recipes-input-wrap {
   position: sticky;
   top: 0;
   z-index: 5;
-  padding: 8px 12px 4px;
+  padding: var(--list-page-pad-top) var(--recipe-card-grid-pad-x) 4px;
   background: var(--ion-background-color);
 }
 
@@ -22,13 +22,18 @@
 .search-recipes-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  padding: 10px 12px 12px;
+  gap: var(--recipe-card-grid-gap);
+  padding: var(--list-page-pad-top) var(--recipe-card-grid-pad-x) 12px;
 }
 
 .search-recipes-grid--loading {
   min-height: calc(100vh - 170px);
   align-content: start;
+}
+
+.search-recipes-tab-empty {
+  padding-top: var(--list-page-empty-pad-top);
+  padding-bottom: var(--list-page-pad-bottom);
 }
 
 @media (min-width: 720px) {
@@ -39,16 +44,19 @@
 
 .search-recipes-card {
   margin: 0;
-  padding: 10px;
+  padding: var(--recipe-card-padding-compact);
   min-height: 150px;
-  border-radius: 14px;
+  border-radius: var(--recipe-card-radius);
+  box-shadow: var(--recipe-card-shadow);
+  border: var(--recipe-card-border);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .search-recipes-title {
   margin: 0;
-  color: #000;
+  color: var(--ion-color-dark);
   font-size: 0.96rem;
   line-height: 1.25;
   display: -webkit-box;
@@ -87,7 +95,7 @@
 
 .search-recipes-skeleton-line {
   height: 11px;
-  border-radius: 8px;
+  border-radius: calc(var(--recipe-card-radius) * 0.45);
   margin-top: 8px;
   background: linear-gradient(
     90deg,

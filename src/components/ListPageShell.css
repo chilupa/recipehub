@@ -1,4 +1,37 @@
 .list-page-shell__list {
-  padding-top: 8px;
-  padding-bottom: 80px;
+  padding-top: var(--list-page-pad-top);
+  padding-bottom: var(--list-page-pad-bottom);
+}
+
+.list-page-shell__state {
+  padding-bottom: var(--list-page-pad-bottom);
+}
+
+.list-page-shell__state--loading {
+  padding-top: var(--list-page-pad-top);
+}
+
+.list-page-shell__state--empty {
+  padding-top: var(--list-page-empty-pad-top);
+}
+
+/** Spinner-only loading (favorites, my recipes) */
+.recipe-list-loading-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: min(42vh, 260px);
+  padding-left: var(--recipe-card-grid-pad-x);
+  padding-right: var(--recipe-card-grid-pad-x);
+}
+
+.recipe-list-loading-block__hint {
+  margin-top: 12px;
+  text-align: center;
+}
+
+/** IonContent on tabs that use manual layouts (favorites) instead of ListPageShell */
+.page-ion-content--list-rhythm {
+  --padding-bottom: var(--list-page-pad-bottom);
 }

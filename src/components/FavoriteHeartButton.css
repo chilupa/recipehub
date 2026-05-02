@@ -1,14 +1,65 @@
-/* Light favorite feedback — short pop on like, soft settle on unlike */
+/* Favorite feedback: burst ring + heart overshoot/tilt + optional count bump */
 
-/* Circular hit target so the MD ripple reads as a round splash, not a rounded rect */
 .favorite-heart-wrap {
+  --favorite-burst-x: 18px;
   display: inline-flex;
   align-items: center;
-  gap:2px;
+  gap: 2px;
   max-width: 100%;
+  position: relative;
+  z-index: 0;
+}
+
+/* Expanding ring aligned to icon center (44px default button) */
+.favorite-heart-wrap--celebrate::before {
+  content: "";
+  position: absolute;
+  left: var(--favorite-burst-x);
+  top: 50%;
+  z-index: 0;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: favorite-heart-burst-ring 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.favorite-heart-wrap--celebrate::after {
+  content: "";
+  position: absolute;
+  left: var(--favorite-burst-x);
+  top: 50%;
+  z-index: 0;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: favorite-heart-burst-ring-delayed 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.08s forwards;
+}
+
+/* Count sits after the full tap square; the icon is centered, so this reads as a big gap.
+   Tighter row when a number is shown: slightly smaller square + zero gap + optical nudge. */
+.favorite-heart-wrap--with-count {
+  --favorite-burst-x: 16px;
+  gap: 0;
+}
+
+.favorite-heart-wrap--with-count ion-button.favorite-heart-btn.button-small {
+  width: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  height: 32px;
+}
+
+.favorite-heart-wrap--with-count .favorite-heart-count {
+  margin-left: -3px;
 }
 
 ion-button.favorite-heart-btn {
+  position: relative;
+  z-index: 1;
   --border-radius: 50%;
   --background: transparent;
   --background-hover: transparent;
@@ -34,11 +85,20 @@ ion-button.favorite-heart-btn.button-small {
   min-height: 36px;
 }
 
+/* Default-size icon button (44px): ring centered on tap area */
+.favorite-heart-wrap:not(.favorite-heart-wrap--with-count):has(
+    ion-button.favorite-heart-btn:not(.button-small)
+  ) {
+  --favorite-burst-x: 22px;
+}
+
 ion-button.favorite-heart-btn.favorite-heart-btn--liked {
   --ripple-color: rgba(var(--ion-color-danger-rgb), 0.28);
 }
 
 .favorite-heart-count {
+  position: relative;
+  z-index: 1;
   font-size: 0.8125rem;
   line-height: 1;
   font-weight: 500;
@@ -51,17 +111,62 @@ ion-button.favorite-heart-btn.favorite-heart-btn--liked {
   color: var(--ion-color-danger);
 }
 
-@keyframes favorite-heart-pop {
+.favorite-heart-count--bump {
+  animation: favorite-heart-count-bump 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes favorite-heart-burst-ring {
   0% {
-    transform: scale(0.88);
-    opacity: 0.9;
+    box-shadow: 0 0 0 0 rgba(var(--ion-color-danger-rgb), 0.55);
+    opacity: 1;
   }
-  55% {
-    transform: scale(1.14);
+  100% {
+    box-shadow: 0 0 0 18px rgba(var(--ion-color-danger-rgb), 0);
+    opacity: 0;
+  }
+}
+
+@keyframes favorite-heart-burst-ring-delayed {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--ion-color-danger-rgb), 0.35);
+    opacity: 1;
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(var(--ion-color-danger-rgb), 0);
+    opacity: 0;
+  }
+}
+
+@keyframes favorite-heart-count-bump {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.18);
   }
   100% {
     transform: scale(1);
+  }
+}
+
+@keyframes favorite-heart-pop {
+  0% {
+    transform: scale(0.65) rotate(-14deg);
+    opacity: 0.85;
+    filter: drop-shadow(0 0 0 rgba(var(--ion-color-danger-rgb), 0));
+  }
+  45% {
+    transform: scale(1.22) rotate(6deg);
+    filter: drop-shadow(0 2px 8px rgba(var(--ion-color-danger-rgb), 0.45));
+  }
+  72% {
+    transform: scale(0.94) rotate(-3deg);
+    filter: drop-shadow(0 1px 4px rgba(var(--ion-color-danger-rgb), 0.25));
+  }
+  100% {
+    transform: scale(1) rotate(0);
     opacity: 1;
+    filter: drop-shadow(0 0 0 rgba(var(--ion-color-danger-rgb), 0));
   }
 }
 
@@ -82,7 +187,7 @@ ion-button.favorite-heart-btn.favorite-heart-btn--liked {
 }
 
 .favorite-heart-wrap ion-icon.favorite-heart-ion--pop {
-  animation: favorite-heart-pop 0.38s cubic-bezier(0.33, 1.4, 0.55, 1) 1;
+  animation: favorite-heart-pop 0.52s cubic-bezier(0.34, 1.56, 0.64, 1) 1;
 }
 
 .favorite-heart-wrap ion-icon.favorite-heart-ion--out {
@@ -92,6 +197,16 @@ ion-button.favorite-heart-btn.favorite-heart-btn--liked {
 @media (prefers-reduced-motion: reduce) {
   .favorite-heart-wrap ion-icon.favorite-heart-ion--pop,
   .favorite-heart-wrap ion-icon.favorite-heart-ion--out {
+    animation: none;
+  }
+
+  .favorite-heart-wrap--celebrate::before,
+  .favorite-heart-wrap--celebrate::after {
+    animation: none;
+    opacity: 0;
+  }
+
+  .favorite-heart-count--bump {
     animation: none;
   }
 }

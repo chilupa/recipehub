@@ -4,6 +4,7 @@ import { IonAvatar } from "@ionic/react";
 interface UserAvatarProps {
   name: string;
   size?: number;
+  /** Ionic color name or hex (e.g. `primary`, `medium`, `#5c7c3e`). */
   color?: string;
 }
 
