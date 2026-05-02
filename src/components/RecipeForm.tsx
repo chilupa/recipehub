@@ -330,7 +330,7 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
             <h3 className="recipe-form-section-title">Time & servings</h3>
             <IonText color="medium">
               <p className="recipe-form-hint ion-padding-horizontal">
-                All optional—leave blank if you don’t know yet.
+                All optional. Leave blank if you don’t know yet.
               </p>
             </IonText>
             <IonGrid className="recipe-form-meta-grid ion-no-padding">

@@ -1,0 +1,52 @@
+.shopping-list-content {
+  --padding-bottom: var(--list-page-pad-bottom);
+}
+
+.shopping-list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: var(--list-page-pad-top) var(--recipe-card-grid-pad-x) 8px;
+}
+
+.shopping-list-toolbar ion-button {
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+.shopping-list-add-row {
+  padding: 14px var(--recipe-card-grid-pad-x) 12px;
+}
+
+.shopping-list-add-row ion-item {
+  --background: var(--ion-item-background, var(--ion-background-color));
+  --border-radius: 12px;
+  --padding-start: 12px;
+  --inner-padding-end: 8px;
+  border: 1px solid rgba(var(--ion-color-medium-rgb), 0.25);
+}
+
+.shopping-list-groups {
+  padding: 0 var(--recipe-card-grid-pad-x);
+}
+
+.shopping-list-groups ion-list-header {
+  padding-inline-start: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ion-color-medium);
+  min-height: 36px;
+}
+
+.shopping-line--done {
+  text-decoration: line-through;
+  color: var(--ion-color-medium);
+}
+
+.shopping-list-empty {
+  padding-top: var(--list-page-empty-pad-top);
+  padding-bottom: var(--list-page-pad-bottom);
+}

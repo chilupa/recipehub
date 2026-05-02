@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from "react";
 import {
   IonAlert,
+  IonBadge,
   IonContent,
   IonPage,
   IonItem,
@@ -16,6 +17,7 @@ import {
 import { useHistory } from "react-router-dom";
 import {
   bookOutline,
+  cartOutline,
   heartOutline,
   logOutOutline,
   notificationsOutline,
@@ -27,12 +29,27 @@ import {
 import AppHeader from "../components/AppHeader";
 import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../contexts/AuthContext";
+import { useShoppingList } from "../contexts/ShoppingListContext";
+import { suppressProfileShoppingTabBadge } from "../utils/profileShoppingTabBadge";
 import "./Profile.css";
 
 const Profile: React.FC = () => {
   const history = useHistory();
   const ionRouter = useIonRouter();
   const { user, updateUser, logout, deleteAccount } = useAuth();
+  const { items: shoppingItems } = useShoppingList();
+  const { shoppingPending, shoppingHasList } = useMemo(() => {
+    const pending = shoppingItems.filter((l) => !l.checked).length;
+    return {
+      shoppingPending: pending,
+      shoppingHasList: shoppingItems.length > 0,
+    };
+  }, [shoppingItems]);
+
+  useLayoutEffect(() => {
+    suppressProfileShoppingTabBadge();
+  }, []);
+
   const [name, setName] = useState("");
   const [originalName, setOriginalName] = useState("");
   const [editingName, setEditingName] = useState(false);
@@ -260,6 +277,31 @@ const Profile: React.FC = () => {
                   Favorites and notifications
                 </p>
               </IonLabel>
+            </IonItem>
+            <IonItem button detail routerLink="/recipes/shopping">
+              <IonIcon icon={cartOutline} slot="start" color="primary" />
+              <IonLabel>
+                <h2 style={{ fontSize: "1rem", fontWeight: 600, margin: 0 }}>
+                  Shopping list
+                </h2>
+                <p style={{ margin: "4px 0 0", fontSize: "0.875rem" }}>
+                  {shoppingPending > 0
+                    ? `${shoppingPending} to buy · Check off at the store`
+                    : "Check off ingredients at the store"}
+                </p>
+              </IonLabel>
+              {shoppingPending > 0 ? (
+                <IonBadge slot="end" color="primary">
+                  {shoppingPending > 99 ? "99+" : shoppingPending}
+                </IonBadge>
+              ) : shoppingHasList ? (
+                <span
+                  slot="end"
+                  className="profile-shopping-list-dot"
+                  title="Shopping list"
+                  aria-hidden
+                />
+              ) : null}
             </IonItem>
           </IonList>
         </div>

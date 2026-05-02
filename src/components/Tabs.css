@@ -2,3 +2,22 @@
 .app-tab-bar ion-icon {
   font-size: 1.25rem;
 }
+
+/* Shopping list saved but all checked — subtle dot (badge-style position on tab) */
+.app-tab-profile-shopping-dot {
+  position: absolute;
+  top: 6px;
+  left: calc(50% + 14px);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  box-shadow: 0 0 0 2px var(--ion-background-color, #fff);
+  pointer-events: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-tab-profile-shopping-dot {
+    box-shadow: 0 0 0 2px var(--ion-background-color, #121212);
+  }
+}

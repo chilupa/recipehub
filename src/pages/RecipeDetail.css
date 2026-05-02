@@ -76,6 +76,54 @@
   font-size: 12px;
 }
 
+.recipe-detail-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.recipe-detail-section-heading .recipe-detail-section-title {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.recipe-detail-section-heading-action {
+  flex-shrink: 0;
+}
+
+.recipe-detail-shop-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 4px 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ion-color-primary);
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.recipe-detail-shop-inline:active {
+  background: rgba(var(--ion-color-primary-rgb), 0.12);
+}
+
+.recipe-detail-shop-inline ion-icon {
+  font-size: 1.25rem;
+}
+
+.recipe-detail-shop-inline-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
 .recipe-detail-author-row {
   display: flex;
   justify-content: space-between;
@@ -107,7 +155,7 @@
 }
 
 .recipe-detail-section-title {
-  margin: 0 0 12px 0;
+  margin: 0;
   font-size: 1.125rem; /* 18px — steps below page title */
   font-weight: 700;
 }
