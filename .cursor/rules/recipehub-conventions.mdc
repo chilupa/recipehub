@@ -1,0 +1,14 @@
+---
+description: RecipeHub code style, copy tone, and README feature notes
+alwaysApply: true
+---
+
+# Code style
+
+- Do not exceed more than 200 lines of code in any React component file. If it exceeds, create a new component and import it.
+- Do not use inline CSS styling (use CSS files or shared tokens).
+- Use a casual tone for any user-facing text. Do not use em dashes.
+
+# Documentation
+
+- When a new feature is added, add a short note under the Features section in `README.md`.

@@ -11,7 +11,7 @@ import {
   IonText,
   IonToast,
 } from "@ionic/react";
-import { createOutline, people, shareOutline, time } from "ionicons/icons";
+import { cartOutline, createOutline, people, shareOutline, time } from "ionicons/icons";
 import { useHistory, useParams } from "react-router-dom";
 import AppHeader from "../components/AppHeader";
 import RecipeDetailSkeleton from "../components/RecipeDetailSkeleton";
@@ -20,6 +20,7 @@ import FavoriteHeartButton from "../components/FavoriteHeartButton";
 import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../contexts/AuthContext";
 import { useRecipes } from "../contexts/RecipeContext";
+import { useShoppingList } from "../contexts/ShoppingListContext";
 import "./RecipeDetail.css";
 
 const formatFavorites = (count: number): string => {
@@ -32,18 +33,26 @@ type RecipeSectionProps = {
   title: string;
   items: string[];
   numbered?: boolean;
+  /** Optional control next to the section title (e.g. compact “add to list”). */
+  headerAction?: React.ReactNode;
 };
 
 const RecipeSection: React.FC<RecipeSectionProps> = ({
   title,
   items,
   numbered = false,
+  headerAction,
 }) => {
   if (items.length === 0) return null;
 
   return (
     <section className="recipe-detail-section">
-      <h2 className="recipe-detail-section-title">{title}</h2>
+      <div className="recipe-detail-section-heading">
+        <h2 className="recipe-detail-section-title">{title}</h2>
+        {headerAction ? (
+          <div className="recipe-detail-section-heading-action">{headerAction}</div>
+        ) : null}
+      </div>
       <IonList>
         {items.map((item, index) => (
           <IonItem key={`${title}-${index}-${item}`}>
@@ -67,6 +76,7 @@ const RecipeDetail: React.FC = () => {
   const history = useHistory();
   const { recipes, toggleFavorite, ensureRecipeLoaded, shareRecipe } =
     useRecipes();
+  const { addFromRecipe } = useShoppingList();
   const { id } = useParams<{ id: string }>();
   const [toast, setToast] = useState({ show: false, message: "" });
   const [loadFailed, setLoadFailed] = useState(false);
@@ -295,7 +305,35 @@ const RecipeDetail: React.FC = () => {
           </div>
         </div>
 
-        <RecipeSection title="Ingredients" items={recipe.ingredients} />
+        <RecipeSection
+          title="Ingredients"
+          items={recipe.ingredients}
+          headerAction={
+            <button
+              type="button"
+              className="recipe-detail-shop-inline"
+              aria-label="Add ingredients to shopping list"
+              onClick={() => {
+                const n = addFromRecipe(recipe);
+                if (n === 0) {
+                  setToast({
+                    show: true,
+                    message:
+                      "Those ingredients are already on your shopping list.",
+                  });
+                } else {
+                  setToast({
+                    show: true,
+                    message: `Added ${n} ${n === 1 ? "item" : "items"} to your shopping list.`,
+                  });
+                }
+              }}
+            >
+              <IonIcon icon={cartOutline} aria-hidden />
+              <span className="recipe-detail-shop-inline-label">Add to list</span>
+            </button>
+          }
+        />
         <RecipeSection
           title="Instructions"
           items={recipe.instructions}

@@ -11,13 +11,13 @@ export type EmptyStateCopy = {
 export const emptyStateFallback: EmptyStateCopy = {
   title: "Nothing here yet",
   description:
-    "Check back soon—we'll show things here when there's something to see.",
+    "Check back soon. We'll show things here when there's something to see.",
 };
 
 export const emptyFeedGuest: EmptyStateCopy = {
   title: "Nothing here yet",
   description:
-    "No recipes to preview right now—could be a quiet moment or a spotty connection. Pull to refresh.",
+    "No recipes to preview right now. It might be a quiet moment or a spotty connection. Pull to refresh.",
 };
 
 export const emptyFeedSignedIn: EmptyStateCopy = {
@@ -27,7 +27,7 @@ export const emptyFeedSignedIn: EmptyStateCopy = {
 
 export const emptyMyRecipes: EmptyStateCopy = {
   title: "Nothing here yet",
-  description: "Tap + to add a recipe—it'll show up in this list.",
+  description: "Tap + to add a recipe. It'll show up in this list.",
 };
 
 export const emptyFavorites: EmptyStateCopy = {
@@ -38,7 +38,7 @@ export const emptyFavorites: EmptyStateCopy = {
 export const emptySearchPrompt: EmptyStateCopy = {
   title: "Find something good",
   description:
-    "We search titles, tags, and descriptions—type above and see what turns up.",
+    "We search titles, tags, and descriptions. Type above and see what turns up.",
 };
 
 export function emptySearchNoResults(query: string): EmptyStateCopy {
@@ -54,7 +54,7 @@ export function emptySearchNoResults(query: string): EmptyStateCopy {
 export function emptyTagFilter(tagDisplay: string): EmptyStateCopy {
   return {
     title: "Nothing here yet",
-    description: `No one's tagged a recipe “${tagDisplay}” yet—you could be first.`,
+    description: `No one's tagged a recipe “${tagDisplay}” yet. You could be first.`,
   };
 }
 
@@ -91,4 +91,10 @@ export const invalidServingsLink: EmptyStateCopy = {
 export const emptyActivity: EmptyStateCopy = {
   title: "Nothing here yet",
   description: "When folks favorite your recipes, you'll see it here.",
+};
+
+export const emptyShoppingList: EmptyStateCopy = {
+  title: "Nothing here yet",
+  description:
+    "Open a recipe and tap “Add ingredients to shopping list.” Or add items above. Find this list anytime under Profile.",
 };

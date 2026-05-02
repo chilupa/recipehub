@@ -80,6 +80,15 @@
   margin-bottom: 8px;
 }
 
+.profile-shopping-list-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  align-self: center;
+}
+
 @media (prefers-color-scheme: dark) {
   .profile-card {
     box-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);

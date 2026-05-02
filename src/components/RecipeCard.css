@@ -184,6 +184,7 @@ ion-card.recipe-card.recipe-card-skeleton {
   min-height: 32px;
 }
 
+/* Match ListPageShell list width: cards use --recipe-card-margin-x only; no extra grid pad-x. */
 .recipe-favorites-grid {
-  padding: var(--list-page-pad-top) var(--recipe-card-grid-pad-x) 0;
+  padding: var(--list-page-pad-top) 0 0;
 }
