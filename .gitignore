@@ -9,6 +9,7 @@ config/
 config.*
 supabase/.temp/
 
+.cursor/
 # testing
 /coverage
 
