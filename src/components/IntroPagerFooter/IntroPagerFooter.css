@@ -1,0 +1,29 @@
+.intro-pager-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 24px 24px;
+  background: linear-gradient(
+    transparent,
+    var(--ion-background-color) 20px
+  );
+  z-index: 100;
+}
+
+.intro-pager-footer__primary {
+  font-weight: 600;
+}
+
+.intro-pager-footer__skip {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 24px;
+  padding: 8px;
+  background: none;
+  border: none;
+  color: var(--ion-color-medium);
+  font-size: 16px;
+  cursor: pointer;
+}

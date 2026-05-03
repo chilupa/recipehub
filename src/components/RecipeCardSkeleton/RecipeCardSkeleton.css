@@ -1,0 +1,99 @@
+.recipe-card-skeleton-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.recipe-card-skeleton-head__text {
+  min-width: 0;
+  flex: 1;
+}
+
+.recipe-card-skeleton-chips {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.recipe-card-skeleton-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recipe-card-skeleton-footer__byline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.recipe-card-skeleton__sk {
+  border-radius: 4px;
+}
+
+.recipe-card-skeleton__sk--title-wide {
+  width: 92%;
+  height: 18px;
+  margin-bottom: 8px;
+}
+
+.recipe-card-skeleton__sk--title-narrow {
+  width: 55%;
+  height: 18px;
+  margin-bottom: 10px;
+}
+
+.recipe-card-skeleton__sk--desc-full {
+  width: 100%;
+  height: 13px;
+  margin-bottom: 6px;
+}
+
+.recipe-card-skeleton__sk--desc-short {
+  width: 78%;
+  height: 13px;
+}
+
+.recipe-card-skeleton__sk--menu {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.recipe-card-skeleton__sk--chip-1 {
+  width: 72px;
+  height: 24px;
+  border-radius: 12px;
+}
+
+.recipe-card-skeleton__sk--chip-2 {
+  width: 52px;
+  height: 24px;
+  border-radius: 12px;
+}
+
+.recipe-card-skeleton__sk--chip-3 {
+  width: 64px;
+  height: 24px;
+  border-radius: 12px;
+}
+
+.recipe-card-skeleton__sk--avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.recipe-card-skeleton__sk--author {
+  width: 128px;
+  height: 14px;
+}
+
+.recipe-card-skeleton__sk--action {
+  width: 52px;
+  height: 32px;
+  border-radius: 8px;
+}

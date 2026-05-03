@@ -1,0 +1,15 @@
+.edit-recipe-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 48px;
+}
+
+.edit-recipe-loading__hint {
+  margin-top: 12px;
+}
+
+.edit-recipe-not-found {
+  padding: 16px;
+  color: var(--ion-color-medium);
+}

@@ -1,0 +1,19 @@
+.activity-notification-item__title {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.activity-notification-item__recipe {
+  margin: 0;
+  color: var(--ion-color-medium);
+}
+
+.activity-notification-item__when {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--ion-color-medium);
+}
+
+.activity-notification-item--unread {
+  --background: var(--ion-color-light);
+}

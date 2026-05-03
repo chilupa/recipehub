@@ -9,8 +9,6 @@ import React, {
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { useAuth } from "./AuthContext";
 
-const useMockData = import.meta.env.VITE_USE_MOCK_DATA === "true";
-
 export type ActivityItem = {
   id: string;
   read: boolean;
@@ -60,8 +58,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const enabled =
-    Boolean(user) && isSupabaseConfigured() && !useMockData;
+  const enabled = Boolean(user) && isSupabaseConfigured();
 
   const load = useCallback(async () => {
     if (!user || !enabled) {

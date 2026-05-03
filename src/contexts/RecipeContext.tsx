@@ -45,30 +45,9 @@ interface RecipeContextType {
 
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
 
-const useMockData = import.meta.env.VITE_USE_MOCK_DATA === "true";
-const MOCK_RECIPES_KEY = "recipe-logger-recipes";
-const MAX_TAGS = 5;
 const PAGE_SIZE = 10;
 const shareWebBaseUrl = (import.meta.env.VITE_SHARE_WEB_BASE_URL ?? "").trim();
 const appDownloadUrl = (import.meta.env.VITE_APP_DOWNLOAD_URL ?? "").trim();
-
-const readAllMockRecipes = (): Recipe[] => {
-  try {
-    const stored = localStorage.getItem(MOCK_RECIPES_KEY);
-    const all = stored ? (JSON.parse(stored) as Recipe[]) : [];
-    return Array.isArray(all) ? all : [];
-  } catch {
-    return [];
-  }
-};
-
-const writeAllMockRecipes = (all: Recipe[]) => {
-  try {
-    localStorage.setItem(MOCK_RECIPES_KEY, JSON.stringify(all));
-  } catch {
-    // ignore
-  }
-};
 
 const getRecipeShareUrl = (recipeId: string): string => {
   if (shareWebBaseUrl) {
@@ -77,53 +56,6 @@ const getRecipeShareUrl = (recipeId: string): string => {
   }
   if (appDownloadUrl) return appDownloadUrl;
   return window.location.href;
-};
-
-const seedMockRecipesForUser = (u: {
-  id: string;
-  name?: string;
-  email?: string;
-}) => {
-  const now = new Date().toISOString();
-  const author = u.name || u.email || "You";
-
-  const mk = (
-    idx: number,
-    title: string,
-    description: string,
-    tags: string[],
-  ): Recipe => ({
-    id: `mock-${u.id}-${Date.now()}-${idx}`,
-    userId: u.id,
-    title,
-    description,
-    ingredients: ["1 cup ingredient", "2 tbsp ingredient", "to taste salt"],
-    instructions: ["Mix ingredients", "Cook until done", "Serve and enjoy"],
-    prepTime: 10 + idx * 2,
-    cookTime: 15 + idx * 3,
-    servings: 2 + idx,
-    tags: tags.slice(0, MAX_TAGS),
-    createdAt: now,
-    updatedAt: now,
-    likes: idx === 0 ? 3 : 0,
-    isLiked: idx === 0,
-    author,
-  });
-
-  return [
-    mk(
-      1,
-      "Crispy Chickpea Bowl",
-      "A crunchy, spicy bowl you can make in under 30 minutes.",
-      ["quick", "high-protein", "vegan"],
-    ),
-    mk(
-      2,
-      "Garlic Lemon Pasta",
-      "Bright lemon + garlic flavor with a silky sauce.",
-      ["comfort", "pasta", "easy"],
-    ),
-  ];
 };
 
 function upsertRecipeSorted(prev: Recipe[], updated: Recipe): Recipe[] {
@@ -169,16 +101,6 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
         setFavoriteRecipes([]);
         return;
       }
-      if (useMockData) {
-        const favs = readAllMockRecipes()
-          .filter((r) => r.isLiked)
-          .slice()
-          .sort((a, b) =>
-            (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
-          );
-        setFavoriteRecipes(favs);
-        return;
-      }
       if (withSpinner) setFavoritesLoading(true);
       try {
         const list = await fetchFavoriteRecipesList(user.id);
@@ -209,44 +131,6 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
     loadingMoreRef.current = false;
 
     try {
-      if (useMockData) {
-        const all = readAllMockRecipes();
-        if (user) {
-          let userRecipes = all.filter((r) => r.userId === user.id);
-
-          if (userRecipes.length === 0) {
-            userRecipes = seedMockRecipesForUser(user);
-            writeAllMockRecipes([...(all ?? []), ...userRecipes]);
-          }
-
-          const sorted = userRecipes
-            .slice()
-            .sort((a, b) =>
-              (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
-            );
-          if (gen !== loadGenerationRef.current) return;
-
-          const first = sorted.slice(0, PAGE_SIZE);
-          setRecipes(first);
-          setHasMoreRecipes(sorted.length > PAGE_SIZE);
-          setRecipesTotalCount(sorted.length);
-          return;
-        }
-
-        const sorted = all
-          .slice()
-          .sort((a, b) =>
-            (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
-          );
-        if (gen !== loadGenerationRef.current) return;
-
-        const first = sorted.slice(0, PAGE_SIZE);
-        setRecipes(first);
-        setHasMoreRecipes(sorted.length > PAGE_SIZE);
-        setRecipesTotalCount(sorted.length);
-        return;
-      }
-
       try {
         const list = await fetchFeedRecipesPage(PAGE_SIZE, 0, viewerId);
         if (gen !== loadGenerationRef.current) return;
@@ -278,27 +162,6 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const loadMoreRecipes = useCallback(async () => {
     if (!canLoadFeed || !hasMoreRecipes || loadingMoreRef.current) return;
-
-    if (useMockData) {
-      loadingMoreRef.current = true;
-      try {
-        const all = readAllMockRecipes().filter((r) =>
-          user ? r.userId === user.id : true,
-        );
-        const sorted = all
-          .slice()
-          .sort((a, b) =>
-            (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
-          );
-        const offset = recipesRef.current.length;
-        const next = sorted.slice(offset, offset + PAGE_SIZE);
-        setRecipes((prev) => [...prev, ...next]);
-        setHasMoreRecipes(offset + next.length < sorted.length);
-      } finally {
-        loadingMoreRef.current = false;
-      }
-      return;
-    }
 
     loadingMoreRef.current = true;
     const offset = recipesRef.current.length;
@@ -333,15 +196,6 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
     async (id: string): Promise<boolean> => {
       if (!canLoadFeed) return false;
       if (recipesRef.current.some((r) => r.id === id)) return true;
-
-      if (useMockData) {
-        const r = readAllMockRecipes().find((x) => x.id === id);
-        if (r) {
-          setRecipes((prev) => upsertRecipeSorted(prev, r));
-          return true;
-        }
-        return false;
-      }
 
       const r = await fetchRecipeById(id, viewerId);
       if (r) {
@@ -395,32 +249,6 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
   const addRecipe = async (newRecipe: NewRecipe) => {
     if (!user) return;
 
-    if (useMockData) {
-      const all = readAllMockRecipes();
-      const recipe: Recipe = {
-        id: Date.now().toString(),
-        title: newRecipe.title.trim(),
-        description: newRecipe.description.trim() || "",
-        ingredients: newRecipe.ingredients,
-        instructions: newRecipe.instructions,
-        prepTime: newRecipe.prepTime ?? 0,
-        cookTime: newRecipe.cookTime ?? 0,
-        servings: newRecipe.servings ?? 0,
-        tags: newRecipe.tags ?? [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        likes: 0,
-        isLiked: false,
-        author: user.name || user.email || "You",
-        userId: user.id,
-      };
-
-      writeAllMockRecipes([recipe, ...all]);
-      setRecipes((prev) => [recipe, ...prev]);
-      setRecipesTotalCount((c) => (c ?? 0) + 1);
-      return;
-    }
-
     try {
       const { data: inserted, error } = await supabase
         .from("recipes")
@@ -451,28 +279,6 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updateRecipe = async (id: string, updates: Partial<Recipe>) => {
     if (!user) return;
-
-    if (useMockData) {
-      const all = readAllMockRecipes();
-      const updatedAt = new Date().toISOString();
-      const nextAll = all.map((r) =>
-        r.id === id && r.userId === user.id
-          ? {
-              ...r,
-              ...updates,
-              updatedAt,
-              author: user.name || user.email || r.author,
-            }
-          : r,
-      );
-
-      writeAllMockRecipes(nextAll);
-      const patch = (r: Recipe) =>
-        r.id === id ? { ...r, ...updates, updatedAt } : r;
-      setRecipes((prev) => prev.map(patch));
-      setFavoriteRecipes((prev) => prev.map(patch));
-      return;
-    }
 
     try {
       const payload: Record<string, unknown> = {};
@@ -515,16 +321,6 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
   const deleteRecipe = async (id: string) => {
     if (!user) return;
 
-    if (useMockData) {
-      const all = readAllMockRecipes();
-      const nextAll = all.filter((r) => !(r.id === id && r.userId === user.id));
-      writeAllMockRecipes(nextAll);
-      setRecipes((prev) => prev.filter((r) => r.id !== id));
-      setFavoriteRecipes((prev) => prev.filter((r) => r.id !== id));
-      setRecipesTotalCount((c) => Math.max(0, (c ?? 1) - 1));
-      return;
-    }
-
     try {
       const { error } = await supabase
         .from("recipes")
@@ -546,11 +342,8 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!user) return;
 
     let recipe = recipesRef.current.find((r) => r.id === id);
-    if (!recipe && !useMockData) {
+    if (!recipe) {
       recipe = (await fetchRecipeById(id, user.id)) ?? undefined;
-    }
-    if (!recipe && useMockData) {
-      recipe = readAllMockRecipes().find((r) => r.id === id);
     }
     if (!recipe) return;
 
@@ -560,25 +353,6 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
       isLiked: !isFav,
       likes: !isFav ? recipe.likes + 1 : Math.max(0, recipe.likes - 1),
     };
-
-    if (useMockData) {
-      const all = readAllMockRecipes();
-      const nextAll = all.map((r) => {
-        if (r.id !== id) return r;
-        const nextLiked = !r.isLiked;
-        const nextLikes = nextLiked ? r.likes + 1 : Math.max(0, r.likes - 1);
-        return {
-          ...r,
-          isLiked: nextLiked,
-          likes: nextLikes,
-          updatedAt: new Date().toISOString(),
-        };
-      });
-      writeAllMockRecipes(nextAll);
-      setRecipes((prev) => replaceRecipePreservingOrder(prev, optimisticRecipe));
-      void loadFavorites({ withSpinner: false });
-      return;
-    }
 
     // Optimistic UI: reflect heart/count immediately, then persist server-side.
     setRecipes((prev) => replaceRecipePreservingOrder(prev, optimisticRecipe));

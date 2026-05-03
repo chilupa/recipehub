@@ -1,0 +1,7 @@
+.search-recipes-input-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: var(--list-page-pad-top) var(--recipe-card-grid-pad-x) 4px;
+  background: var(--ion-background-color);
+}

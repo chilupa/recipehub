@@ -1,0 +1,9 @@
+.auth-loading-screen__spinner-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.auth-loading-screen__hint {
+  text-align: center;
+  margin-top: 12px;
+}
