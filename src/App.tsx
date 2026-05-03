@@ -30,7 +30,10 @@ import { AuthProvider } from "./contexts/AuthContext";
 import Intro, { hasSeenIntro } from "./pages/Intro";
 import AppRoutes from "./AppRoutes";
 
-setupIonicReact();
+setupIonicReact({
+  /** Edge swipe to go back (iOS mode / native; improves stack depth tracking). */
+  swipeBackEnabled: true,
+});
 
 const App: React.FC = () => {
   const [showIntro, setShowIntro] = useState(() => !hasSeenIntro());

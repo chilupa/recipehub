@@ -1,0 +1,42 @@
+.user-avatar {
+  flex-shrink: 0;
+}
+
+.user-avatar--compact {
+  width: 20px;
+  height: 20px;
+}
+
+.user-avatar--profile {
+  width: 88px;
+  height: 88px;
+}
+
+.user-avatar__inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: calc(min(88px, 100%) * 0.45);
+}
+
+.user-avatar--compact .user-avatar__inner {
+  font-size: 9px;
+}
+
+.user-avatar--profile .user-avatar__inner {
+  font-size: 39.6px;
+}
+
+.user-avatar--ion-primary .user-avatar__inner {
+  background: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast, var(--ion-color-dark));
+}
+
+.user-avatar--ion-medium .user-avatar__inner {
+  background: var(--ion-color-medium);
+  color: var(--ion-color-medium-contrast, var(--ion-color-dark));
+}

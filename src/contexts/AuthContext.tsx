@@ -48,34 +48,6 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const useMockAuth = import.meta.env.VITE_USE_MOCK_AUTH === "true";
-const MOCK_USER_STORAGE_KEY = "recipehub-mock-user";
-const defaultMockUser: User = {
-  id: "mock-user",
-  name: "Demo Chef",
-  email: "demo@example.com",
-  avatarUrl: undefined,
-  joinedAt: "2024-06-01T12:00:00.000Z",
-};
-
-const loadMockUser = (): User | null => {
-  try {
-    const raw = localStorage.getItem(MOCK_USER_STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as User;
-  } catch {
-    return null;
-  }
-};
-
-const saveMockUser = (u: User) => {
-  try {
-    localStorage.setItem(MOCK_USER_STORAGE_KEY, JSON.stringify(u));
-  } catch {
-    // ignore
-  }
-};
-
 function formatProviderAuthError(
   error: unknown,
   providerLabel: string,
@@ -128,13 +100,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const continueWithoutSignIn = () => {
-    if (useMockAuth) return;
     setGuestBrowse(true);
     persistGuestBrowsePreference(true);
   };
 
   const fetchProfile = async (userId: string) => {
-    if (useMockAuth) return null;
     const { data } = await supabase
       .from("profiles")
       .select("display_name, avatar_url")
@@ -144,7 +114,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const upsertProfile = async (supabaseUser: SupabaseUser) => {
-    if (useMockAuth) return;
     const displayName =
       supabaseUser.user_metadata?.full_name?.trim() ||
       supabaseUser.user_metadata?.name?.trim() ||
@@ -165,18 +134,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     let mounted = true;
-
-    if (useMockAuth) {
-      const mock = loadMockUser() ?? defaultMockUser;
-      if (mounted) {
-        setUser(mock);
-        clearGuestBrowse();
-        setIsLoading(false);
-      }
-      return () => {
-        mounted = false;
-      };
-    }
 
     const init = async () => {
       try {
@@ -277,7 +234,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [clearGuestBrowse]);
 
   useEffect(() => {
-    if (useMockAuth || !isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured()) return;
     if (!Capacitor.isNativePlatform()) return;
 
     let cancelled = false;
@@ -306,15 +263,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const loginWithProvider = async (provider: Provider, errorLabel: string) => {
-    if (useMockAuth) {
-      setIsLoading(true);
-      const mock = loadMockUser() ?? defaultMockUser;
-      saveMockUser(mock);
-      setUser(mock);
-      setIsLoading(false);
-      return;
-    }
-
     setIsLoading(true);
     setAuthError(null);
     try {
@@ -349,17 +297,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const logout = async () => {
-    if (useMockAuth) {
-      try {
-        localStorage.removeItem(MOCK_USER_STORAGE_KEY);
-      } catch {
-        // ignore
-      }
-      setUser(null);
-      clearGuestBrowse();
-      return;
-    }
-
     // Clear UI first so we don’t stay on tabs while sign-out network runs.
     setUser(null);
     clearGuestBrowse();
@@ -367,16 +304,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const deleteAccount = useCallback(async () => {
-    if (useMockAuth) {
-      try {
-        localStorage.removeItem(MOCK_USER_STORAGE_KEY);
-      } catch {
-        // ignore
-      }
-      setUser(null);
-      clearGuestBrowse();
-      return;
-    }
     if (!isSupabaseConfigured()) {
       throw new Error("Sign-in is not configured.");
     }
@@ -418,12 +345,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const updateUser = async (updates: Partial<User>) => {
     if (!user) return;
     setUser((prev) => (prev ? { ...prev, ...updates } : null));
-
-    if (useMockAuth) {
-      const updated = { ...user, ...updates };
-      saveMockUser(updated);
-      return;
-    }
 
     const { id } = user;
     const { error } = await supabase

@@ -1,14 +1,31 @@
 ---
-description: RecipeHub code style, copy tone, and README feature notes
+description: RecipeHub code style, copy tone, component structure, and README feature notes
 alwaysApply: true
 ---
 
 # Code style
 
-- Do not exceed more than 200 lines of code in any React component file. If it exceeds, create a new component and import it.
-- Do not use inline CSS styling (use CSS files or shared tokens).
+- Do not exceed 200 lines of code in any React component file. If it exceeds 200 lines, create a new component and import it.
+- Do not use inline CSS styling. Use CSS files or shared tokens.
 - Use a casual tone for any user-facing text. Do not use em dashes.
 
 # Documentation
 
 - When a new feature is added, add a short note under the Features section in `README.md`.
+
+# React Component Structure
+
+- Every React component must be created inside its own folder.
+- Folder name must match the component name.
+- Do not create standalone component files outside a component folder.
+
+**Styles:** Each component must load its styles from a project CSS file (not inline). Prefer a colocated `Component.css` when the component has scoped rules. If it has no rules of its own, import a parent or shared stylesheet (for example `../RecipeForm.css` or `src/pages/shared/...`) and do not add a comment-only stub file.
+
+Typical layout when the component defines its own classes:
+
+```txt
+Profile/
+  Profile.tsx
+  Profile.css
+  index.ts
+```

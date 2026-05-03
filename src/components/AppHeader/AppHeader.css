@@ -1,0 +1,31 @@
+/*
+ * Center toolbar titles without a late horizontal snap: keep start buttons in
+ * their own layer and let the title span the bar with flex centering (no
+ * translateX(-50%) reflow on long strings).
+ */
+ion-toolbar.app-header-toolbar {
+  position: relative;
+}
+
+ion-toolbar.app-header-toolbar ion-buttons[slot="start"] {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+}
+
+ion-toolbar.app-header-toolbar > ion-title.app-header-title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  padding-inline: 3.25rem;
+  margin: 0;
+  max-width: none;
+  flex: none !important;
+  box-sizing: border-box;
+  text-align: center;
+}

@@ -1,0 +1,130 @@
+import { useCallback, useEffect, useState } from "react";
+import type { User } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/AuthContext";
+import { useRecipes } from "../contexts/RecipeContext";
+import {
+  emptyDeleteRecipeAlertState,
+  emptyRecipeMenuPopoverState,
+} from "../lib/recipeListOwnerState";
+import type {
+  DeleteRecipeAlertState,
+  RecipeMenuPopoverState,
+} from "../lib/recipeListOwnerState";
+import type { Recipe } from "../types/Recipe";
+
+const FAVORITE_ERROR = "Could not update favorite.";
+
+export type RecipeFilterListPageController = {
+  recipes: Recipe[];
+  loading: boolean;
+  load: () => Promise<void>;
+  user: User | null;
+  shareRecipe: (recipe: Recipe) => Promise<void>;
+  deleteRecipe: (id: string) => Promise<void>;
+  toast: { show: boolean; message: string };
+  dismissToast: () => void;
+  deleteAlert: DeleteRecipeAlertState;
+  dismissDeleteAlert: () => void;
+  popoverOpen: RecipeMenuPopoverState;
+  dismissPopover: () => void;
+  openPopover: (event: Event, recipeId: string) => void;
+  requestDelete: (recipeId: string, recipeName: string) => void;
+  favoriteRecipe: (recipeId: string) => Promise<void>;
+  showToast: (message: string) => void;
+};
+
+export function useRecipeFilterListPage(
+  fetchRecipes: () => Promise<Recipe[]>,
+): RecipeFilterListPageController {
+  const { user } = useAuth();
+  const { toggleFavorite, shareRecipe, deleteRecipe } = useRecipes();
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState({ show: false, message: "" });
+  const [deleteAlert, setDeleteAlert] = useState<DeleteRecipeAlertState>(
+    emptyDeleteRecipeAlertState,
+  );
+  const [popoverOpen, setPopoverOpen] = useState<RecipeMenuPopoverState>(
+    emptyRecipeMenuPopoverState,
+  );
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const list = await fetchRecipes();
+      setRecipes(Array.isArray(list) ? list : []);
+    } catch (e) {
+      console.error(e);
+      setRecipes([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchRecipes]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const showToast = useCallback((message: string) => {
+    setToast({ show: true, message });
+  }, []);
+
+  const dismissToast = useCallback(
+    () => setToast((t) => ({ ...t, show: false })),
+    [],
+  );
+
+  const dismissDeleteAlert = useCallback(
+    () => setDeleteAlert(emptyDeleteRecipeAlertState),
+    [],
+  );
+
+  const dismissPopover = useCallback(
+    () => setPopoverOpen(emptyRecipeMenuPopoverState),
+    [],
+  );
+
+  const openPopover = useCallback((event: Event, recipeId: string) => {
+    setPopoverOpen({ isOpen: true, event, recipeId });
+  }, []);
+
+  const requestDelete = useCallback(
+    (recipeId: string, recipeName: string) =>
+      setDeleteAlert({
+        isOpen: true,
+        recipeId,
+        recipeName,
+      }),
+    [],
+  );
+
+  const favoriteRecipe = useCallback(
+    async (recipeId: string) => {
+      try {
+        await toggleFavorite(recipeId);
+      } catch {
+        showToast(FAVORITE_ERROR);
+      }
+    },
+    [toggleFavorite, showToast],
+  );
+
+  return {
+    recipes,
+    loading,
+    load,
+    user,
+    shareRecipe,
+    deleteRecipe,
+    toast,
+    dismissToast,
+    deleteAlert,
+    dismissDeleteAlert,
+    popoverOpen,
+    dismissPopover,
+    openPopover,
+    requestDelete,
+    favoriteRecipe,
+    showToast,
+  };
+}

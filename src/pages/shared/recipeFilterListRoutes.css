@@ -1,0 +1,9 @@
+/* Shared by tag / servings / total-time / my-recipes list routes. */
+
+.tag-recipe-list-desc {
+  margin: 0;
+  padding: var(--list-page-pad-top) var(--recipe-card-margin-x) 4px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--ion-color-medium);
+}

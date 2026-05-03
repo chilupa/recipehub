@@ -3,21 +3,21 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
 } from "react";
 import type { Recipe } from "../types/Recipe";
+import type { ShoppingLine } from "../types/shoppingList";
+import {
+  loadShoppingItems,
+  saveShoppingItems,
+  shoppingScopeId,
+} from "../lib/shoppingListStorage";
 import { unsuppressProfileShoppingTabBadge } from "../utils/profileShoppingTabBadge";
+import { useAuth } from "./AuthContext";
 
-const STORAGE_KEY = "recipehub-shopping-v1";
-
-export type ShoppingLine = {
-  id: string;
-  text: string;
-  checked: boolean;
-  recipeId: string;
-  recipeTitle: string;
-};
+export type { ShoppingLine } from "../types/shoppingList";
 
 type ShoppingListContextValue = {
   items: ShoppingLine[];
@@ -40,27 +40,6 @@ function normKey(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-function loadFromStorage(): ShoppingLine[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (row): row is ShoppingLine =>
-        row != null &&
-        typeof row === "object" &&
-        typeof (row as ShoppingLine).id === "string" &&
-        typeof (row as ShoppingLine).text === "string" &&
-        typeof (row as ShoppingLine).checked === "boolean" &&
-        typeof (row as ShoppingLine).recipeId === "string" &&
-        typeof (row as ShoppingLine).recipeTitle === "string",
-    );
-  } catch {
-    return [];
-  }
-}
-
 const ShoppingListContext = createContext<ShoppingListContextValue | null>(
   null,
 );
@@ -68,15 +47,23 @@ const ShoppingListContext = createContext<ShoppingListContextValue | null>(
 export const ShoppingListProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [items, setItems] = useState<ShoppingLine[]>(() => loadFromStorage());
+  const { user, isGuest, isLoading } = useAuth();
+  const scopeId = useMemo(
+    () => shoppingScopeId(user?.id, isGuest),
+    [user?.id, isGuest],
+  );
+
+  const [items, setItems] = useState<ShoppingLine[]>([]);
+
+  useLayoutEffect(() => {
+    if (isLoading) return;
+    setItems(loadShoppingItems(scopeId));
+  }, [scopeId, isLoading]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch {
-      /* ignore quota */
-    }
-  }, [items]);
+    if (isLoading) return;
+    saveShoppingItems(scopeId, items);
+  }, [scopeId, items, isLoading]);
 
   const addFromRecipe = useCallback((recipe: Recipe): number => {
     const trimmed = recipe.ingredients
