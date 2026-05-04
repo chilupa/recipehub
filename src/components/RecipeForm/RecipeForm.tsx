@@ -11,13 +11,14 @@ import {
   emptyFormState,
   toFormState,
   linesFromText,
-  toNewRecipe,
+  toSubmitPayload,
   MAX_TAGS,
   MAX_TAG_LENGTH,
   type RecipeFormHandle,
   type RecipeFormProps,
 } from "./recipeFormModel";
 import "./RecipeForm.css";
+import { useCoverDisplayUrl } from "./useCoverDisplayUrl";
 
 const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
   ({ initialData, formResetKey = 0, onSubmit }, ref) => {
@@ -26,6 +27,8 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
     );
     const [newTag, setNewTag] = useState("");
     const [toast, setToast] = useState({ show: false, message: "" });
+    const { coverDisplayUrl, onPickCover, onRemoveCover } =
+      useCoverDisplayUrl(formData, setFormData);
 
     useEffect(() => {
       if (initialData) {
@@ -62,7 +65,7 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
         return;
       }
       try {
-        await onSubmit(toNewRecipe(formData));
+        await onSubmit(toSubmitPayload(formData));
       } catch {
         setToast({
           show: true,
@@ -153,6 +156,9 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
           onTagInput={handleTagInput}
           onAddTag={addTag}
           onRemoveTag={removeTag}
+          coverDisplayUrl={coverDisplayUrl}
+          onPickCover={onPickCover}
+          onRemoveCover={onRemoveCover}
         />
 
         <IonToast

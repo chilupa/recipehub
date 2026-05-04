@@ -10,7 +10,9 @@
 
 1. In the dashboard, open **SQL Editor** → **New query**.
 2. Copy the contents of `supabase/schema.sql` and run it.
-3. This creates `profiles`, `recipes`, `favorites`, and `notifications` tables and RLS policies.
+3. This creates `profiles`, `recipes`, `favorites`, and `notifications` tables and RLS policies, the **`recipe-images`** storage bucket, and updated feed/search RPCs when you use the current `schema.sql`.
+
+**Existing projects:** run new SQL from `supabase/migrations/` in order (for example `20260503120000_recipe_images.sql`, then `20260504120000_recipe_shares.sql`) so `recipes.image_url`, Storage, `recipe_shares`, and `list_recipes_feed` / `search_recipes_enriched` stay in sync with the app.
 
 ## 3. Enable Google sign-in
 

@@ -1,2 +1,6 @@
 export { default } from "./RecipeForm";
-export type { RecipeFormHandle, RecipeFormProps } from "./recipeFormModel";
+export type {
+  RecipeFormHandle,
+  RecipeFormProps,
+  RecipeSubmitPayload,
+} from "./recipeFormModel";

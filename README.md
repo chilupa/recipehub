@@ -11,13 +11,13 @@ A cross-platform recipe app: sign in, browse a **community feed**, add and edit 
 | Area | What it does |
 |------|----------------|
 | **Auth** | Sign in with **Google** via Supabase Auth; native apps use an in-app browser + deep link callback (`recipehub://…`). |
-| **Recipes** | Paginated **feed** (`IonInfiniteScroll`), recipe **detail**, **add** / **edit** with ingredients, steps, times, servings, and tags. |
+| **Recipes** | Paginated **feed** (`IonInfiniteScroll`), recipe **detail**, **add** / **edit** with ingredients, steps, times, servings, tags, optional **cover photos** (Supabase Storage + `image_url`), and **share counts** (`recipe_shares`). |
 | **Favorites** | Heart on list or detail; dedicated **Favorites** tab; like counts synced server-side. |
 | **Activity** | In-app **notifications** when someone favorites your recipe (Supabase `notifications` + optional Realtime). |
 | **Profile** | Display name (editable), email, links to feed / favorites / activity, sign out. |
 | **Intro** | First-launch onboarding (`Intro.tsx`); skipped after completion (local persistence). |
 
-Data lives in **Supabase** (`profiles`, `recipes`, `favorites`, `notifications`) with **Row Level Security**. See `supabase/schema.sql`.
+Data lives in **Supabase** (`profiles`, `recipes`, `favorites`, `recipe_shares`, `notifications`) plus a public **`recipe-images`** storage bucket, with **Row Level Security**. See `supabase/schema.sql` and `supabase/migrations/`.
 
 ---
 
