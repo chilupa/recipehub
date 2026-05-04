@@ -15,7 +15,10 @@ import {
 } from "@ionic/react";
 import { useRecipes } from "../../contexts/RecipeContext";
 import { useHistory, useParams } from "react-router-dom";
-import RecipeForm, { type RecipeFormHandle } from "../../components/RecipeForm";
+import RecipeForm, {
+  type RecipeFormHandle,
+  type RecipeSubmitPayload,
+} from "../../components/RecipeForm";
 import type { NewRecipe } from "../../types/Recipe";
 import "./EditRecipe.css";
 
@@ -46,7 +49,7 @@ const EditRecipe: React.FC = () => {
     };
   }, [id, recipes, ensureRecipeLoaded]);
 
-  const handleSubmit = async (data: NewRecipe) => {
+  const handleSubmit = async (data: RecipeSubmitPayload) => {
     if (!id) return;
     await updateRecipe(id, data);
     history.push("/recipes");
@@ -62,6 +65,7 @@ const EditRecipe: React.FC = () => {
         cookTime: recipe.cookTime,
         servings: recipe.servings,
         tags: recipe.tags ?? [],
+        image: recipe.image,
       }
     : undefined;
 

@@ -14,8 +14,10 @@ import {
 } from "@ionic/react";
 import { useRecipes } from "../../contexts/RecipeContext";
 import { useHistory } from "react-router-dom";
-import RecipeForm, { type RecipeFormHandle } from "../../components/RecipeForm";
-import type { NewRecipe } from "../../types/Recipe";
+import RecipeForm, {
+  type RecipeFormHandle,
+  type RecipeSubmitPayload,
+} from "../../components/RecipeForm";
 const AddRecipe: React.FC = () => {
   const { addRecipe } = useRecipes();
   const history = useHistory();
@@ -31,7 +33,7 @@ const AddRecipe: React.FC = () => {
     void contentRef.current?.scrollToTop(0);
   });
 
-  const handleSubmit = async (data: NewRecipe) => {
+  const handleSubmit = async (data: RecipeSubmitPayload) => {
     await addRecipe(data);
     history.push("/recipes");
   };

@@ -11,6 +11,9 @@ export type FormState = {
   cookTime: number;
   servings: number;
   tags: string[];
+  coverFile: File | null;
+  removeCover: boolean;
+  existingImageUrl: string | null;
 };
 
 export function emptyFormState(): FormState {
@@ -23,6 +26,9 @@ export function emptyFormState(): FormState {
     cookTime: 0,
     servings: 0,
     tags: [],
+    coverFile: null,
+    removeCover: false,
+    existingImageUrl: null,
   };
 }
 
@@ -38,6 +44,9 @@ export function toFormState(data: NewRecipe): FormState {
     cookTime: data.cookTime ?? 0,
     servings: data.servings ?? 0,
     tags: data.tags ?? [],
+    coverFile: null,
+    removeCover: false,
+    existingImageUrl: data.image?.trim() || null,
   };
 }
 
@@ -85,6 +94,20 @@ export function toNewRecipe(form: FormState): NewRecipe {
   };
 }
 
+/** Full payload for create/update including optional cover image file. */
+export type RecipeSubmitPayload = NewRecipe & {
+  coverFile: File | null;
+  removeCover: boolean;
+};
+
+export function toSubmitPayload(form: FormState): RecipeSubmitPayload {
+  return {
+    ...toNewRecipe(form),
+    coverFile: form.coverFile,
+    removeCover: form.removeCover,
+  };
+}
+
 export const MAX_TAGS = 5;
 export const MAX_TAG_LENGTH = 20;
 
@@ -95,5 +118,5 @@ export type RecipeFormHandle = {
 export interface RecipeFormProps {
   initialData?: NewRecipe | null;
   formResetKey?: number;
-  onSubmit: (data: NewRecipe) => void | Promise<void>;
+  onSubmit: (data: RecipeSubmitPayload) => void | Promise<void>;
 }

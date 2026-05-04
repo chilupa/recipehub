@@ -13,6 +13,8 @@ export interface Recipe {
   updatedAt: string;
   likes: number;
   isLiked: boolean;
+  /** Distinct signed-in users who completed Share for this recipe */
+  shareCount: number;
   author: string;
   userId: string;
 }

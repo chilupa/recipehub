@@ -12,6 +12,7 @@ export type RecipeRow = {
   cook_time: number;
   servings: number;
   tags: string[];
+  image_url?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -25,6 +26,10 @@ type FavoriteRecipeIdRow = {
   recipe_id: string;
 };
 
+type ShareRecipeIdRow = {
+  recipe_id: string;
+};
+
 function toRecipeRows(data: unknown): RecipeRow[] {
   return Array.isArray(data) ? (data as RecipeRow[]) : [];
 }
@@ -34,6 +39,7 @@ export function rowToRecipe(
   author: string,
   likes: number,
   isLiked: boolean,
+  shareCount = 0,
 ): Recipe {
   return {
     id: row.id,
@@ -48,8 +54,10 @@ export function rowToRecipe(
     tags: Array.isArray(row.tags) ? row.tags : [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    image: row.image_url?.trim() || undefined,
     likes,
     isLiked,
+    shareCount,
     author,
   };
 }
@@ -83,16 +91,26 @@ export async function enrichRecipeRows(
     .eq("user_id", userId)
     .in("recipe_id", recipeIds);
 
+  const { data: shareRows } = await supabase
+    .from("recipe_shares")
+    .select("recipe_id")
+    .in("recipe_id", recipeIds);
+
   const favoriteCounts = new Map<string, number>();
+  const shareCounts = new Map<string, number>();
   const userFavoriteIds = new Set<string>();
   const allFavoriteRows = (favRows ?? []) as FavoriteRecipeIdRow[];
   const userFavoriteRows = (userFavRows ?? []) as FavoriteRecipeIdRow[];
+  const allShareRows = (shareRows ?? []) as ShareRecipeIdRow[];
 
   allFavoriteRows.forEach((f) => {
     favoriteCounts.set(
       f.recipe_id,
       (favoriteCounts.get(f.recipe_id) ?? 0) + 1,
     );
+  });
+  allShareRows.forEach((s) => {
+    shareCounts.set(s.recipe_id, (shareCounts.get(s.recipe_id) ?? 0) + 1);
   });
   userFavoriteRows.forEach((f) => {
     userFavoriteIds.add(f.recipe_id);
@@ -104,6 +122,7 @@ export async function enrichRecipeRows(
       profileMap.get(row.user_id) ?? "Chef",
       favoriteCounts.get(row.id) ?? 0,
       userFavoriteIds.has(row.id),
+      shareCounts.get(row.id) ?? 0,
     ),
   );
 }
@@ -251,9 +270,11 @@ type SearchRecipesEnrichedRpcRow = {
   tags: unknown;
   created_at: string;
   updated_at: string;
+  image_url?: string | null;
   author: string | null;
   likes: number | string | null;
   is_liked: boolean | null;
+  shares?: number | string | null;
 };
 
 function rpcJsonbToStringArray(value: unknown): string[] {
@@ -273,6 +294,7 @@ function rpcRowToRecipeRow(row: SearchRecipesEnrichedRpcRow): RecipeRow {
     cook_time: row.cook_time ?? 0,
     servings: row.servings ?? 0,
     tags: rpcJsonbToStringArray(row.tags),
+    image_url: row.image_url,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -306,6 +328,7 @@ export async function searchRecipesByQuery(
       row.author?.trim() || "Chef",
       Number(row.likes ?? 0),
       Boolean(row.is_liked),
+      Number(row.shares ?? 0),
     ),
   );
 }
@@ -319,6 +342,7 @@ function mapEnrichedRpcRowsToRecipes(
       row.author?.trim() || "Chef",
       Number(row.likes ?? 0),
       Boolean(row.is_liked),
+      Number(row.shares ?? 0),
     ),
   );
 }

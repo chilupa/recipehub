@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  IonButton,
-  IonChip,
-  IonIcon,
-  IonLabel,
-  IonText,
-} from "@ionic/react";
+import { IonButton, IonChip, IonIcon, IonLabel, IonText } from "@ionic/react";
 import { people, shareOutline, createOutline, time } from "ionicons/icons";
 import FavoriteHeartButton from "../../../components/FavoriteHeartButton";
 import UserAvatar from "../../../components/UserAvatar";
@@ -35,18 +29,21 @@ const RecipeDetailSummary: React.FC<Props> = ({
   onGoToServings,
 }) => (
   <div className="recipe-detail-top">
+    {recipe.image ? (
+      <div className="recipe-detail-hero">
+        <img
+          className="recipe-detail-hero-img"
+          src={recipe.image}
+          alt=""
+          decoding="async"
+        />
+      </div>
+    ) : null}
+
     <div className="recipe-detail-header-row">
       <h1 className="recipe-detail-title">{recipe.title}</h1>
-      <div className="recipe-detail-header-actions">
-        <IonButton
-          fill="clear"
-          size="small"
-          className="recipe-detail-share-btn"
-          onClick={onShareClick}
-        >
-          <IonIcon icon={shareOutline} slot="icon-only" />
-        </IonButton>
-        {showEditButton && (
+      {showEditButton ? (
+        <div className="recipe-detail-header-actions">
           <IonButton
             fill="clear"
             size="small"
@@ -55,8 +52,8 @@ const RecipeDetailSummary: React.FC<Props> = ({
           >
             <IonIcon icon={createOutline} slot="icon-only" />
           </IonButton>
-        )}
-      </div>
+        </div>
+      ) : null}
     </div>
 
     {recipe.description ? (
@@ -139,6 +136,22 @@ const RecipeDetailSummary: React.FC<Props> = ({
       </div>
 
       <div className="recipe-detail-actions">
+        <div className="recipe-detail-share-wrap">
+          <IonButton
+            fill="clear"
+            size="small"
+            className="recipe-detail-share-btn"
+            onClick={onShareClick}
+            aria-label="Share recipe"
+          >
+            <IonIcon icon={shareOutline} slot="icon-only" />
+          </IonButton>
+          {recipe.shareCount > 0 ? (
+            <span className="recipe-detail-share-count">
+              {formatFavorites(recipe.shareCount)}
+            </span>
+          ) : null}
+        </div>
         <FavoriteHeartButton
           isLiked={recipe.isLiked}
           onToggle={onFavoriteToggle}

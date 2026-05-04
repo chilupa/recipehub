@@ -64,6 +64,16 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
       routerLink={`/recipes/recipe/${recipe.id}`}
       aria-labelledby={titleId}
     >
+      {recipe.image ? (
+        <div className="recipe-card__media">
+          <img
+            className="recipe-card__media-img"
+            src={recipe.image}
+            alt=""
+            decoding="async"
+          />
+        </div>
+      ) : null}
       <div className="recipe-card__body">
         <div className="recipe-card__head">
           <div className="recipe-card__text">

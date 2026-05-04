@@ -7,7 +7,7 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { Recipe, NewRecipe } from "../types/Recipe";
+import { Recipe } from "../types/Recipe";
 import { useAuth } from "./AuthContext";
 import { supabase } from "../lib/supabase";
 import {
@@ -18,6 +18,11 @@ import {
   fetchVisibleRecipeCount,
   fetchFeedRecipesPage,
 } from "../lib/recipeSupabase";
+import {
+  deleteRecipeCoverObject,
+  uploadRecipeCover,
+} from "../lib/recipeImageStorage";
+import type { RecipeSubmitPayload } from "../components/RecipeForm/recipeFormModel";
 import { GUEST_VIEWER_ID } from "../lib/guestBrowse";
 
 interface RecipeContextType {
@@ -36,8 +41,8 @@ interface RecipeContextType {
   refreshFavorites: (options?: { withSpinner?: boolean }) => Promise<void>;
   /** Total recipes visible under RLS (for profile); null until first load. */
   recipesTotalCount: number | null;
-  addRecipe: (recipe: NewRecipe) => Promise<void>;
-  updateRecipe: (id: string, updates: Partial<Recipe>) => Promise<void>;
+  addRecipe: (recipe: RecipeSubmitPayload) => Promise<void>;
+  updateRecipe: (id: string, updates: RecipeSubmitPayload) => Promise<void>;
   deleteRecipe: (id: string) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
   shareRecipe: (recipe: Recipe) => Promise<void>;
@@ -246,8 +251,10 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
       window.removeEventListener("profile:updated", handler as EventListener);
   }, []);
 
-  const addRecipe = async (newRecipe: NewRecipe) => {
+  const addRecipe = async (payload: RecipeSubmitPayload) => {
     if (!user) return;
+
+    const { coverFile, removeCover: _removeCover, ...newRecipe } = payload;
 
     try {
       const { data: inserted, error } = await supabase
@@ -262,13 +269,32 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
           cook_time: newRecipe.cookTime ?? 0,
           servings: newRecipe.servings ?? 0,
           tags: newRecipe.tags ?? [],
+          image_url: newRecipe.image?.trim() || null,
         })
         .select()
         .single();
 
       if (error) throw error;
       const row = inserted as RecipeRow;
-      const recipe = rowToRecipe(row, user.name ?? "Chef", 0, false);
+
+      let imageUrl = row.image_url?.trim() || undefined;
+      if (coverFile) {
+        imageUrl = await uploadRecipeCover(user.id, row.id, coverFile);
+        const { error: imgErr } = await supabase
+          .from("recipes")
+          .update({ image_url: imageUrl })
+          .eq("id", row.id)
+          .eq("user_id", user.id);
+        if (imgErr) throw imgErr;
+      }
+
+      const recipe = rowToRecipe(
+        { ...row, image_url: imageUrl ?? null },
+        user.name ?? "Chef",
+        0,
+        false,
+        0,
+      );
       setRecipes((prev) => [recipe, ...prev]);
       setRecipesTotalCount((c) => (c ?? 0) + 1);
     } catch (error) {
@@ -277,22 +303,29 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const updateRecipe = async (id: string, updates: Partial<Recipe>) => {
+  const updateRecipe = async (id: string, data: RecipeSubmitPayload) => {
     if (!user) return;
 
+    const { coverFile, removeCover, ...recipe } = data;
+
     try {
-      const payload: Record<string, unknown> = {};
-      if (updates.title !== undefined) payload.title = updates.title;
-      if (updates.description !== undefined)
-        payload.description = updates.description;
-      if (updates.ingredients !== undefined)
-        payload.ingredients = updates.ingredients;
-      if (updates.instructions !== undefined)
-        payload.instructions = updates.instructions;
-      if (updates.prepTime !== undefined) payload.prep_time = updates.prepTime;
-      if (updates.cookTime !== undefined) payload.cook_time = updates.cookTime;
-      if (updates.servings !== undefined) payload.servings = updates.servings;
-      if (updates.tags !== undefined) payload.tags = updates.tags;
+      const payload: Record<string, unknown> = {
+        title: recipe.title.trim(),
+        description: recipe.description.trim() || null,
+        ingredients: recipe.ingredients,
+        instructions: recipe.instructions,
+        prep_time: recipe.prepTime ?? 0,
+        cook_time: recipe.cookTime ?? 0,
+        servings: recipe.servings ?? 0,
+        tags: recipe.tags ?? [],
+      };
+
+      if (coverFile) {
+        payload.image_url = await uploadRecipeCover(user.id, id, coverFile);
+      } else if (removeCover) {
+        await deleteRecipeCoverObject(user.id, id);
+        payload.image_url = null;
+      }
 
       const { error } = await supabase
         .from("recipes")
@@ -306,7 +339,19 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
         r.id === id
           ? {
               ...r,
-              ...updates,
+              title: recipe.title,
+              description: recipe.description,
+              ingredients: recipe.ingredients,
+              instructions: recipe.instructions,
+              prepTime: recipe.prepTime ?? 0,
+              cookTime: recipe.cookTime ?? 0,
+              servings: recipe.servings ?? 0,
+              tags: recipe.tags ?? [],
+              image: (() => {
+                if (coverFile) return String(payload.image_url ?? "");
+                if (removeCover) return undefined;
+                return r.image;
+              })(),
               updatedAt: ts,
             }
           : r;
@@ -329,6 +374,7 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
         .eq("user_id", user.id);
 
       if (error) throw error;
+      await deleteRecipeCoverObject(user.id, id);
       setRecipes((prev) => prev.filter((r) => r.id !== id));
       setFavoriteRecipes((prev) => prev.filter((r) => r.id !== id));
       setRecipesTotalCount((c) => Math.max(0, (c ?? 1) - 1));
@@ -399,6 +445,8 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
       ? `\n\nGet RecipeHub: ${appDownloadUrl}`
       : "";
 
+    let completed = false;
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -406,14 +454,49 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
           text: `Check out this recipe: ${recipeDescription}${installLine}`,
           url: shareUrl,
         });
-      } catch (error) {
+        completed = true;
+      } catch (error: unknown) {
+        const name =
+          error &&
+          typeof error === "object" &&
+          "name" in error &&
+          typeof (error as { name?: unknown }).name === "string"
+            ? (error as { name: string }).name
+            : "";
+        if (name === "AbortError") return;
         console.log("Error sharing:", error);
+        return;
       }
     } else {
-      const shareText = `${recipe.title}\n\n${recipeDescription}\n\nIngredients:\n${recipe.ingredients.join("\n")}\n\nInstructions:\n${recipe.instructions.join("\n")}`;
-      await navigator.clipboard.writeText(shareText);
-      alert("Recipe copied to clipboard!");
+      try {
+        const shareText = `${recipe.title}\n\n${recipeDescription}\n\nIngredients:\n${recipe.ingredients.join("\n")}\n\nInstructions:\n${recipe.instructions.join("\n")}`;
+        await navigator.clipboard.writeText(shareText);
+        alert("Recipe copied to clipboard!");
+        completed = true;
+      } catch {
+        return;
+      }
     }
+
+    if (!completed || !user) return;
+
+    const { error } = await supabase.from("recipe_shares").insert({
+      user_id: user.id,
+      recipe_id: recipe.id,
+    });
+
+    if (error) {
+      if (error.code === "23505") return;
+      console.warn("Could not record share:", error);
+      return;
+    }
+
+    const prevCount = recipe.shareCount ?? 0;
+    const bumped: Recipe = { ...recipe, shareCount: prevCount + 1 };
+    setRecipes((prev) => replaceRecipePreservingOrder(prev, bumped));
+    setFavoriteRecipes((prev) =>
+      prev.map((r) => (r.id === recipe.id ? bumped : r)),
+    );
   };
 
   return (

@@ -17,6 +17,7 @@ import {
 } from "./recipeFormModel";
 import RecipeFormBasics from "./RecipeFormBasics";
 import RecipeFormTagsBlock from "./RecipeFormTagsBlock";
+import RecipeFormCover from "../RecipeFormCover";
 import "./RecipeForm.css";
 
 type Props = {
@@ -26,6 +27,9 @@ type Props = {
   onTagInput: (value: string) => void;
   onAddTag: () => void;
   onRemoveTag: (tag: string) => void;
+  coverDisplayUrl: string | null;
+  onPickCover: (file: File) => void;
+  onRemoveCover: () => void;
 };
 
 const RecipeFormListContent: React.FC<Props> = ({
@@ -35,8 +39,17 @@ const RecipeFormListContent: React.FC<Props> = ({
   onTagInput,
   onAddTag,
   onRemoveTag,
+  coverDisplayUrl,
+  onPickCover,
+  onRemoveCover,
 }) => (
   <IonList className="recipe-form-list">
+    <RecipeFormCover
+      displayUrl={coverDisplayUrl}
+      onPick={onPickCover}
+      onRemove={onRemoveCover}
+    />
+
     <RecipeFormBasics formData={formData} setFormData={setFormData} />
 
     <div className="recipe-form-section">

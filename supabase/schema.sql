@@ -19,6 +19,7 @@ create table if not exists public.recipes (
   cook_time int default 0,
   servings int default 0,
   tags jsonb default '[]'::jsonb,
+  image_url text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -95,6 +96,26 @@ create policy "Users can add own favorite"
 create policy "Users can remove own favorite"
   on public.favorites for delete using (auth.uid() = user_id);
 
+-- Shares: one row per user who shared a recipe (used for share counts)
+create table if not exists public.recipe_shares (
+  user_id uuid references auth.users on delete cascade not null,
+  recipe_id uuid references public.recipes on delete cascade not null,
+  created_at timestamptz default now(),
+  primary key (user_id, recipe_id)
+);
+
+create index if not exists recipe_shares_recipe_id_idx on public.recipe_shares (recipe_id);
+
+alter table public.recipe_shares enable row level security;
+
+create policy "Recipe shares are viewable by everyone"
+  on public.recipe_shares for select using (true);
+
+create policy "Users can record own share"
+  on public.recipe_shares for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
 -- Trigger: update recipes.updated_at
 create or replace function public.set_updated_at()
 returns trigger as $$
@@ -168,9 +189,11 @@ RETURNS TABLE (
   tags jsonb,
   created_at timestamptz,
   updated_at timestamptz,
+  image_url text,
   author text,
   likes bigint,
-  is_liked boolean
+  is_liked boolean,
+  shares bigint
 )
 LANGUAGE plpgsql
 STABLE
@@ -238,13 +261,15 @@ BEGIN
     s.tags,
     s.created_at,
     s.updated_at,
+    s.image_url,
     COALESCE(p.display_name, 'Chef') AS author,
     COALESCE(fc.cnt, 0)::bigint AS likes,
     EXISTS (
       SELECT 1
       FROM public.favorites f
       WHERE f.recipe_id = s.id AND f.user_id = p_viewer_id
-    ) AS is_liked
+    ) AS is_liked,
+    COALESCE(shc.cnt, 0)::bigint AS shares
   FROM scored s
   LEFT JOIN public.profiles p ON p.id = s.user_id
   LEFT JOIN LATERAL (
@@ -252,6 +277,11 @@ BEGIN
     FROM public.favorites f
     WHERE f.recipe_id = s.id
   ) fc ON true
+  LEFT JOIN LATERAL (
+    SELECT count(*)::bigint AS cnt
+    FROM public.recipe_shares sh
+    WHERE sh.recipe_id = s.id
+  ) shc ON true
   WHERE s.score > 0
   ORDER BY s.score DESC, s.created_at DESC
   LIMIT 200;
@@ -260,6 +290,56 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.search_recipes_enriched(text, uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.search_recipes_enriched(text, uuid) TO authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Recipe images (Supabase Storage). Apply migrations for incremental updates.
+-- ---------------------------------------------------------------------------
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'recipe-images',
+  'recipe-images',
+  true,
+  5242880,
+  array['image/jpeg', 'image/png', 'image/webp', 'image/gif']::text[]
+)
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "recipe_images_select_public" on storage.objects;
+drop policy if exists "recipe_images_insert_own_folder" on storage.objects;
+drop policy if exists "recipe_images_update_own_folder" on storage.objects;
+drop policy if exists "recipe_images_delete_own_folder" on storage.objects;
+
+create policy "recipe_images_select_public"
+  on storage.objects for select
+  using (bucket_id = 'recipe-images');
+
+create policy "recipe_images_insert_own_folder"
+  on storage.objects for insert
+  to authenticated
+  with check (
+    bucket_id = 'recipe-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+create policy "recipe_images_update_own_folder"
+  on storage.objects for update
+  to authenticated
+  using (
+    bucket_id = 'recipe-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+create policy "recipe_images_delete_own_folder"
+  on storage.objects for delete
+  to authenticated
+  using (
+    bucket_id = 'recipe-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
 
 -- Home feed: paginated list + author + likes + is_liked (see migrations for canonical version).
 CREATE OR REPLACE FUNCTION public.list_recipes_feed(
@@ -280,9 +360,11 @@ RETURNS TABLE (
   tags jsonb,
   created_at timestamptz,
   updated_at timestamptz,
+  image_url text,
   author text,
   likes bigint,
-  is_liked boolean
+  is_liked boolean,
+  shares bigint
 )
 LANGUAGE sql
 STABLE
@@ -302,13 +384,15 @@ AS $$
     r.tags,
     r.created_at,
     r.updated_at,
+    r.image_url,
     COALESCE(p.display_name, 'Chef') AS author,
     COALESCE(fc.cnt, 0)::bigint AS likes,
     EXISTS (
       SELECT 1
       FROM public.favorites f
       WHERE f.recipe_id = r.id AND f.user_id = p_viewer_id
-    ) AS is_liked
+    ) AS is_liked,
+    COALESCE(sc.cnt, 0)::bigint AS shares
   FROM public.recipes r
   LEFT JOIN public.profiles p ON p.id = r.user_id
   LEFT JOIN LATERAL (
@@ -316,6 +400,11 @@ AS $$
     FROM public.favorites f
     WHERE f.recipe_id = r.id
   ) fc ON true
+  LEFT JOIN LATERAL (
+    SELECT count(*)::bigint AS cnt
+    FROM public.recipe_shares sh
+    WHERE sh.recipe_id = r.id
+  ) sc ON true
   ORDER BY r.created_at DESC
   LIMIT LEAST(GREATEST(COALESCE(p_limit, 10), 1), 50)
   OFFSET GREATEST(COALESCE(p_offset, 0), 0);
