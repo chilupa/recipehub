@@ -14,10 +14,18 @@ export function useSearchRecipesScreen() {
 
   const query = useSearchRecipesQuery({ viewerId, onSearchFailed });
 
+  const dismissToast = useCallback(() => {
+    setToast((current) => ({ ...current, show: false }));
+  }, []);
+
+  const showToast = useCallback((message: string) => {
+    setToast({ show: true, message });
+  }, []);
+
   return {
     ...query,
     toast,
-    dismissToast: () =>
-      setToast((current) => ({ ...current, show: false })),
+    dismissToast,
+    showToast,
   };
 }

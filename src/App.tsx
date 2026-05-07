@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { IonApp, setupIonicReact } from "@ionic/react";
 import { RecipeProvider } from "./contexts/RecipeContext";
+import { RecentlyViewedProvider } from "./contexts/RecentlyViewedContext";
 import { ShoppingListProvider } from "./contexts/ShoppingListContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
 
@@ -50,11 +51,13 @@ const App: React.FC = () => {
     <IonApp key="main">
       <AuthProvider>
         <RecipeProvider>
-          <ShoppingListProvider>
-            <NotificationProvider>
-              <AppRoutes />
-            </NotificationProvider>
-          </ShoppingListProvider>
+          <RecentlyViewedProvider>
+            <ShoppingListProvider>
+              <NotificationProvider>
+                <AppRoutes />
+              </NotificationProvider>
+            </ShoppingListProvider>
+          </RecentlyViewedProvider>
         </RecipeProvider>
       </AuthProvider>
     </IonApp>

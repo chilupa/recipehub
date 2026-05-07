@@ -21,7 +21,10 @@ export type { ShoppingLine } from "../types/shoppingList";
 
 type ShoppingListContextValue = {
   items: ShoppingLine[];
-  addFromRecipe: (recipe: Recipe) => number;
+  addFromRecipe: (
+    recipe: Recipe,
+    opts?: { ingredientLines?: string[] },
+  ) => number;
   toggleLine: (id: string) => void;
   removeLine: (id: string) => void;
   clearChecked: () => void;
@@ -65,38 +68,42 @@ export const ShoppingListProvider: React.FC<{ children: React.ReactNode }> = ({
     saveShoppingItems(scopeId, items);
   }, [scopeId, items, isLoading]);
 
-  const addFromRecipe = useCallback((recipe: Recipe): number => {
-    const trimmed = recipe.ingredients
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
-    if (trimmed.length === 0) return 0;
+  const addFromRecipe = useCallback(
+    (recipe: Recipe, opts?: { ingredientLines?: string[] }): number => {
+      const source = opts?.ingredientLines ?? recipe.ingredients;
+      const trimmed = source
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+      if (trimmed.length === 0) return 0;
 
-    let added = 0;
-    setItems((prev) => {
-      const existing = new Set(
-        prev
-          .filter((l) => l.recipeId === recipe.id)
-          .map((l) => normKey(l.text)),
-      );
-      const toAdd: ShoppingLine[] = [];
-      for (const text of trimmed) {
-        if (existing.has(normKey(text))) continue;
-        existing.add(normKey(text));
-        toAdd.push({
-          id: newId(),
-          text,
-          checked: false,
-          recipeId: recipe.id,
-          recipeTitle: recipe.title,
-        });
-      }
-      added = toAdd.length;
-      if (toAdd.length === 0) return prev;
-      return [...prev, ...toAdd];
-    });
-    if (added > 0) unsuppressProfileShoppingTabBadge();
-    return added;
-  }, []);
+      let added = 0;
+      setItems((prev) => {
+        const existing = new Set(
+          prev
+            .filter((l) => l.recipeId === recipe.id)
+            .map((l) => normKey(l.text)),
+        );
+        const toAdd: ShoppingLine[] = [];
+        for (const text of trimmed) {
+          if (existing.has(normKey(text))) continue;
+          existing.add(normKey(text));
+          toAdd.push({
+            id: newId(),
+            text,
+            checked: false,
+            recipeId: recipe.id,
+            recipeTitle: recipe.title,
+          });
+        }
+        added = toAdd.length;
+        if (toAdd.length === 0) return prev;
+        return [...prev, ...toAdd];
+      });
+      if (added > 0) unsuppressProfileShoppingTabBadge();
+      return added;
+    },
+    [],
+  );
 
   const toggleLine = useCallback((id: string) => {
     setItems((prev) =>

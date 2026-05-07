@@ -1,0 +1,29 @@
+.recently-viewed-strip {
+  padding-top: var(--list-page-pad-top);
+  padding-bottom: 8px;
+}
+
+.recently-viewed-strip__title {
+  margin: 0 0 16px 0;
+  padding-inline: var(--recipe-card-grid-pad-x);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.recently-viewed-strip__scroll {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-inline: var(--recipe-card-grid-pad-x);
+  padding-bottom: 4px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.recently-viewed-strip__card {
+  flex: 0 0 min(300px, 82vw);
+  scroll-snap-align: start;
+  max-width: 340px;
+}

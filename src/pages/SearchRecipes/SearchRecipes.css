@@ -4,6 +4,15 @@
   --padding-bottom: var(--list-page-pad-bottom);
 }
 
+.search-recipes-idle-prompt {
+  padding: 12px var(--recipe-card-grid-pad-x) 8px;
+}
+
+.search-recipes-recent .recently-viewed-strip {
+  padding-top: 8px;
+  padding-bottom: 6px;
+}
+
 .search-recipes-hint {
   margin: 4px 4px 0;
   padding: 0 4px;
