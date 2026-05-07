@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { IonContent, IonIcon, IonPage, IonToast } from "@ionic/react";
-import { cartOutline } from "ionicons/icons";
+import { IonContent, IonPage, IonToast } from "@ionic/react";
 import { useHistory, useParams } from "react-router-dom";
 import AppHeader from "../../components/AppHeader";
 import SignInPromptAlert from "../../components/SignInPromptAlert";
 import { useAuth } from "../../contexts/AuthContext";
+import { useRecentlyViewed } from "../../contexts/RecentlyViewedContext";
 import { useRecipes } from "../../contexts/RecipeContext";
 import { useShoppingList } from "../../contexts/ShoppingListContext";
+import { scaleRecipeIngredients } from "../../lib/scaleIngredientQuantities";
+import RecipeDetailIngredientsPanel from "./RecipeDetailIngredientsPanel";
 import RecipeDetailSummary from "./RecipeDetailSummary";
 import RecipeSection from "./RecipeSection";
 import {
@@ -18,6 +20,7 @@ import "./RecipeDetail.css";
 const RecipeDetail: React.FC = () => {
   const { user, isGuest } = useAuth();
   const history = useHistory();
+  const { recordRecipeView } = useRecentlyViewed();
   const { recipes, toggleFavorite, ensureRecipeLoaded, shareRecipe } =
     useRecipes();
   const { addFromRecipe } = useShoppingList();
@@ -25,6 +28,7 @@ const RecipeDetail: React.FC = () => {
   const [toast, setToast] = useState({ show: false, message: "" });
   const [loadFailed, setLoadFailed] = useState(false);
   const [signInAlertOpen, setSignInAlertOpen] = useState(false);
+  const [scaledServings, setScaledServings] = useState(1);
 
   const promptSignIn = () => setSignInAlertOpen(true);
 
@@ -37,6 +41,23 @@ const RecipeDetail: React.FC = () => {
   };
 
   const recipe = useMemo(() => recipes.find((r) => r.id === id), [recipes, id]);
+
+  useEffect(() => {
+    if (!recipe) return;
+    setScaledServings(recipe.servings > 0 ? recipe.servings : 1);
+  }, [recipe?.id, recipe?.servings]);
+
+  const displayIngredients = useMemo(() => {
+    if (!recipe) return [];
+    const factor =
+      recipe.servings > 0 ? scaledServings / recipe.servings : 1;
+    return scaleRecipeIngredients(recipe.ingredients, factor);
+  }, [recipe, scaledServings]);
+
+  useEffect(() => {
+    if (!recipe?.id) return;
+    recordRecipeView(recipe.id);
+  }, [recipe?.id, recordRecipeView]);
 
   useEffect(() => {
     if (!id) return;
@@ -119,36 +140,13 @@ const RecipeDetail: React.FC = () => {
           onGoToServings={goToServings}
         />
 
-        <RecipeSection
-          title="Ingredients"
-          items={recipe.ingredients}
-          headerAction={
-            <button
-              type="button"
-              className="recipe-detail-shop-inline"
-              aria-label="Add ingredients to shopping list"
-              onClick={() => {
-                const n = addFromRecipe(recipe);
-                if (n === 0) {
-                  setToast({
-                    show: true,
-                    message:
-                      "Those ingredients are already on your shopping list.",
-                  });
-                } else {
-                  setToast({
-                    show: true,
-                    message: `Added ${n} ${n === 1 ? "item" : "items"} to your shopping list.`,
-                  });
-                }
-              }}
-            >
-              <IonIcon icon={cartOutline} aria-hidden />
-              <span className="recipe-detail-shop-inline-label">
-                Add to list
-              </span>
-            </button>
-          }
+        <RecipeDetailIngredientsPanel
+          recipe={recipe}
+          displayIngredients={displayIngredients}
+          scaledServings={scaledServings}
+          onScaledServingsChange={setScaledServings}
+          addFromRecipe={addFromRecipe}
+          setToast={setToast}
         />
         <RecipeSection
           title="Instructions"
