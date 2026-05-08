@@ -136,7 +136,10 @@ const RecipeList: React.FC = () => {
 
         {!isGuest ? (
           <IonFab vertical="bottom" horizontal="end" slot="fixed">
-            <IonFabButton routerLink="/recipes/add" color="secondary">
+            <IonFabButton
+              color="secondary"
+              onClick={() => history.push("/recipes/add")}
+            >
               <IonIcon icon={add} />
             </IonFabButton>
           </IonFab>

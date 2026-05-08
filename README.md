@@ -11,7 +11,7 @@ A cross-platform recipe app: sign in, browse a **community feed**, add and edit 
 | Area | What it does |
 |------|----------------|
 | **Auth** | Sign in with **Google** via Supabase Auth; native apps use an in-app browser + deep link callback (`recipehub://…`). |
-| **Recipes** | Paginated **feed** (`IonInfiniteScroll`), recipe **detail**, **add** / **edit** with ingredients, steps, times, servings, tags, optional **cover photos** (Supabase Storage + `image_url`), and **share counts** (`recipe_shares`). On detail, a **servings scaler** (up to 999) rescales leading quantities in ingredient lines (shopping list uses the same scaled lines). |
+| **Recipes** | Paginated **feed** (`IonInfiniteScroll`), recipe **detail**, **add** / **edit** with ingredients, steps, times, servings, tags, optional **cover photos** (Supabase Storage + `image_url`), and **share counts** (`recipe_shares`). On detail, a **servings scaler** (up to 999) rescales leading quantities in ingredient lines (shopping list uses the same scaled lines). Add/Edit forms now include **debounced draft autosave** (localStorage) with restore after accidental close/navigation. |
 | **Favorites** | Heart on list or detail; dedicated **Favorites** tab; like counts synced server-side. |
 | **Activity** | In-app **notifications** when someone favorites your recipe (Supabase `notifications` + optional Realtime). |
 | **Profile** | Display name (editable), email, links to feed / favorites / activity, sign out. |
