@@ -3,8 +3,26 @@ import { IonCard, IonSkeletonText } from "@ionic/react";
 import "../RecipeCard/RecipeCard.css";
 import "./RecipeCardSkeleton.css";
 
-const RecipeCardSkeleton: React.FC = () => (
+export type RecipeCardSkeletonProps = {
+  /** Match cards that show a cover image so list layout does not jump. */
+  withMedia?: boolean;
+};
+
+const RecipeCardSkeleton: React.FC<RecipeCardSkeletonProps> = ({
+  withMedia = false,
+}) => (
   <IonCard className="recipe-card recipe-card-skeleton">
+    {withMedia ? (
+      <div
+        className="recipe-card__media recipe-card-skeleton__media"
+        aria-hidden
+      >
+        <IonSkeletonText
+          animated
+          className="recipe-card-skeleton__media-fill"
+        />
+      </div>
+    ) : null}
     <div className="recipe-card__body">
       <div className="recipe-card-skeleton-head">
         <div className="recipe-card-skeleton-head__text">

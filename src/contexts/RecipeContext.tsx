@@ -24,6 +24,7 @@ import {
 } from "../lib/recipeImageStorage";
 import type { RecipeSubmitPayload } from "../components/RecipeForm/recipeFormModel";
 import { GUEST_VIEWER_ID } from "../lib/guestBrowse";
+import { playFavoriteToggleHaptics } from "../lib/playFavoriteToggleHaptics";
 
 interface RecipeContextType {
   recipes: Recipe[];
@@ -432,7 +433,8 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         }
       }
-      void loadFavorites({ withSpinner: false });
+      await loadFavorites({ withSpinner: false });
+      void playFavoriteToggleHaptics();
     } catch (error) {
       // Revert optimistic state if write fails.
       setRecipes((prev) => replaceRecipePreservingOrder(prev, recipe));

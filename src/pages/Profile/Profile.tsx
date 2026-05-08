@@ -17,6 +17,7 @@ import "./Profile.css";
 import ProfileIdentitySection from "./ProfileIdentitySection";
 import ProfileBrowseSection from "./ProfileBrowseSection";
 import ProfileAccountSection from "./ProfileAccountSection";
+import ProfilePreferencesSection from "./ProfilePreferencesSection";
 
 const Profile: React.FC = () => {
   const history = useHistory();
@@ -170,6 +171,8 @@ const Profile: React.FC = () => {
           shoppingPending={shoppingPending}
           shoppingHasList={shoppingHasList}
         />
+
+        <ProfilePreferencesSection />
 
         {user ? (
           <ProfileAccountSection
