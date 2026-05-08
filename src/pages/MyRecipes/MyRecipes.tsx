@@ -9,7 +9,6 @@ import {
 import { add } from "ionicons/icons";
 import { useAuth } from "../../contexts/AuthContext";
 import { fetchRecipesOwnedByUser } from "../../lib/recipeSupabase";
-import { supabase } from "../../lib/supabase";
 import AppHeader from "../../components/AppHeader";
 import NoData from "../../components/NoData";
 import { emptyMyRecipes } from "../../lib/emptyStateMessages";
@@ -21,10 +20,7 @@ const MyRecipes: React.FC = () => {
 
   const fetchRecipes = useCallback(async () => {
     if (!user?.id) return [];
-    const { data: sessionData } = await supabase.auth.getSession();
-    const sessionUserId = sessionData.session?.user?.id;
-    if (!sessionUserId) return [];
-    return fetchRecipesOwnedByUser(sessionUserId, sessionUserId);
+    return fetchRecipesOwnedByUser(user.id, user.id);
   }, [user?.id]);
 
   const listPage = useRecipeFilterListPage(fetchRecipes);

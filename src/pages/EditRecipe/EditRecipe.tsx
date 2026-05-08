@@ -14,6 +14,7 @@ import {
   useIonViewDidEnter,
 } from "@ionic/react";
 import { useRecipes } from "../../contexts/RecipeContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { useHistory, useParams } from "react-router-dom";
 import RecipeForm, {
   type RecipeFormHandle,
@@ -24,6 +25,7 @@ import "./EditRecipe.css";
 
 const EditRecipe: React.FC = () => {
   const { recipes, updateRecipe, ensureRecipeLoaded } = useRecipes();
+  const { user, isGuest } = useAuth();
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
   const [loadFailed, setLoadFailed] = useState(false);
@@ -68,6 +70,7 @@ const EditRecipe: React.FC = () => {
         image: recipe.image,
       }
     : undefined;
+  const draftScope = user?.id ?? (isGuest ? "guest" : "__signed_out__");
 
   return (
     <IonPage>
@@ -84,6 +87,7 @@ const EditRecipe: React.FC = () => {
           <RecipeForm
             ref={formRef}
             initialData={initialData}
+            draftKey={`edit:${draftScope}:${id}`}
             onSubmit={handleSubmit}
           />
         ) : !loadFailed ? (

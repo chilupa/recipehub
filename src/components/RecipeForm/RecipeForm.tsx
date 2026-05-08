@@ -1,9 +1,9 @@
 import {
   useState,
-  useEffect,
   forwardRef,
   useImperativeHandle,
   useCallback,
+  useMemo,
 } from "react";
 import { IonToast } from "@ionic/react";
 import RecipeFormListContent from "./RecipeFormListContent";
@@ -19,9 +19,13 @@ import {
 } from "./recipeFormModel";
 import "./RecipeForm.css";
 import { useCoverDisplayUrl } from "./useCoverDisplayUrl";
+import {
+  clearRecipeFormDraft,
+  useRecipeFormDraft,
+} from "./useRecipeFormDraft";
 
 const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
-  ({ initialData, formResetKey = 0, onSubmit }, ref) => {
+  ({ initialData, formResetKey = 0, draftKey, onSubmit }, ref) => {
     const [formData, setFormData] = useState(() =>
       initialData ? toFormState(initialData) : emptyFormState(),
     );
@@ -30,18 +34,24 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
     const { coverDisplayUrl, onPickCover, onRemoveCover } =
       useCoverDisplayUrl(formData, setFormData);
 
-    useEffect(() => {
-      if (initialData) {
-        setFormData(toFormState(initialData));
-      }
-    }, [initialData]);
-
-    useEffect(() => {
-      if (initialData) return;
-      if (formResetKey === 0) return;
-      setFormData(emptyFormState());
-      setNewTag("");
-    }, [formResetKey, initialData]);
+    const baseFormData = useMemo(
+      () => (initialData ? toFormState(initialData) : emptyFormState()),
+      [initialData],
+    );
+    const handleDraftRestored = useCallback(() => {
+      setToast({ show: true, message: "Restored your unsaved draft." });
+    }, []);
+    useRecipeFormDraft({
+      draftKey,
+      baseFormData,
+      formData,
+      newTag,
+      formResetKey,
+      hasInitialData: Boolean(initialData),
+      setFormData,
+      setNewTag,
+      onDraftRestored: handleDraftRestored,
+    });
 
     const handleSubmit = useCallback(async () => {
       if (!formData.title.trim()) {
@@ -66,17 +76,29 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
       }
       try {
         await onSubmit(toSubmitPayload(formData));
+        clearRecipeFormDraft(draftKey);
       } catch {
         setToast({
           show: true,
           message: "Could not save recipe. Please try again.",
         });
       }
-    }, [formData, onSubmit]);
+    }, [draftKey, formData, onSubmit]);
 
-    useImperativeHandle(ref, () => ({ submit: () => void handleSubmit() }), [
-      handleSubmit,
-    ]);
+    const resetForm = useCallback(() => {
+      setFormData(baseFormData);
+      setNewTag("");
+      clearRecipeFormDraft(draftKey);
+    }, [baseFormData, draftKey]);
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        submit: () => void handleSubmit(),
+        reset: resetForm,
+      }),
+      [handleSubmit, resetForm],
+    );
 
     const addTag = () => {
       const tag = newTag.trim();

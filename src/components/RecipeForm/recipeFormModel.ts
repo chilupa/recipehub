@@ -113,10 +113,13 @@ export const MAX_TAG_LENGTH = 20;
 
 export type RecipeFormHandle = {
   submit: () => void | Promise<void>;
+  reset: () => void;
 };
 
 export interface RecipeFormProps {
   initialData?: NewRecipe | null;
   formResetKey?: number;
+  /** Optional scoped key to enable debounced local draft autosave/restore. */
+  draftKey?: string;
   onSubmit: (data: RecipeSubmitPayload) => void | Promise<void>;
 }
