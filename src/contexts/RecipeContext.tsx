@@ -391,7 +391,10 @@ export const RecipeProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!recipe) {
       recipe = (await fetchRecipeById(id, user.id)) ?? undefined;
     }
-    if (!recipe) return;
+    if (!recipe) {
+      console.warn("toggleFavorite: recipe not found", id);
+      throw new Error("Recipe not found");
+    }
 
     const isFav = recipe.isLiked;
     const optimisticRecipe: Recipe = {
