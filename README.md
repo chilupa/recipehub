@@ -14,9 +14,10 @@ A cross-platform recipe app: sign in, browse a **community feed**, add and edit 
 | **Recipes** | Paginated **feed** (`IonInfiniteScroll`), recipe **detail**, **add** / **edit** with ingredients, steps, times, servings, tags, optional **cover photos** (Supabase Storage + `image_url`), and **share counts** (`recipe_shares`). On detail, a **servings scaler** (up to 999) rescales leading quantities in ingredient lines (shopping list uses the same scaled lines). Add/Edit forms now include **debounced draft autosave** (localStorage) with restore after accidental close/navigation. |
 | **Favorites** | Heart on list or detail; dedicated **Favorites** tab; like counts synced server-side. |
 | **Activity** | In-app **notifications** when someone favorites your recipe (Supabase `notifications` + optional Realtime). |
-| **Profile** | Display name (editable), email, links to feed / favorites / activity, sign out. |
+| **Profile** | Display name (editable), email, links to feed / favorites / activity, sign out. On native apps, optional **haptic feedback** when you favorite a recipe (toggle under Preferences). |
 | **Recently viewed** | Recipe ids stored per scope in **localStorage** (guest vs signed-in). Opening recipe detail records a visit; the **Search** tab shows a horizontal **Recently viewed** strip under the search bar (loads missing recipes via `ensureRecipeLoaded`). |
 | **Intro** | First-launch onboarding (`Intro.tsx`); skipped after completion (local persistence). |
+| **Reliability** | Top-level **error boundary** for render crashes (reload / back to feed). **Offline banner** when the browser reports no connection. If `VITE_SUPABASE_*` is unset, a **setup screen** explains required env vars instead of silent dummy-client failures. |
 
 Data lives in **Supabase** (`profiles`, `recipes`, `favorites`, `recipe_shares`, `notifications`) plus a public **`recipe-images`** storage bucket, with **Row Level Security**. See `supabase/schema.sql` and `supabase/migrations/`.
 
@@ -134,7 +135,7 @@ supabase/
 
 ```bash
 npm run lint
-npm run test.unit      # Vitest
-npm run test.e2e       # Cypress
+npm run test.unit      # Vitest (includes ErrorBoundary + recipe list helpers + haptics prefs)
+npm run test.e2e       # Cypress — run `npm run dev` first; smoke loads `/`
 ```
 

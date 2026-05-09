@@ -61,6 +61,7 @@ const FavoriteHeartButton: React.FC<FavoriteHeartButtonProps> = ({
         fill="clear"
         color={isLiked ? "danger" : "medium"}
         size={size}
+        aria-label={isLiked ? "Remove from favorites" : "Save to favorites"}
         className={`favorite-heart-btn${isLiked ? " favorite-heart-btn--liked" : ""}`}
         onClick={(e) => {
           if (stopEventPropagation) {

@@ -1,3 +1,4 @@
+import { devWarn } from "./devLog";
 import { supabase } from "./supabase";
 
 export const RECIPE_IMAGES_BUCKET = "recipe-images";
@@ -70,5 +71,5 @@ export async function deleteRecipeCoverObject(
   const { error } = await supabase.storage
     .from(RECIPE_IMAGES_BUCKET)
     .remove([path]);
-  if (error) console.warn("deleteRecipeCoverObject:", error);
+  if (error) devWarn("deleteRecipeCoverObject:", error);
 }

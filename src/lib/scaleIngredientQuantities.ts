@@ -46,7 +46,7 @@ export function formatScaledQuantity(n: number): string {
   if (!Number.isFinite(n) || n <= 0) return String(n);
   const rounded = Math.round(n * 10000) / 10000;
   const intPart = Math.floor(rounded + 1e-9);
-  let frac = rounded - intPart;
+  const frac = rounded - intPart;
   if (Math.abs(frac) < 1e-4) return String(intPart);
 
   const vulgar: [number, string][] = [

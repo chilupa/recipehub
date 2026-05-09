@@ -100,13 +100,24 @@ export function useRecipeFilterListPage(
 
   const favoriteRecipe = useCallback(
     async (recipeId: string) => {
+      if (!user) return;
       try {
         await toggleFavorite(recipeId);
+        // Feed context gets optimistic updates; this page keeps its own list copy.
+        setRecipes((prev) => {
+          const r = prev.find((x) => x.id === recipeId);
+          if (!r) return prev;
+          const isLiked = !r.isLiked;
+          const likes = r.isLiked ? Math.max(0, r.likes - 1) : r.likes + 1;
+          return prev.map((item) =>
+            item.id === recipeId ? { ...item, isLiked, likes } : item,
+          );
+        });
       } catch {
         showToast(FAVORITE_ERROR);
       }
     },
-    [toggleFavorite, showToast],
+    [toggleFavorite, showToast, user],
   );
 
   return {

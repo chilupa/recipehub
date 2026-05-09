@@ -16,6 +16,7 @@ const Favorites: React.FC = () => {
   const {
     favoriteRecipes,
     favoritesLoading,
+    skeletonRecipeId,
     onFavoritePress,
     shareRecipe,
     toast,
@@ -37,6 +38,7 @@ const Favorites: React.FC = () => {
         ) : (
           <FavoritesRecipeGrid
             recipes={favoriteRecipes}
+            skeletonRecipeId={skeletonRecipeId}
             onFavorite={onFavoritePress}
             onShare={shareRecipe}
           />
