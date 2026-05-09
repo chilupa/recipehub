@@ -16,7 +16,7 @@ import RecipeCard from "../../components/RecipeCard";
 import AppHeader from "../../components/AppHeader";
 import NoData from "../../components/NoData";
 import { emptyFeedGuest, emptyFeedSignedIn } from "../../lib/emptyStateMessages";
-import DangerToast from "../../components/DangerToast";
+import { useToast } from "../../contexts/ToastContext";
 import SignInPromptAlert from "../../components/SignInPromptAlert";
 import RecipeListSkeleton from "../../components/RecipeListSkeleton";
 import ListPageShell from "../../components/ListPageShell";
@@ -41,7 +41,7 @@ const RecipeList: React.FC = () => {
     shareRecipe,
     deleteRecipe,
   } = useRecipes();
-  const [toast, setToast] = useState({ show: false, message: "" });
+  const { showErrorToast } = useToast();
   const [deleteAlert, setDeleteAlert] = useState<DeleteRecipeAlertState>(
     emptyDeleteRecipeAlertState,
   );
@@ -78,7 +78,7 @@ const RecipeList: React.FC = () => {
                 try {
                   await toggleFavorite(recipeId);
                 } catch {
-                  setToast({ show: true, message: "Could not update favorite." });
+                  showErrorToast("Could not update favorite.");
                 }
               }}
               onShare={
@@ -125,13 +125,7 @@ const RecipeList: React.FC = () => {
           onDismiss={() => setDeleteAlert(emptyDeleteRecipeAlertState)}
           deleteRecipe={deleteRecipe}
           afterDelete={refreshRecipes}
-          onError={(message) => setToast({ show: true, message })}
-        />
-
-        <DangerToast
-          isOpen={toast.show}
-          message={toast.message}
-          onDidDismiss={() => setToast((t) => ({ ...t, show: false }))}
+          onError={(message) => showErrorToast(message)}
         />
 
         {!isGuest ? (

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { User } from "../contexts/AuthContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 import { useRecipes } from "../contexts/RecipeContext";
 import {
   emptyDeleteRecipeAlertState,
@@ -21,8 +22,6 @@ export type RecipeFilterListPageController = {
   user: User | null;
   shareRecipe: (recipe: Recipe) => Promise<void>;
   deleteRecipe: (id: string) => Promise<void>;
-  toast: { show: boolean; message: string };
-  dismissToast: () => void;
   deleteAlert: DeleteRecipeAlertState;
   dismissDeleteAlert: () => void;
   popoverOpen: RecipeMenuPopoverState;
@@ -30,7 +29,7 @@ export type RecipeFilterListPageController = {
   openPopover: (event: Event, recipeId: string) => void;
   requestDelete: (recipeId: string, recipeName: string) => void;
   favoriteRecipe: (recipeId: string) => Promise<void>;
-  showToast: (message: string) => void;
+  showErrorToast: (message: string) => void;
 };
 
 export function useRecipeFilterListPage(
@@ -38,9 +37,9 @@ export function useRecipeFilterListPage(
 ): RecipeFilterListPageController {
   const { user } = useAuth();
   const { toggleFavorite, shareRecipe, deleteRecipe } = useRecipes();
+  const { showErrorToast } = useToast();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState({ show: false, message: "" });
   const [deleteAlert, setDeleteAlert] = useState<DeleteRecipeAlertState>(
     emptyDeleteRecipeAlertState,
   );
@@ -64,15 +63,6 @@ export function useRecipeFilterListPage(
   useEffect(() => {
     void load();
   }, [load]);
-
-  const showToast = useCallback((message: string) => {
-    setToast({ show: true, message });
-  }, []);
-
-  const dismissToast = useCallback(
-    () => setToast((t) => ({ ...t, show: false })),
-    [],
-  );
 
   const dismissDeleteAlert = useCallback(
     () => setDeleteAlert(emptyDeleteRecipeAlertState),
@@ -114,10 +104,10 @@ export function useRecipeFilterListPage(
           );
         });
       } catch {
-        showToast(FAVORITE_ERROR);
+        showErrorToast(FAVORITE_ERROR);
       }
     },
-    [toggleFavorite, showToast, user],
+    [toggleFavorite, showErrorToast, user],
   );
 
   return {
@@ -127,8 +117,6 @@ export function useRecipeFilterListPage(
     user,
     shareRecipe,
     deleteRecipe,
-    toast,
-    dismissToast,
     deleteAlert,
     dismissDeleteAlert,
     popoverOpen,
@@ -136,6 +124,6 @@ export function useRecipeFilterListPage(
     openPopover,
     requestDelete,
     favoriteRecipe,
-    showToast,
+    showErrorToast,
   };
 }

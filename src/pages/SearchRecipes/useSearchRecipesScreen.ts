@@ -1,31 +1,22 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
 import { useSearchRecipesQuery } from "../../hooks/useSearchRecipesQuery";
 import { GUEST_VIEWER_ID } from "../../lib/guestBrowse";
 
 export function useSearchRecipesScreen() {
   const { user } = useAuth();
   const viewerId = user?.id ?? GUEST_VIEWER_ID;
-  const [toast, setToast] = useState({ show: false, message: "" });
+  const { showErrorToast } = useToast();
 
   const onSearchFailed = useCallback(() => {
-    setToast({ show: true, message: "Could not search recipes." });
-  }, []);
+    showErrorToast("Could not search recipes.");
+  }, [showErrorToast]);
 
   const query = useSearchRecipesQuery({ viewerId, onSearchFailed });
 
-  const dismissToast = useCallback(() => {
-    setToast((current) => ({ ...current, show: false }));
-  }, []);
-
-  const showToast = useCallback((message: string) => {
-    setToast({ show: true, message });
-  }, []);
-
   return {
     ...query,
-    toast,
-    dismissToast,
-    showToast,
+    showErrorToast,
   };
 }

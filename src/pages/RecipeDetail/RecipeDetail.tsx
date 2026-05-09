@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { IonContent, IonPage, IonToast } from "@ionic/react";
+import { IonContent, IonPage } from "@ionic/react";
 import { useHistory, useParams } from "react-router-dom";
 import AppHeader from "../../components/AppHeader";
 import SignInPromptAlert from "../../components/SignInPromptAlert";
@@ -16,6 +16,7 @@ import {
   RecipeDetailNotFoundPage,
 } from "./RecipeDetailFallbacks";
 import "./RecipeDetail.css";
+import { useToast } from "../../contexts/ToastContext";
 
 const RecipeDetail: React.FC = () => {
   const { user, isGuest } = useAuth();
@@ -25,7 +26,7 @@ const RecipeDetail: React.FC = () => {
     useRecipes();
   const { addFromRecipe } = useShoppingList();
   const { id } = useParams<{ id: string }>();
-  const [toast, setToast] = useState({ show: false, message: "" });
+  const { showToast, showErrorToast } = useToast();
   const [loadFailed, setLoadFailed] = useState(false);
   const [signInAlertOpen, setSignInAlertOpen] = useState(false);
   const [scaledServings, setScaledServings] = useState(1);
@@ -115,10 +116,7 @@ const RecipeDetail: React.FC = () => {
             try {
               await shareRecipe(recipe);
             } catch {
-              setToast({
-                show: true,
-                message: "Could not share recipe.",
-              });
+              showErrorToast("Could not share recipe.");
             }
           }}
           onFavoriteToggle={async () => {
@@ -129,10 +127,7 @@ const RecipeDetail: React.FC = () => {
             try {
               await toggleFavorite(recipe.id);
             } catch {
-              setToast({
-                show: true,
-                message: "Could not update favorite.",
-              });
+              showErrorToast("Could not update favorite.");
             }
           }}
           onGoToTag={goToTag}
@@ -146,19 +141,12 @@ const RecipeDetail: React.FC = () => {
           scaledServings={scaledServings}
           onScaledServingsChange={setScaledServings}
           addFromRecipe={addFromRecipe}
-          setToast={setToast}
+          onShoppingListNotify={showToast}
         />
         <RecipeSection
           title="Instructions"
           items={recipe.instructions}
           numbered
-        />
-
-        <IonToast
-          isOpen={toast.show}
-          onDidDismiss={() => setToast((t) => ({ ...t, show: false }))}
-          message={toast.message}
-          duration={2000}
         />
 
         <SignInPromptAlert

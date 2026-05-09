@@ -4,6 +4,7 @@ import { RecipeProvider } from "./contexts/RecipeContext";
 import { RecentlyViewedProvider } from "./contexts/RecentlyViewedContext";
 import { ShoppingListProvider } from "./contexts/ShoppingListContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
+import { ToastProvider } from "./contexts/ToastContext";
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css";
@@ -61,20 +62,22 @@ const App: React.FC = () => {
 
   return (
     <IonApp key="main">
-      <OfflineBanner />
-      <AuthProvider>
-        <RecipeProvider>
-          <RecentlyViewedProvider>
-            <ShoppingListProvider>
-              <NotificationProvider>
-                <ErrorBoundary>
-                  <AppRoutes />
-                </ErrorBoundary>
-              </NotificationProvider>
-            </ShoppingListProvider>
-          </RecentlyViewedProvider>
-        </RecipeProvider>
-      </AuthProvider>
+      <ToastProvider>
+        <OfflineBanner />
+        <AuthProvider>
+          <RecipeProvider>
+            <RecentlyViewedProvider>
+              <ShoppingListProvider>
+                <NotificationProvider>
+                  <ErrorBoundary>
+                    <AppRoutes />
+                  </ErrorBoundary>
+                </NotificationProvider>
+              </ShoppingListProvider>
+            </RecentlyViewedProvider>
+          </RecipeProvider>
+        </AuthProvider>
+      </ToastProvider>
     </IonApp>
   );
 };
