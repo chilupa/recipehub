@@ -13,6 +13,7 @@
     "android:add": "npx cap add android",
     "ios:add": "npx cap add ios",
     "android:build": "npm run build && npx cap copy android",
+    "mobile:build": "npm run build && npx cap copy ios && npx cap copy android",
     "android:sync": "npx cap sync android",
     "ios:build": "npm run build && npx cap copy ios",
     "ios:sync": "npx cap sync ios",

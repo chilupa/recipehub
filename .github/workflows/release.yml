@@ -1,0 +1,32 @@
+# Pushing a version tag (e.g. v1.2.0) creates a GitHub Release with auto-generated
+# notes from merged PRs and commits since the previous tag.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run mobile:build
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
