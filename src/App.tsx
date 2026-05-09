@@ -30,6 +30,10 @@ import "./theme/variables.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import Intro, { hasSeenIntro } from "./pages/Intro";
 import AppRoutes from "./AppRoutes";
+import ErrorBoundary from "./components/ErrorBoundary";
+import OfflineBanner from "./components/OfflineBanner";
+import SupabaseConfigMissing from "./components/SupabaseConfigMissing";
+import { isSupabaseConfigured } from "./lib/supabase";
 
 setupIonicReact({
   /** Edge swipe to go back (iOS mode / native; improves stack depth tracking). */
@@ -47,14 +51,25 @@ const App: React.FC = () => {
     );
   }
 
+  if (!isSupabaseConfigured()) {
+    return (
+      <IonApp key="main">
+        <SupabaseConfigMissing />
+      </IonApp>
+    );
+  }
+
   return (
     <IonApp key="main">
+      <OfflineBanner />
       <AuthProvider>
         <RecipeProvider>
           <RecentlyViewedProvider>
             <ShoppingListProvider>
               <NotificationProvider>
-                <AppRoutes />
+                <ErrorBoundary>
+                  <AppRoutes />
+                </ErrorBoundary>
               </NotificationProvider>
             </ShoppingListProvider>
           </RecentlyViewedProvider>

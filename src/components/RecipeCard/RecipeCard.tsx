@@ -174,7 +174,9 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
               size="small"
               stopEventPropagation
               className="recipe-card__favorite"
-              onToggle={() => onFavorite(recipe.id).catch(() => {})}
+              onToggle={() => {
+                void onFavorite(recipe.id);
+              }}
             >
               {recipe.likes > 0 && formatFavorites(recipe.likes)}
             </FavoriteHeartButton>

@@ -1,3 +1,4 @@
+import { devWarn } from "./devLog";
 import { supabase } from "./supabase";
 import type { Recipe } from "../types/Recipe";
 
@@ -369,7 +370,7 @@ export async function fetchFeedRecipesPage(
     return mapEnrichedRpcRowsToRecipes((data ?? []) as SearchRecipesEnrichedRpcRow[]);
   }
 
-  console.warn("fetchFeedRecipesPage: RPC unavailable, using legacy path:", error);
+  devWarn("fetchFeedRecipesPage: RPC unavailable, using legacy path:", error);
 
   const { data: rows, error: qErr } = await supabase
     .from("recipes")

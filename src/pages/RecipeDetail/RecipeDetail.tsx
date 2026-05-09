@@ -45,7 +45,7 @@ const RecipeDetail: React.FC = () => {
   useEffect(() => {
     if (!recipe) return;
     setScaledServings(recipe.servings > 0 ? recipe.servings : 1);
-  }, [recipe?.id, recipe?.servings]);
+  }, [recipe]);
 
   const displayIngredients = useMemo(() => {
     if (!recipe) return [];

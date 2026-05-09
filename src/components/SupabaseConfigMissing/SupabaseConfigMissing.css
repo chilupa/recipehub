@@ -1,0 +1,30 @@
+.supabase-config-missing__title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+
+.supabase-config-missing__lead {
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+
+.supabase-config-missing__hint {
+  margin: 16px 0 0;
+  line-height: 1.45;
+}
+
+.supabase-config-missing__code {
+  font-size: 0.9em;
+}
+
+.supabase-config-missing__pre {
+  margin: 12px 0 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  background: var(--ion-color-light);
+  color: var(--ion-text-color);
+}

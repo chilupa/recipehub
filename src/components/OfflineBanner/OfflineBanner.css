@@ -1,0 +1,16 @@
+.offline-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--ion-color-warning-tint);
+  color: var(--ion-color-warning-contrast);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  border-bottom: 1px solid var(--ion-color-warning-shade);
+}
+
+.offline-banner__icon {
+  flex-shrink: 0;
+  font-size: 22px;
+}
