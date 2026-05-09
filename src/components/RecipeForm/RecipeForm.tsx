@@ -5,7 +5,7 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { IonToast } from "@ionic/react";
+import { useToast } from "../../contexts/ToastContext";
 import RecipeFormListContent from "./RecipeFormListContent";
 import {
   emptyFormState,
@@ -26,11 +26,11 @@ import {
 
 const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
   ({ initialData, formResetKey = 0, draftKey, onSubmit }, ref) => {
+    const { showToast, showErrorToast } = useToast();
     const [formData, setFormData] = useState(() =>
       initialData ? toFormState(initialData) : emptyFormState(),
     );
     const [newTag, setNewTag] = useState("");
-    const [toast, setToast] = useState({ show: false, message: "" });
     const { coverDisplayUrl, onPickCover, onRemoveCover } =
       useCoverDisplayUrl(formData, setFormData);
 
@@ -39,8 +39,8 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
       [initialData],
     );
     const handleDraftRestored = useCallback(() => {
-      setToast({ show: true, message: "Restored your unsaved draft." });
-    }, []);
+      showToast("Restored your unsaved draft.");
+    }, [showToast]);
     useRecipeFormDraft({
       draftKey,
       baseFormData,
@@ -55,35 +55,26 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
 
     const handleSubmit = useCallback(async () => {
       if (!formData.title.trim()) {
-        setToast({ show: true, message: "Please enter a title." });
+        showToast("Please enter a title.");
         return;
       }
       const ing = linesFromText(formData.ingredientsText);
       const steps = linesFromText(formData.instructionsText);
       if (ing.length === 0) {
-        setToast({
-          show: true,
-          message: "Add ingredients (one per line).",
-        });
+        showToast("Add ingredients (one per line).");
         return;
       }
       if (steps.length === 0) {
-        setToast({
-          show: true,
-          message: "Add steps (one per line).",
-        });
+        showToast("Add steps (one per line).");
         return;
       }
       try {
         await onSubmit(toSubmitPayload(formData));
         clearRecipeFormDraft(draftKey);
       } catch {
-        setToast({
-          show: true,
-          message: "Could not save recipe. Please try again.",
-        });
+        showErrorToast("Could not save recipe. Please try again.");
       }
-    }, [draftKey, formData, onSubmit]);
+    }, [draftKey, formData, onSubmit, showToast, showErrorToast]);
 
     const resetForm = useCallback(() => {
       setFormData(baseFormData);
@@ -103,22 +94,19 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
     const addTag = () => {
       const tag = newTag.trim();
       if (!tag) {
-        setToast({ show: true, message: "Type a tag first." });
+        showToast("Type a tag first.");
         return;
       }
       if (tag.length > MAX_TAG_LENGTH) {
-        setToast({
-          show: true,
-          message: `Tag is too long (max ${MAX_TAG_LENGTH} characters).`,
-        });
+        showToast(`Tag is too long (max ${MAX_TAG_LENGTH} characters).`);
         return;
       }
       if (formData.tags.length >= MAX_TAGS) {
-        setToast({ show: true, message: `Max ${MAX_TAGS} tags.` });
+        showToast(`Max ${MAX_TAGS} tags.`);
         return;
       }
       if (formData.tags.includes(tag)) {
-        setToast({ show: true, message: "Tag already added." });
+        showToast("Tag already added.");
         return;
       }
 
@@ -142,22 +130,19 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
         }
 
         if (tag.length > MAX_TAG_LENGTH) {
-          setToast({
-            show: true,
-            message: `Tag is too long (max ${MAX_TAG_LENGTH} characters).`,
-          });
+          showToast(`Tag is too long (max ${MAX_TAG_LENGTH} characters).`);
           setNewTag("");
           return;
         }
 
         if (formData.tags.length >= MAX_TAGS) {
-          setToast({ show: true, message: `Max ${MAX_TAGS} tags.` });
+          showToast(`Max ${MAX_TAGS} tags.`);
           setNewTag("");
           return;
         }
 
         if (formData.tags.includes(tag)) {
-          setToast({ show: true, message: "Tag already added." });
+          showToast("Tag already added.");
           setNewTag("");
           return;
         }
@@ -181,14 +166,6 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
           coverDisplayUrl={coverDisplayUrl}
           onPickCover={onPickCover}
           onRemoveCover={onRemoveCover}
-        />
-
-        <IonToast
-          isOpen={toast.show}
-          onDidDismiss={() => setToast((t) => ({ ...t, show: false }))}
-          message={toast.message}
-          duration={2000}
-          color="warning"
         />
       </>
     );

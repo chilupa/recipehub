@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  IonContent,
-  IonPage,
-  IonToast,
-} from "@ionic/react";
+import { IonContent, IonPage } from "@ionic/react";
 import AppHeader from "../../components/AppHeader";
 import NoData from "../../components/NoData";
 import RecipeListLoadingBlock from "../../components/RecipeListLoadingBlock";
@@ -19,8 +15,6 @@ const Favorites: React.FC = () => {
     skeletonRecipeId,
     onFavoritePress,
     shareRecipe,
-    toast,
-    dismissToast,
   } = useFavoritesList();
 
   return (
@@ -44,14 +38,6 @@ const Favorites: React.FC = () => {
           />
         )}
       </IonContent>
-
-      <IonToast
-        isOpen={toast.show}
-        onDidDismiss={dismissToast}
-        message={toast.message}
-        duration={2500}
-        color="danger"
-      />
     </IonPage>
   );
 };

@@ -6,8 +6,6 @@ import RecipeSection from "../RecipeSection";
 import type { Recipe } from "../../../types/Recipe";
 import "../RecipeDetail.css";
 
-type ToastState = { show: boolean; message: string };
-
 type Props = {
   recipe: Recipe;
   displayIngredients: string[];
@@ -17,7 +15,7 @@ type Props = {
     recipe: Recipe,
     opts?: { ingredientLines?: string[] },
   ) => number;
-  setToast: React.Dispatch<React.SetStateAction<ToastState>>;
+  onShoppingListNotify: (message: string) => void;
 };
 
 const RecipeDetailIngredientsPanel: React.FC<Props> = ({
@@ -26,7 +24,7 @@ const RecipeDetailIngredientsPanel: React.FC<Props> = ({
   scaledServings,
   onScaledServingsChange,
   addFromRecipe,
-  setToast,
+  onShoppingListNotify,
 }) => (
   <>
     {recipe.servings > 0 ? (
@@ -49,16 +47,13 @@ const RecipeDetailIngredientsPanel: React.FC<Props> = ({
               ingredientLines: displayIngredients,
             });
             if (n === 0) {
-              setToast({
-                show: true,
-                message:
-                  "Those ingredients are already on your shopping list.",
-              });
+              onShoppingListNotify(
+                "Those ingredients are already on your shopping list.",
+              );
             } else {
-              setToast({
-                show: true,
-                message: `Added ${n} ${n === 1 ? "item" : "items"} to your shopping list.`,
-              });
+              onShoppingListNotify(
+                `Added ${n} ${n === 1 ? "item" : "items"} to your shopping list.`,
+              );
             }
           }}
         >

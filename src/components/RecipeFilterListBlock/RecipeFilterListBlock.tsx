@@ -2,7 +2,6 @@ import React from "react";
 import type { RecipeFilterListPageController } from "../../hooks/useRecipeFilterListPage";
 import type { Recipe } from "../../types/Recipe";
 import RecipeCard from "../RecipeCard";
-import DangerToast from "../DangerToast";
 import RecipeListLoadingBlock from "../RecipeListLoadingBlock";
 import ListPageShell from "../ListPageShell";
 import RecipeOwnerMenuPopover from "../RecipeOwnerMenuPopover";
@@ -33,8 +32,6 @@ const RecipeFilterListBlock: React.FC<RecipeFilterListBlockProps> = ({
     load,
     shareRecipe,
     deleteRecipe,
-    toast,
-    dismissToast,
     deleteAlert,
     dismissDeleteAlert,
     popoverOpen,
@@ -42,7 +39,7 @@ const RecipeFilterListBlock: React.FC<RecipeFilterListBlockProps> = ({
     openPopover,
     requestDelete,
     favoriteRecipe,
-    showToast,
+    showErrorToast,
   } = page;
 
   return (
@@ -86,13 +83,7 @@ const RecipeFilterListBlock: React.FC<RecipeFilterListBlockProps> = ({
         onDismiss={dismissDeleteAlert}
         deleteRecipe={deleteRecipe}
         afterDelete={load}
-        onError={showToast}
-      />
-
-      <DangerToast
-        isOpen={toast.show}
-        message={toast.message}
-        onDidDismiss={dismissToast}
+        onError={showErrorToast}
       />
     </>
   );

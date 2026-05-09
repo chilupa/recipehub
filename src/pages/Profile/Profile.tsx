@@ -5,11 +5,12 @@ import React, {
   useRef,
   useMemo,
 } from "react";
-import { IonContent, IonPage, IonToast, useIonRouter } from "@ionic/react";
+import { IonContent, IonPage, useIonRouter } from "@ionic/react";
 import { useHistory } from "react-router-dom";
 
 import AppHeader from "../../components/AppHeader";
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
 import { useShoppingList } from "../../contexts/ShoppingListContext";
 import { suppressProfileShoppingTabBadge } from "../../utils/profileShoppingTabBadge";
 
@@ -23,6 +24,7 @@ const Profile: React.FC = () => {
   const history = useHistory();
   const ionRouter = useIonRouter();
   const { user, updateUser, logout, deleteAccount } = useAuth();
+  const { showToast, showErrorToast } = useToast();
   const { items: shoppingItems } = useShoppingList();
   const { shoppingPending, shoppingHasList } = useMemo(() => {
     const pending = shoppingItems.filter((l) => !l.checked).length;
@@ -41,11 +43,6 @@ const Profile: React.FC = () => {
   const [editingName, setEditingName] = useState(false);
   const [loading, setLoading] = useState(false);
   const nameInputRef = useRef<HTMLIonInputElement>(null);
-  const [showToast, setShowToast] = useState({
-    show: false,
-    message: "",
-    color: "secondary",
-  });
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -69,11 +66,7 @@ const Profile: React.FC = () => {
 
   const saveProfile = async () => {
     if (!user || !name.trim()) {
-      setShowToast({
-        show: true,
-        message: "Please enter your name",
-        color: "warning",
-      });
+      showToast("Please enter your name");
       return;
     }
 
@@ -90,17 +83,9 @@ const Profile: React.FC = () => {
 
       setOriginalName(name.trim());
       setEditingName(false);
-      setShowToast({
-        show: true,
-        message: "Profile updated",
-        color: "success",
-      });
+      showToast("Profile updated");
     } catch {
-      setShowToast({
-        show: true,
-        message: "Error updating profile",
-        color: "danger",
-      });
+      showErrorToast("Error updating profile");
     }
     setLoading(false);
   };
@@ -122,14 +107,11 @@ const Profile: React.FC = () => {
       setDeleteAlertOpen(false);
       ionRouter.push("/login", "root", "replace");
     } catch (e) {
-      setShowToast({
-        show: true,
-        message:
-          e instanceof Error
-            ? e.message
-            : "Could not delete account. If this keeps happening, contact support.",
-        color: "danger",
-      });
+      showErrorToast(
+        e instanceof Error
+          ? e.message
+          : "Could not delete account. If this keeps happening, contact support.",
+      );
     } finally {
       setDeleteLoading(false);
     }
@@ -187,13 +169,6 @@ const Profile: React.FC = () => {
           />
         ) : null}
 
-        <IonToast
-          isOpen={showToast.show}
-          onDidDismiss={() => setShowToast((s) => ({ ...s, show: false }))}
-          message={showToast.message}
-          duration={3000}
-          color={showToast.color}
-        />
       </IonContent>
     </IonPage>
   );

@@ -1,10 +1,11 @@
 import { useCallback, useState } from "react";
 import { useRecipes } from "../../contexts/RecipeContext";
+import { useToast } from "../../contexts/ToastContext";
 
 export function useFavoritesList() {
   const { favoriteRecipes, favoritesLoading, toggleFavorite, shareRecipe } =
     useRecipes();
-  const [toast, setToast] = useState({ show: false, message: "" });
+  const { showErrorToast } = useToast();
   /** Recipe row showing an in-place skeleton while favorite toggles (unfavorite on this tab). */
   const [skeletonRecipeId, setSkeletonRecipeId] = useState<string | null>(
     null,
@@ -16,17 +17,13 @@ export function useFavoritesList() {
       try {
         await toggleFavorite(recipeId);
       } catch {
-        setToast({ show: true, message: "Could not update favorite." });
+        showErrorToast("Could not update favorite.");
       } finally {
         setSkeletonRecipeId(null);
       }
     },
-    [toggleFavorite],
+    [toggleFavorite, showErrorToast],
   );
-
-  const dismissToast = useCallback(() => {
-    setToast((t) => ({ ...t, show: false }));
-  }, []);
 
   return {
     favoriteRecipes,
@@ -34,7 +31,5 @@ export function useFavoritesList() {
     skeletonRecipeId,
     onFavoritePress,
     shareRecipe,
-    toast,
-    dismissToast,
   };
 }

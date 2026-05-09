@@ -3,7 +3,6 @@ import { IonContent, IonPage } from "@ionic/react";
 import { useHistory } from "react-router-dom";
 import AppHeader from "../../components/AppHeader";
 import DeleteRecipeConfirmAlert from "../../components/DeleteRecipeConfirmAlert";
-import DangerToast from "../../components/DangerToast";
 import NoData from "../../components/NoData";
 import RecentlyViewedStrip from "../../components/RecentlyViewedStrip";
 import RecipeOwnerMenuPopover from "../../components/RecipeOwnerMenuPopover";
@@ -62,9 +61,7 @@ const SearchRecipes: React.FC = () => {
     hasSubmittedSearch,
     submitSearch,
     clearQuery,
-    toast,
-    dismissToast,
-    showToast,
+    showErrorToast,
   } = useSearchRecipesScreen();
 
   return (
@@ -96,7 +93,7 @@ const SearchRecipes: React.FC = () => {
                 try {
                   await toggleFavorite(recipeId);
                 } catch {
-                  showToast("Could not update favorite.");
+                  showErrorToast("Could not update favorite.");
                 }
               }}
               onShare={
@@ -151,13 +148,7 @@ const SearchRecipes: React.FC = () => {
           onDismiss={() => setDeleteAlert(emptyDeleteRecipeAlertState)}
           deleteRecipe={deleteRecipe}
           afterDelete={refreshRecipes}
-          onError={(message) => showToast(message)}
-        />
-
-        <DangerToast
-          isOpen={toast.show}
-          message={toast.message}
-          onDidDismiss={dismissToast}
+          onError={(message) => showErrorToast(message)}
         />
 
         <SignInPromptAlert
