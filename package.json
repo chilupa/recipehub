@@ -1,11 +1,17 @@
 {
   "name": "recipe-logger",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.12.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:sync": "npm run build && npx cap sync",
+    "version:print": "node scripts/bump-app-version.mjs print",
+    "version:sync": "node scripts/bump-app-version.mjs sync",
+    "version:patch": "node scripts/bump-app-version.mjs patch",
+    "version:minor": "node scripts/bump-app-version.mjs minor",
+    "version:major": "node scripts/bump-app-version.mjs major",
     "preview": "vite preview",
     "test.e2e": "cypress run",
     "test.unit": "vitest",

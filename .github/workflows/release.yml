@@ -1,32 +1,60 @@
-# Pushing a version tag (e.g. v1.2.0) creates a GitHub Release with auto-generated
-# notes from merged PRs and commits since the previous tag.
 name: Release
 
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  validate-and-release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: '20'
           cache: npm
 
-      - run: npm ci
+      - name: Install
+        run: npm ci
 
-      - run: npm run mobile:build
+      - name: Print versions
+        run: npm run version:print
 
-      - uses: softprops/action-gh-release@v2
+      - name: Build
+        run: npm run build
+
+      - name: Extract version
+        id: version
+        run: echo "tag=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          body: |
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/CHANGELOG.md) for user-facing changes.
+
+            Fill in store build numbers after native archives:
+
+            | Platform | Version | Build |
+            | -------- | ------- | ----- |
+            | Web/JS   | ${{ steps.version.outputs.tag }} | (package.json) |
+            | Android  | ${{ steps.version.outputs.tag }} | _TBD_ |
+            | iOS      | ${{ steps.version.outputs.tag }} | _TBD_ |
+
+            ## Store status
+            - [ ] Google Play
+            - [ ] TestFlight / App Store
+
+            ## Build locally
+            ```bash
+            npm run build:sync
+            ```
+            Then archive in Android Studio / Xcode. See [docs/release.md](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/docs/release.md).

@@ -19,7 +19,7 @@ A cross-platform recipe app: sign in, browse a **community feed**, add and edit 
 | **Intro** | First-launch onboarding (`Intro.tsx`); skipped after completion (local persistence). |
 | **Reliability** | Top-level **error boundary** for render crashes (reload / back to feed). **Offline banner** when the browser reports no connection. If `VITE_SUPABASE_*` is unset, a **setup screen** explains required env vars instead of silent dummy-client failures. |
 | **Toasts** | One global **IonToast** (3s): normal feedback uses the default style; failures use **danger**. Call `showToast` / `showErrorToast` from `ToastContext`. |
-| **Release tooling** | **`npm run mobile:build`** runs one production web build and **Cap copy** for iOS and Android. Pushing a **`v*`** git tag runs CI that verifies that build and creates a GitHub Release with **auto-generated notes** from merged PRs and commits. |
+| **Release tooling** | `npm run version:print` / `version:patch` sync web + native store versions. [docs/release.md](docs/release.md) and [CHANGELOG.md](CHANGELOG.md) describe feature branch → PR → tag → stores. Pushing a **`v*`** tag runs CI and creates a GitHub Release. |
 
 Data lives in **Supabase** (`profiles`, `recipes`, `favorites`, `recipe_shares`, `notifications`) plus a public **`recipe-images`** storage bucket, with **Row Level Security**. See `supabase/schema.sql` and `supabase/migrations/`.
 
@@ -92,21 +92,14 @@ Useful scripts from `package.json`:
 
 | Script | Purpose |
 |--------|---------|
-| `mobile:build` | Single web `build`, then `cap copy` for **iOS and Android** (skip duplicate builds vs running both platform scripts). |
+| `build:sync` | Single web `build`, then `cap sync` for **iOS and Android** |
+| `mobile:build` | Single web `build`, then `cap copy` for **iOS and Android** |
+| `version:print` / `version:patch` | Show or bump marketing version + native build numbers |
 | `ios:build` / `android:build` | `build` + `cap copy` for one platform |
 | `ios:sync` / `android:sync` | `cap sync` |
 | `android:apk` | Debug APK via Gradle |
 
-### GitHub releases
-
-Tag a release from `main` (or your release branch) with a **semver tag** like `v1.2.0` and push it:
-
-```bash
-git tag v1.2.0
-git push origin v1.2.0
-```
-
-The **[Release workflow](.github/workflows/release.yml)** runs `npm run mobile:build` and opens a **GitHub Release** whose body is filled with **[automatically generated release notes](https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes)** (merged PR titles, contributors, and commits grouped since the previous tag). Edit the release on GitHub afterward if you want extra detail.
+Development and releases: [docs/release.md](docs/release.md) (feature branches → `main` → tag → stores) and [CHANGELOG.md](CHANGELOG.md). Pushing a `v*` tag runs the GitHub Release workflow.
 
 **OAuth on device:** configure Google redirect URIs and app URL scheme as described in `SUPABASE_SETUP.md`.
 
