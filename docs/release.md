@@ -76,7 +76,7 @@ Confirm on `main`:
 - [ ] Feature PR(s) merged
 - [ ] `npm run build` passes
 - [ ] Changelog `[Unreleased]` is accurate
-- [ ] `.env` has production Supabase values (not committed) for anything the feature needs
+- [ ] `.env` has production Firebase values (not committed) for anything the feature needs
 
 Pick the next version:
 
@@ -278,4 +278,4 @@ Keep feature branches short-lived; merge `main` into your branch if the PR stays
 
 ## Environment reminder
 
-`.env` is not in git. Run `npm run build:sync` with production Supabase env vars on the build machine. See `.env.example` and [SUPABASE_SETUP.md](../SUPABASE_SETUP.md).
+`.env` is not in git. Run `npm run build:sync` with production Firebase env vars on the build machine. See `.env.example` and [FIREBASE_SETUP.md](../FIREBASE_SETUP.md).

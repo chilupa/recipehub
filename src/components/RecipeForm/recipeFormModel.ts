@@ -111,6 +111,9 @@ export function toSubmitPayload(form: FormState): RecipeSubmitPayload {
 export const MAX_TAGS = 5;
 export const MAX_TAG_LENGTH = 20;
 
+/** Form element id so footer Save can submit across IonContent / IonFooter. */
+export const RECIPE_FORM_ID = "recipe-form";
+
 export type RecipeFormHandle = {
   submit: () => void | Promise<void>;
   reset: () => void;
@@ -121,5 +124,10 @@ export interface RecipeFormProps {
   formResetKey?: number;
   /** Optional scoped key to enable debounced local draft autosave/restore. */
   draftKey?: string;
+  /**
+   * Increment to request a submit from outside (header Save).
+   * More reliable than refs with Ionic page caching.
+   */
+  submitRequestKey?: number;
   onSubmit: (data: RecipeSubmitPayload) => void | Promise<void>;
 }

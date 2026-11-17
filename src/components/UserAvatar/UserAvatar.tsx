@@ -1,37 +1,23 @@
-import React from "react";
-import { IonAvatar } from "@ionic/react";
-import "./UserAvatar.css";
+import { AppAvatar, type AppAvatarSize } from "../../design-system";
 
 interface UserAvatarProps {
   name: string;
+  src?: string;
   size?: number;
-  /** Ionic color name (e.g. primary, medium). */
+  /** Kept for call-site compatibility; AppAvatar uses brand tokens. */
   color?: string;
 }
 
-const getInitials = (name: string): string => {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-};
+function mapSize(size: number): AppAvatarSize {
+  if (size >= 64) return "xl";
+  if (size >= 48) return "lg";
+  if (size >= 32) return "md";
+  if (size >= 24) return "sm";
+  return "xs";
+}
 
-const UserAvatar: React.FC<UserAvatarProps> = ({
-  name,
-  size = 20,
-  color = "primary",
-}) => {
-  const layoutClass = size >= 48 ? "user-avatar--profile" : "user-avatar--compact";
-  const ionTint =
-    color === "medium" ? "user-avatar--ion-medium" : "user-avatar--ion-primary";
-
-  return (
-    <IonAvatar className={`user-avatar ${layoutClass} ${ionTint}`}>
-      <div className="user-avatar__inner">{getInitials(name)}</div>
-    </IonAvatar>
-  );
-};
+const UserAvatar = ({ name, src, size = 20 }: UserAvatarProps) => (
+  <AppAvatar name={name} src={src} size={mapSize(size)} />
+);
 
 export default UserAvatar;

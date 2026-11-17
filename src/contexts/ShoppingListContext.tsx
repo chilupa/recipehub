@@ -133,7 +133,8 @@ export const ShoppingListProvider: React.FC<{ children: React.ReactNode }> = ({
         text: t,
         checked: false,
         recipeId: "__custom",
-        recipeTitle: "Other",
+        // Group label for items typed in (not from a recipe)
+        recipeTitle: "Your items",
       },
     ]);
     unsuppressProfileShoppingTabBadge();

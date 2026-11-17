@@ -16,6 +16,8 @@ export interface Recipe {
   /** Distinct signed-in users who completed Share for this recipe */
   shareCount: number;
   author: string;
+  /** Author profile photo when available. */
+  authorAvatarUrl?: string;
   userId: string;
 }
 

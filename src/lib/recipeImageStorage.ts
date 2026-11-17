@@ -1,49 +1,27 @@
+import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { compressImageToJpeg } from "./imageCompress";
 import { devWarn } from "./devLog";
-import { supabase } from "./supabase";
+import { getFirebaseStorage } from "./firebase";
 
 export const RECIPE_IMAGES_BUCKET = "recipe-images";
 
+/** Feed/detail covers stay sharp enough while staying in the low-hundreds KB. */
+const COVER_MAX_BYTES = 250 * 1024;
+const COVER_MAX_EDGE = 1280;
+
 export function recipeCoverStoragePath(userId: string, recipeId: string): string {
-  return `${userId}/${recipeId}.jpg`;
+  return `${RECIPE_IMAGES_BUCKET}/${userId}/${recipeId}.jpg`;
 }
 
-export function publicUrlForRecipeCover(path: string): string {
-  const { data } = supabase.storage
-    .from(RECIPE_IMAGES_BUCKET)
-    .getPublicUrl(path);
-  return data.publicUrl;
-}
-
-async function blobToJpeg(blob: Blob, maxWidth: number, quality: number): Promise<Blob> {
-  const bitmap = await createImageBitmap(blob);
-  try {
-    let { width, height } = bitmap;
-    if (width > maxWidth) {
-      height = Math.round((height * maxWidth) / width);
-      width = maxWidth;
-    }
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return blob;
-    ctx.drawImage(bitmap, 0, 0, width, height);
-    const out = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob((b) => resolve(b), "image/jpeg", quality);
-    });
-    return out ?? blob;
-  } finally {
-    bitmap.close();
-  }
-}
-
-/** Resize wide photos and normalize to JPEG for a predictable storage path. */
+/** Resize and JPEG-encode covers before Firebase Storage upload. */
 export async function prepareRecipeCoverBlob(file: File): Promise<Blob> {
-  try {
-    return await blobToJpeg(file, 1600, 0.88);
-  } catch {
-    return file;
-  }
+  return compressImageToJpeg(file, {
+    maxEdge: COVER_MAX_EDGE,
+    maxBytes: COVER_MAX_BYTES,
+    quality: 0.8,
+    minQuality: 0.45,
+    minEdge: 640,
+  });
 }
 
 export async function uploadRecipeCover(
@@ -53,14 +31,9 @@ export async function uploadRecipeCover(
 ): Promise<string> {
   const body = await prepareRecipeCoverBlob(file);
   const path = recipeCoverStoragePath(userId, recipeId);
-  const { error } = await supabase.storage
-    .from(RECIPE_IMAGES_BUCKET)
-    .upload(path, body, {
-      contentType: "image/jpeg",
-      upsert: true,
-    });
-  if (error) throw error;
-  return publicUrlForRecipeCover(path);
+  const storageRef = ref(getFirebaseStorage(), path);
+  await uploadBytes(storageRef, body, { contentType: "image/jpeg" });
+  return getDownloadURL(storageRef);
 }
 
 export async function deleteRecipeCoverObject(
@@ -68,8 +41,9 @@ export async function deleteRecipeCoverObject(
   recipeId: string,
 ): Promise<void> {
   const path = recipeCoverStoragePath(userId, recipeId);
-  const { error } = await supabase.storage
-    .from(RECIPE_IMAGES_BUCKET)
-    .remove([path]);
-  if (error) devWarn("deleteRecipeCoverObject:", error);
+  try {
+    await deleteObject(ref(getFirebaseStorage(), path));
+  } catch (error) {
+    devWarn("deleteRecipeCoverObject:", error);
+  }
 }

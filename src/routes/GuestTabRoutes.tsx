@@ -1,8 +1,12 @@
 import React from "react";
 import { Redirect, Route } from "react-router-dom";
-import Login from "../pages/Login";
-import SignInGatePage from "../pages/SignInGatePage";
-import SearchRecipes from "../pages/SearchRecipes";
+import {
+  ForgotPassword,
+  Login,
+  Register,
+  SignInGatePage,
+} from "../features/auth";
+import { SearchRecipes } from "../features/search";
 import { GuestRecipesStack } from "./RecipesIonStack";
 
 /**
@@ -11,6 +15,8 @@ import { GuestRecipesStack } from "./RecipesIonStack";
 const GuestTabRoutes: React.FC = () => (
   <>
     <Route exact path="/login" component={Login} />
+    <Route exact path="/register" component={Register} />
+    <Route exact path="/forgot-password" component={ForgotPassword} />
     <Route path="/:tab(recipes)" component={GuestRecipesStack} />
     <Route exact path="/:tab(myrecipes)" component={SignInGatePage} />
     <Route exact path="/:tab(search)" component={SearchRecipes} />

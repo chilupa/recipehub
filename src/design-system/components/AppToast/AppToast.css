@@ -1,0 +1,4 @@
+.app-toast {
+  --border-radius: var(--radius-md);
+  font-weight: var(--font-weight-medium);
+}

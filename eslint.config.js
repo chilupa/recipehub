@@ -16,7 +16,6 @@ export default tseslint.config(
       "**/DerivedData/**",
       "coverage/**",
       "cypress.config.ts",
-      "supabase/functions/**",
     ],
   },
   {

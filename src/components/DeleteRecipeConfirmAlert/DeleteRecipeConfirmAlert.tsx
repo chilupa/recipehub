@@ -1,6 +1,7 @@
 import React from "react";
-import { IonAlert } from "@ionic/react";
+import { AppConfirm } from "../../design-system";
 import type { DeleteRecipeAlertState } from "../../lib/recipeListOwnerState";
+
 type Props = {
   state: DeleteRecipeAlertState;
   onDismiss: () => void;
@@ -16,28 +17,25 @@ const DeleteRecipeConfirmAlert: React.FC<Props> = ({
   afterDelete,
   onError,
 }) => (
-  <IonAlert
+  <AppConfirm
     isOpen={state.isOpen}
     onDidDismiss={onDismiss}
-    header="Delete Recipe"
-    message={`Are you sure you want to delete "${state.recipeName || "this recipe"}"?`}
-    buttons={[
-      { text: "Cancel", role: "cancel" },
-      {
-        text: "Delete",
-        role: "destructive",
-        handler: async () => {
-          try {
-            await deleteRecipe(state.recipeId);
-            await afterDelete?.();
-          } catch {
-            onError("Could not delete recipe.");
-          } finally {
-            onDismiss();
-          }
-        },
-      },
-    ]}
+    message="Are you sure you want to delete this recipe?"
+    cancelText="Cancel"
+    confirmText="Delete"
+    destructive
+    onConfirm={() => {
+      void (async () => {
+        try {
+          await deleteRecipe(state.recipeId);
+          await afterDelete?.();
+        } catch {
+          onError("Could not delete recipe.");
+        } finally {
+          onDismiss();
+        }
+      })();
+    }}
   />
 );
 

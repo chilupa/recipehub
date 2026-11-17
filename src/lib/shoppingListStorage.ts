@@ -7,7 +7,7 @@ export function shoppingItemsKey(scopeId: string): string {
   return `recipehub-shopping-items:${scopeId}`;
 }
 
-/** Signed-in: Supabase user id. Guest browse: `"guest"`. Login screen: `"__signed_out__"`. */
+/** Signed-in: Firebase uid. Guest browse: `"guest"`. Login screen: `"__signed_out__"`. */
 export function shoppingScopeId(
   userId: string | undefined,
   isGuest: boolean,

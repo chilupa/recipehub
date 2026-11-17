@@ -1,6 +1,6 @@
 # RecipeHub
 
-A cross-platform recipe app: sign in, browse a **community feed**, add and edit your own recipes, save **favorites**, and see **activity** when others favorite your posts. Built with **Ionic React**, **Vite**, **Supabase**, and **Capacitor** for web, iOS, and Android.
+A cross-platform recipe app: sign in, browse a **community feed**, add and edit your own recipes, save **favorites**, and keep up with **activity** on your posts. Built with **Ionic React**, **Vite**, **Firebase**, and **Capacitor** for web, iOS, and Android.
 
 **Bundle ID / app id:** `com.chilupa.recipehub` (see `capacitor.config.ts`).
 
@@ -10,18 +10,19 @@ A cross-platform recipe app: sign in, browse a **community feed**, add and edit 
 
 | Area | What it does |
 |------|----------------|
-| **Auth** | Sign in with **Google** via Supabase Auth; native apps use an in-app browser + deep link callback (`recipehub://…`). |
-| **Recipes** | Paginated **feed** (`IonInfiniteScroll`), recipe **detail**, **add** / **edit** with ingredients, steps, times, servings, tags, optional **cover photos** (Supabase Storage + `image_url`), and **share counts** (`recipe_shares`). On detail, a **servings scaler** (up to 999) rescales leading quantities in ingredient lines (shopping list uses the same scaled lines). Add/Edit forms now include **debounced draft autosave** (localStorage) with restore after accidental close/navigation. |
-| **Favorites** | Heart on list or detail; dedicated **Favorites** tab; like counts synced server-side. |
-| **Activity** | In-app **notifications** when someone favorites your recipe (Supabase `notifications` + optional Realtime). |
-| **Profile** | Display name (editable), email, links to feed / favorites / activity, sign out. On native apps, optional **haptic feedback** when you favorite a recipe (toggle under Preferences). |
-| **Recently viewed** | Recipe ids stored per scope in **localStorage** (guest vs signed-in). Opening recipe detail records a visit; the **Search** tab shows a horizontal **Recently viewed** strip under the search bar (loads missing recipes via `ensureRecipeLoaded`). |
+| **Auth** | Sign in with **email/password**, **Google**, and **Apple** via **Firebase Auth**. Includes create account and password reset. Native Android/iOS use the device Google/Apple picker. |
+| **Recipes** | Paginated **feed** (`IonInfiniteScroll`), recipe **detail**, **add** / **edit** with ingredients, steps, times, servings, tags, optional **cover photos** (Firebase Storage + `image_url`), and **share counts**. On detail, a **servings scaler** (up to 999) rescales leading quantities in ingredient lines (shopping list uses the same scaled lines). Add/Edit forms now include **debounced draft autosave** (localStorage) with restore after accidental close/navigation. |
+| **Favorites** | Heart on list or detail; dedicated **Favorites** tab; like counts synced in Firestore. |
+| **Activity** | In-app **notifications** for recipe updates (Firestore + live listeners). Favorites are the first type; more can land here later. |
+| **Profile** | Compact identity card with **edit profile** (display name + photo). Photos are compressed (~100KB JPEG) before upload to Firebase Storage (`profile-avatars/`). Email, browse links, preferences, sign out / delete account. Native apps can toggle **haptic feedback** on favorite. |
+| **Recently viewed** | Recipe ids stored per scope in **localStorage** (guest vs signed-in) when you open a recipe. Not shown in the UI for now. |
 | **Intro** | First-launch onboarding (`Intro.tsx`); skipped after completion (local persistence). |
-| **Reliability** | Top-level **error boundary** for render crashes (reload / back to feed). **Offline banner** when the browser reports no connection. If `VITE_SUPABASE_*` is unset, a **setup screen** explains required env vars instead of silent dummy-client failures. |
-| **Toasts** | One global **IonToast** (3s): normal feedback uses the default style; failures use **danger**. Call `showToast` / `showErrorToast` from `ToastContext`. |
+| **Reliability** | Top-level **error boundary** for render crashes (reload / back to feed). **Offline banner** when the browser reports no connection. If Firebase env vars are unset, a **setup screen** explains required config instead of silent failures. |
+| **Toasts** | One global **AppToast** (3s): normal feedback uses the default style; failures use **danger**. Call `showToast` / `showErrorToast` from `ToastContext`. |
+| **Design system** | Shared UI from `src/design-system` (tokens, AppHeader, AppTabBar, AppEmptyState, etc.). Branding and tabs live in `src/app.config.ts`. |
 | **Release tooling** | `npm run version:print` / `version:patch` sync web + native store versions. [docs/release.md](docs/release.md) and [CHANGELOG.md](CHANGELOG.md) describe feature branch → PR → tag → stores. Pushing a **`v*`** tag runs CI and creates a GitHub Release. |
 
-Data lives in **Supabase** (`profiles`, `recipes`, `favorites`, `recipe_shares`, `notifications`) plus a public **`recipe-images`** storage bucket, with **Row Level Security**. See `supabase/schema.sql` and `supabase/migrations/`.
+Data lives in **Firebase Firestore** (`profiles`, `recipes`, `favorites`, `recipe_shares`, `notifications`) plus **Firebase Storage** (`recipe-images/{userId}/…`, `profile-avatars/{userId}.jpg`). See [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) and `firestore.rules` / `storage.rules`.
 
 ---
 
@@ -30,15 +31,17 @@ Data lives in **Supabase** (`profiles`, `recipes`, `favorites`, `recipe_shares`,
 - **React 19** + **TypeScript**
 - **Ionic React 8** + **React Router 5** (`@ionic/react-router`)
 - **Vite 5**
-- **Supabase** (`@supabase/supabase-js`) — Postgres, Auth, Realtime (optional)
-- **Capacitor 8** — App, Browser (OAuth), Keyboard, Splash Screen, Status Bar, Haptics, etc.
+- **Firebase** (`firebase`) — Auth, Firestore, Storage
+- **Capacitor 8** — App, Browser, Keyboard, Splash Screen, Status Bar, Haptics, Network, Preferences
+- **Zustand** — theme + client preferences
+- Feature folders under `src/features/` + shared design system under `src/design-system/`
 
 ---
 
 ## Prerequisites
 
 - **Node.js** (LTS recommended)
-- A **Supabase** project (for production-like runs)
+- A **Firebase** project (Auth + Firestore + Storage)
 - For native builds: **Xcode** (iOS) and/or **Android Studio** (Android)
 
 ---
@@ -49,18 +52,11 @@ Data lives in **Supabase** (`profiles`, `recipes`, `favorites`, `recipe_shares`,
 npm install
 ```
 
-Create a `.env` in the project root (Vite reads `VITE_*` variables):
+Create a `.env` in the project root (Vite reads `VITE_*` variables). Copy from `.env.example` and fill Firebase values from the console / `google-services.json`.
 
-```env
-VITE_SUPABASE_URL=https://<your-project-ref>.supabase.co
-VITE_SUPABASE_ANON_KEY=<your-anon-key>
-```
+Enable Auth, Firestore, and Storage, then deploy [`firestore.rules`](./firestore.rules) and [`storage.rules`](./storage.rules).
 
-Apply the database schema:
-
-- Run `supabase/schema.sql` in the Supabase SQL Editor.
-
-Full Auth + Google + native redirect notes: **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)**.
+Full setup: **[FIREBASE_SETUP.md](./FIREBASE_SETUP.md)**.
 
 ```bash
 npm run dev
@@ -110,6 +106,7 @@ Development and releases: [docs/release.md](docs/release.md) (feature branches �
 | Variable | Effect |
 |----------|--------|
 | `VITE_NATIVE_AUTH_REDIRECT_URL` | Custom native OAuth redirect (must match app URL scheme). |
+| `VITE_GOOGLE_WEB_CLIENT_ID` | Web client ID from `google-services.json` for native Android Google sign-in. |
 | `VITE_SHARE_WEB_BASE_URL` | Public base URL used in shares for recipe links (example: `https://recipehub.app`). |
 | `VITE_APP_DOWNLOAD_URL` | App download/smart link appended in share text to help recipients install the app. |
 
@@ -125,16 +122,23 @@ The repo includes **`netlify.toml`**: build `npm run build`, publish `dist`, SPA
 
 ```
 src/
-  App.tsx                 # Intro gate, auth, tabs, providers
-  components/             # RecipeCard, AppHeader, Tabs, FavoriteHeartButton, …
-  contexts/               # AuthContext, RecipeContext, NotificationContext
-  lib/                    # supabase client, recipeSupabase, oauthRedirect
-  pages/                  # RecipeList, RecipeDetail, AddRecipe, EditRecipe,
-                          # Favorites, Activity, Profile, Login, Intro
-  theme/variables.css     # Ionic color tokens
-supabase/
-  schema.sql              # Tables + RLS
+  app/App.tsx             # Thin shell: bootstrap, providers, intro/config gates
+  app.config.ts           # Brand colors, app name, tab config
+  design-system/          # Tokens, theme, icons, shared UI components
+  features/               # auth, feed, search, my-recipes, favorites,
+                          # activity, profile, shopping, recipes
+  navigation/             # AppRouter + TabNavigation (config-driven tabs)
+  store/                  # Zustand theme + preferences
+  services/native/        # Keyboard, status bar, network wrappers
+  components/             # Recipe-specific UI (cards, forms, …)
+  contexts/               # Auth, recipes, notifications, shopping, toasts
+  lib/                    # Firebase auth, Firestore recipes, Storage helpers
+  theme/variables.css     # Extra Ionic / recipe card tokens
+firestore.rules           # Firestore security rules
+storage.rules             # Storage security rules
 ```
+
+Cursor rules for this architecture live in `.cursor/rules/` (design system, project standards, mobile, testing, git workflow).
 
 ---
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { User } from "../AuthContext";
 import type { Recipe } from "../../types/Recipe";
-import { fetchFavoriteRecipesList } from "../../lib/recipeSupabase";
+import { fetchFavoriteRecipesList } from "../../lib/recipeFirebase";
 
 export function useRecipeFavorites(user: User | null) {
   const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);

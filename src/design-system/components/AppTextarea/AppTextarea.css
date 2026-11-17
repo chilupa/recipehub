@@ -1,0 +1,10 @@
+.app-textarea__field {
+  align-items: stretch;
+  min-height: 96px;
+  padding-block: var(--space-3);
+}
+
+.app-textarea__control {
+  min-height: 72px;
+  width: 100%;
+}

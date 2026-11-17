@@ -1,0 +1,97 @@
+.auth-providers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Shared OAuth button shell — 44px+ height, full width */
+.auth-oauth {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-button);
+  border: 1px solid transparent;
+  font-size: var(--font-size-body2);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.auth-oauth:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.auth-oauth:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.auth-oauth__logo {
+  position: absolute;
+  left: var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-oauth__label {
+  pointer-events: none;
+}
+
+.auth-oauth__google-g {
+  display: block;
+  flex-shrink: 0;
+}
+
+/*
+ * Google Identity Services — light theme
+ * https://developers.google.com/identity/branding-guidelines
+ */
+.auth-oauth--google {
+  background: #ffffff;
+  color: #1f1f1f;
+  border-color: #747775;
+}
+
+.auth-oauth--google:hover:not(:disabled) {
+  background: #f8f9fa;
+}
+
+.auth-oauth--google:active:not(:disabled) {
+  background: #f1f3f4;
+}
+
+/*
+ * Sign in with Apple — white / black-logo variant (valid on light cards)
+ * https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple
+ */
+.auth-oauth--apple {
+  background: #ffffff;
+  color: #000000;
+  border-color: #747775;
+}
+
+.auth-oauth--apple:hover:not(:disabled) {
+  background: #f8f9fa;
+}
+
+.auth-oauth--apple:active:not(:disabled) {
+  background: #f1f3f4;
+}
+
+.auth-oauth--apple .auth-oauth__logo {
+  color: #000000;
+}
+
+.auth-form-error {
+  margin: 0;
+  font-size: var(--font-size-body2);
+  color: var(--color-danger);
+}

@@ -1,0 +1,106 @@
+.app-modal {
+  --border-radius: var(--radius-modal);
+  --box-shadow: var(--elevation-4);
+}
+
+.app-modal__toolbar {
+  --border-width: 0;
+  --background: var(--ion-color-primary);
+  --color: var(--ion-color-primary-contrast);
+  position: relative;
+}
+
+/* Keep actions above the centered absolute title */
+.app-modal__toolbar ion-buttons {
+  position: relative;
+  z-index: 2;
+}
+
+.app-modal__toolbar .app-button--text {
+  --color: var(--ion-color-primary-contrast);
+  --color-activated: var(--ion-color-primary-contrast);
+  --color-focused: var(--ion-color-primary-contrast);
+  --color-hover: var(--ion-color-primary-contrast);
+  --opacity: 1;
+  color: var(--ion-color-primary-contrast);
+}
+
+.app-modal__toolbar .app-button--text.app-button {
+  opacity: 1;
+}
+
+.app-modal__toolbar .app-button--text .app-button__label,
+.app-modal__toolbar .app-button--text ion-icon {
+  color: var(--ion-color-primary-contrast);
+}
+
+.app-modal__toolbar .app-button--text::part(native) {
+  color: var(--ion-color-primary-contrast);
+}
+
+.app-modal ion-title.app-modal__title {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding-inline: 5.5rem;
+  font-size: var(--font-size-body1);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+  color: var(--ion-color-primary-contrast);
+  background: transparent;
+  pointer-events: none;
+}
+
+.app-modal ion-title.app-modal__title::part(text) {
+  text-align: center;
+  width: 100%;
+  color: var(--ion-color-primary-contrast);
+}
+
+.app-modal--sm {
+  --width: min(360px, 92%);
+  --height: auto;
+  --max-height: 70%;
+}
+
+.app-modal--md {
+  --width: min(480px, 94%);
+  --height: auto;
+  --max-height: 80%;
+}
+
+.app-modal--lg {
+  --width: min(640px, 96%);
+  --height: auto;
+  --max-height: 90%;
+}
+
+.app-modal--fullscreen {
+  --width: 100%;
+  --height: 100%;
+  --max-width: 100%;
+  --max-height: 100%;
+  --min-width: 100%;
+  --min-height: 100%;
+  --border-radius: 0;
+  --box-shadow: none;
+}
+
+.app-modal__content {
+  --padding-start: var(--space-4);
+  --padding-end: var(--space-4);
+  --padding-top: var(--space-4);
+  --padding-bottom: var(--space-4);
+}
+
+.app-modal__footer {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  padding: var(--space-3) var(--space-4);
+  padding-bottom: calc(var(--space-3) + var(--safe-area-bottom));
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}

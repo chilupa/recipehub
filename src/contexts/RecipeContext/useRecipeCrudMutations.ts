@@ -1,11 +1,12 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { User } from "../AuthContext";
 import type { Recipe } from "../../types/Recipe";
-import { supabase } from "../../lib/supabase";
 import {
-  type RecipeRow,
+  createRecipeDoc,
+  deleteRecipeDoc,
   rowToRecipe,
-} from "../../lib/recipeSupabase";
+  updateRecipeDoc,
+} from "../../lib/recipeFirebase";
 import {
   deleteRecipeCoverObject,
   uploadRecipeCover,
@@ -19,40 +20,29 @@ export function useRecipeCrudMutations(
   setRecipesTotalCount: Dispatch<SetStateAction<number | null>>,
 ) {
   const addRecipe = async (payload: RecipeSubmitPayload) => {
-    if (!user) return;
+    if (!user) {
+      throw new Error("Sign in to save a recipe.");
+    }
 
     const { coverFile, removeCover: _removeCover, ...newRecipe } = payload;
 
     try {
-      const { data: inserted, error } = await supabase
-        .from("recipes")
-        .insert({
-          user_id: user.id,
-          title: newRecipe.title.trim(),
-          description: newRecipe.description.trim() || null,
-          ingredients: newRecipe.ingredients,
-          instructions: newRecipe.instructions,
-          prep_time: newRecipe.prepTime ?? 0,
-          cook_time: newRecipe.cookTime ?? 0,
-          servings: newRecipe.servings ?? 0,
-          tags: newRecipe.tags ?? [],
-          image_url: newRecipe.image?.trim() || null,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      const row = inserted as RecipeRow;
+      const row = await createRecipeDoc(user.id, {
+        title: newRecipe.title.trim(),
+        description: newRecipe.description.trim() || null,
+        ingredients: newRecipe.ingredients,
+        instructions: newRecipe.instructions,
+        prep_time: newRecipe.prepTime ?? 0,
+        cook_time: newRecipe.cookTime ?? 0,
+        servings: newRecipe.servings ?? 0,
+        tags: newRecipe.tags ?? [],
+        image_url: newRecipe.image?.trim() || null,
+      });
 
       let imageUrl = row.image_url?.trim() || undefined;
       if (coverFile) {
         imageUrl = await uploadRecipeCover(user.id, row.id, coverFile);
-        const { error: imgErr } = await supabase
-          .from("recipes")
-          .update({ image_url: imageUrl })
-          .eq("id", row.id)
-          .eq("user_id", user.id);
-        if (imgErr) throw imgErr;
+        await updateRecipeDoc(row.id, user.id, { image_url: imageUrl });
       }
 
       const recipe = rowToRecipe(
@@ -61,6 +51,7 @@ export function useRecipeCrudMutations(
         0,
         false,
         0,
+        user.avatarUrl,
       );
       setRecipes((prev) => [recipe, ...prev]);
       setRecipesTotalCount((c) => (c ?? 0) + 1);
@@ -71,7 +62,9 @@ export function useRecipeCrudMutations(
   };
 
   const updateRecipe = async (id: string, data: RecipeSubmitPayload) => {
-    if (!user) return;
+    if (!user) {
+      throw new Error("Sign in to update a recipe.");
+    }
 
     const { coverFile, removeCover, ...recipe } = data;
 
@@ -94,13 +87,7 @@ export function useRecipeCrudMutations(
         payload.image_url = null;
       }
 
-      const { error } = await supabase
-        .from("recipes")
-        .update(payload)
-        .eq("id", id)
-        .eq("user_id", user.id);
-
-      if (error) throw error;
+      await updateRecipeDoc(id, user.id, payload);
       const ts = new Date().toISOString();
       const patch = (r: Recipe) =>
         r.id === id
@@ -134,13 +121,7 @@ export function useRecipeCrudMutations(
     if (!user) return;
 
     try {
-      const { error } = await supabase
-        .from("recipes")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
-
-      if (error) throw error;
+      await deleteRecipeDoc(id, user.id);
       await deleteRecipeCoverObject(user.id, id);
       setRecipes((prev) => prev.filter((r) => r.id !== id));
       setFavoriteRecipes((prev) => prev.filter((r) => r.id !== id));

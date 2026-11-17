@@ -1,0 +1,14 @@
+:root {
+  --breakpoint-xs: 0px;
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+}
+
+/* Utility media query references for documentation:
+ * @media (min-width: 576px)  { ... } // sm
+ * @media (min-width: 768px)  { ... } // md
+ * @media (min-width: 992px)  { ... } // lg
+ * @media (min-width: 1200px) { ... } // xl
+ */

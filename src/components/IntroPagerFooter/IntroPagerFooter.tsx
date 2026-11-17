@@ -1,5 +1,7 @@
 import React from "react";
-import { IonButton } from "@ionic/react";
+
+import { AppButton } from "../../design-system";
+
 import "./IntroPagerFooter.css";
 
 type Props = {
@@ -14,19 +16,16 @@ const IntroPagerFooter: React.FC<Props> = ({
   onSkipClick,
 }) => (
   <div className="intro-pager-footer">
-    <IonButton
+    <AppButton
       type="button"
-      expand="block"
-      size="large"
+      fullWidth
       className="intro-pager-footer__primary"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
+      onClick={() => {
         onPrimaryClick();
       }}
     >
       {isLastSlide ? "Get started" : "Next"}
-    </IonButton>
+    </AppButton>
     <button
       type="button"
       className="intro-pager-footer__skip"

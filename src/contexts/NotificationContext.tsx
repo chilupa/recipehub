@@ -6,7 +6,20 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+  writeBatch,
+} from "firebase/firestore";
+import { getFirestoreDb, isFirebaseConfigured } from "../lib/firebase";
 import { useAuth } from "./AuthContext";
 
 export type ActivityItem = {
@@ -32,25 +45,6 @@ const NotificationContext = createContext<NotificationContextValue | undefined>(
   undefined,
 );
 
-type Row = {
-  id: string;
-  read: boolean;
-  created_at: string;
-  recipe_id: string;
-  actor_id: string;
-  type: string;
-  recipes: { title: string } | { title: string }[] | null;
-};
-
-type ProfileNameRow = {
-  id: string;
-  display_name: string | null;
-};
-
-function toNotificationRows(data: unknown): Row[] {
-  return Array.isArray(data) ? (data as Row[]) : [];
-}
-
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -58,7 +52,57 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const enabled = Boolean(user) && isSupabaseConfigured();
+  const enabled = Boolean(user) && isFirebaseConfigured();
+
+  const mapDocsToItems = useCallback(async (docs: Array<{ id: string; data: () => Record<string, unknown> }>) => {
+    const rows = docs.map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        read: Boolean(data.read),
+        created_at: String(data.created_at ?? ""),
+        recipe_id: String(data.recipe_id ?? ""),
+        actor_id: String(data.actor_id ?? ""),
+        type: String(data.type ?? "favorite"),
+      };
+    });
+
+    const actorIds = [...new Set(rows.map((r) => r.actor_id).filter(Boolean))];
+    const recipeIds = [...new Set(rows.map((r) => r.recipe_id).filter(Boolean))];
+    const db = getFirestoreDb();
+
+    const actorNames = new Map<string, string>();
+    await Promise.all(
+      actorIds.map(async (id) => {
+        const snap = await getDoc(doc(db, "profiles", id));
+        const name = snap.exists()
+          ? String(snap.data().display_name ?? "").trim()
+          : "";
+        actorNames.set(id, name || "Someone");
+      }),
+    );
+
+    const recipeTitles = new Map<string, string>();
+    await Promise.all(
+      recipeIds.map(async (id) => {
+        const snap = await getDoc(doc(db, "recipes", id));
+        const title = snap.exists()
+          ? String(snap.data().title ?? "").trim()
+          : "";
+        recipeTitles.set(id, title || "Recipe");
+      }),
+    );
+
+    return rows.map((r) => ({
+      id: r.id,
+      read: r.read,
+      createdAt: r.created_at,
+      recipeId: r.recipe_id,
+      recipeTitle: recipeTitles.get(r.recipe_id) ?? "Recipe",
+      actorName: actorNames.get(r.actor_id) ?? "Someone",
+      type: r.type,
+    }));
+  }, []);
 
   const load = useCallback(async () => {
     if (!user || !enabled) {
@@ -68,60 +112,21 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("notifications")
-        .select("id, read, created_at, recipe_id, actor_id, type, recipes(title)")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(100);
-
-      if (error) {
-        console.error("Error loading notifications:", error);
-        setItems([]);
-        return;
-      }
-
-      const rows = toNotificationRows(data);
-      const actorIds = [...new Set(rows.map((r) => r.actor_id))];
-      let actorNames = new Map<string, string>();
-
-      if (actorIds.length > 0) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("id, display_name")
-          .in("id", actorIds);
-
-        const profileRows = (profs ?? []) as ProfileNameRow[];
-        actorNames = new Map(
-          profileRows.map((p) => [
-            p.id,
-            p.display_name?.trim() || "Chef",
-          ]),
-        );
-      }
-
-      const recipeTitle = (r: Row): string => {
-        const rec = r.recipes;
-        if (!rec) return "Recipe";
-        const row = Array.isArray(rec) ? rec[0] : rec;
-        return row?.title?.trim() || "Recipe";
-      };
-
-      setItems(
-        rows.map((r) => ({
-          id: r.id,
-          read: r.read,
-          createdAt: r.created_at,
-          recipeId: r.recipe_id,
-          recipeTitle: recipeTitle(r),
-          actorName: actorNames.get(r.actor_id) ?? "Someone",
-          type: r.type,
-        })),
+      const q = query(
+        collection(getFirestoreDb(), "notifications"),
+        where("user_id", "==", user.id),
+        orderBy("created_at", "desc"),
+        limit(100),
       );
+      const snap = await getDocs(q);
+      setItems(await mapDocsToItems(snap.docs));
+    } catch (error) {
+      console.error("Error loading notifications:", error);
+      setItems([]);
     } finally {
       setLoading(false);
     }
-  }, [user?.id, enabled]);
+  }, [user?.id, enabled, mapDocsToItems]);
 
   useEffect(() => {
     if (!user || !enabled) {
@@ -137,26 +142,25 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (!user?.id || !enabled) return;
 
-    const channel = supabase
-      .channel(`notifications:${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          void load();
-        },
-      )
-      .subscribe();
+    const q = query(
+      collection(getFirestoreDb(), "notifications"),
+      where("user_id", "==", user.id),
+      orderBy("created_at", "desc"),
+      limit(100),
+    );
 
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [user?.id, enabled, load]);
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        void mapDocsToItems(snap.docs).then(setItems);
+      },
+      (error) => {
+        console.error("notifications snapshot:", error);
+      },
+    );
+
+    return () => unsub();
+  }, [user?.id, enabled, mapDocsToItems]);
 
   const markRead = useCallback(
     async (id: string) => {
@@ -164,12 +168,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
       setItems((prev) =>
         prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
       );
-      const { error } = await supabase
-        .from("notifications")
-        .update({ read: true })
-        .eq("id", id)
-        .eq("user_id", user.id);
-      if (error) {
+      try {
+        await updateDoc(doc(getFirestoreDb(), "notifications", id), { read: true });
+      } catch (error) {
         console.error("markRead:", error);
         void load();
       }
@@ -180,16 +181,19 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   const markAllRead = useCallback(async () => {
     if (!user || !enabled) return;
     setItems((prev) => prev.map((n) => ({ ...n, read: true })));
-    const { error } = await supabase
-      .from("notifications")
-      .update({ read: true })
-      .eq("user_id", user.id)
-      .eq("read", false);
-    if (error) {
+    try {
+      const unread = items.filter((n) => !n.read);
+      const db = getFirestoreDb();
+      const batch = writeBatch(db);
+      unread.forEach((n) => {
+        batch.update(doc(db, "notifications", n.id), { read: true });
+      });
+      if (unread.length > 0) await batch.commit();
+    } catch (error) {
       console.error("markAllRead:", error);
       void load();
     }
-  }, [user?.id, enabled, load]);
+  }, [user?.id, enabled, load, items]);
 
   const unreadCount = useMemo(
     () => items.filter((n) => !n.read).length,

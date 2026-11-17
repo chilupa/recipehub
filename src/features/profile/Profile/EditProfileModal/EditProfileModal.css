@@ -1,0 +1,32 @@
+.edit-profile-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--page-padding-x);
+}
+
+.edit-profile-modal__avatar-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.edit-profile-modal__file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.edit-profile-modal__hint {
+  margin: 0;
+  text-align: center;
+  color: var(--color-text-muted);
+  max-width: 16rem;
+}

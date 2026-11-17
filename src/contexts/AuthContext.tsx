@@ -6,44 +6,58 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { App } from "@capacitor/app";
-import { Browser } from "@capacitor/browser";
-import { Capacitor } from "@capacitor/core";
-import type { PluginListenerHandle } from "@capacitor/core";
-import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { getFirebaseAuth, getFirebaseIdToken, isFirebaseConfigured } from "../lib/firebase";
+import { signInWithGoogle, signOutGoogleNative } from "../lib/firebaseGoogleAuth";
 import {
-  completeSupabaseOAuthFromUrl,
-  getOAuthRedirectUrl,
-  looksLikeOAuthCallbackUrl,
-} from "../lib/oauthRedirect";
-import type { Provider, User as SupabaseUser } from "@supabase/supabase-js";
-import { FunctionsHttpError } from "@supabase/supabase-js";
+  signInWithApple as signInWithAppleFirebase,
+  signOutAppleNative,
+} from "../lib/firebaseAppleAuth";
+import {
+  getAuthErrorMessage,
+  registerWithEmail as registerWithEmailFirebase,
+  sendPasswordReset as sendPasswordResetFirebase,
+  signInWithEmail,
+} from "../lib/firebaseEmailAuth";
+import {
+  fetchProfile,
+  mapFirebaseUser,
+  syncAuthProfile,
+  updateProfileFields,
+  upsertProfile,
+} from "../lib/authProfile";
+import { uploadProfileAvatar } from "../lib/profileAvatarStorage";
+import { deleteFirebaseAccount } from "../lib/deleteFirebaseAccount";
 import {
   persistGuestBrowsePreference,
   readGuestBrowsePreference,
 } from "../lib/guestBrowse";
+import { isBackendConfigured } from "../lib/appConfig";
 
-export interface User {
-  id: string;
-  name: string;
-  email?: string;
-  avatarUrl?: string;
-  /** ISO timestamp from Supabase Auth (`user.created_at`). */
-  joinedAt?: string;
-}
+import type { User } from "../types/User";
+
+export type { User };
 
 type AuthContextType = {
   user: User | null;
-  /** True when the user is browsing without an account (feed preview only). */
   isGuest: boolean;
   isLoading: boolean;
   authError: string | null;
   loginWithGoogle: () => Promise<void>;
   loginWithApple: () => Promise<void>;
+  loginWithEmail: (email: string, password: string) => Promise<void>;
+  registerWithEmail: (
+    name: string,
+    email: string,
+    password: string,
+  ) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
   continueWithoutSignIn: () => void;
   logout: () => Promise<void>;
-  deleteAccount: () => Promise<void>;
-  updateUser: (updates: Partial<User>) => Promise<void>;
+  deleteAccount: (password?: string) => Promise<void>;
+  updateUser: (
+    updates: Partial<User> & { avatarFile?: File | null },
+  ) => Promise<{ name?: string; avatarUrl?: string } | void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,24 +80,26 @@ function formatProviderAuthError(
   return rawMessage || fallback;
 }
 
-function mapAuthUser(
-  supabaseUser: SupabaseUser | null,
-  profile: { display_name?: string | null; avatar_url?: string | null } | null,
-): User | null {
-  if (!supabaseUser) return null;
-  const name =
-    profile?.display_name?.trim() ||
-    supabaseUser.user_metadata?.full_name?.trim() ||
-    supabaseUser.user_metadata?.name?.trim() ||
-    supabaseUser.email?.split("@")[0] ||
-    "Chef";
-  return {
-    id: supabaseUser.id,
-    name,
-    email: supabaseUser.email ?? undefined,
-    avatarUrl: profile?.avatar_url ?? supabaseUser.user_metadata?.avatar_url ?? undefined,
-    joinedAt: supabaseUser.created_at,
-  };
+async function hydrateUserFromFirebase(
+  mounted: () => boolean,
+  setUser: React.Dispatch<React.SetStateAction<User | null>>,
+) {
+  let firebaseUser = getFirebaseAuth().currentUser;
+  if (!firebaseUser || !mounted()) return;
+
+  // Use Auth user immediately. Do not seed/upsert Firestore profiles here;
+  // register/OAuth flows write the profile only when there is a real name.
+  setUser(mapFirebaseUser(firebaseUser, null));
+  try {
+    await getFirebaseIdToken(true);
+    firebaseUser = getFirebaseAuth().currentUser;
+    if (!firebaseUser || !mounted()) return;
+    const profile = await fetchProfile(firebaseUser.uid);
+    if (!mounted()) return;
+    setUser(mapFirebaseUser(firebaseUser, profile));
+  } catch {
+    // keep Auth metadata if profile read fails
+  }
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -104,257 +120,189 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     persistGuestBrowsePreference(true);
   };
 
-  const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("display_name, avatar_url")
-      .eq("id", userId)
-      .single();
-    return data;
-  };
-
-  const upsertProfile = async (supabaseUser: SupabaseUser) => {
-    const displayName =
-      supabaseUser.user_metadata?.full_name?.trim() ||
-      supabaseUser.user_metadata?.name?.trim() ||
-      supabaseUser.email?.split("@")[0] ||
-      null;
-    const avatarUrl =
-      supabaseUser.user_metadata?.avatar_url?.trim() || null;
-    await supabase.from("profiles").upsert(
-      {
-        id: supabaseUser.id,
-        display_name: displayName,
-        avatar_url: avatarUrl,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "id" }
-    );
-  };
-
   useEffect(() => {
+    if (!isBackendConfigured()) {
+      setIsLoading(false);
+      return;
+    }
+
     let mounted = true;
+    const isMounted = () => mounted;
 
-    const init = async () => {
-      try {
-        if (isSupabaseConfigured()) {
-          try {
-            if (typeof window !== "undefined") {
-              const href = window.location.href;
-              if (looksLikeOAuthCallbackUrl(href)) {
-                await completeSupabaseOAuthFromUrl(supabase, href);
-                window.history.replaceState(
-                  {},
-                  document.title,
-                  window.location.pathname || "/"
-                );
-              }
-            }
-            if (Capacitor.isNativePlatform()) {
-              const launch = await App.getLaunchUrl();
-              if (launch?.url && looksLikeOAuthCallbackUrl(launch.url)) {
-                await completeSupabaseOAuthFromUrl(supabase, launch.url);
-                await Browser.close().catch(() => undefined);
-              }
-            }
-          } catch {
-            // OAuth callback parse failed; continue with getSession
-          }
-        }
-
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (!mounted) return;
-        if (session?.user) {
-          clearGuestBrowse();
-          // Show home immediately from JWT metadata; hydrate profile in background.
-          setUser(mapAuthUser(session.user, null));
-          void (async () => {
-            try {
-              await upsertProfile(session.user);
-              const profileAfter = await fetchProfile(session.user.id);
-              if (!mounted) return;
-              setUser(mapAuthUser(session.user, profileAfter));
-            } catch {
-              // keep metadata-based user if profiles/RLS fail
-            }
-          })();
-        } else {
-          setUser(null);
-          if (mounted && readGuestBrowsePreference()) {
-            setGuestBrowse(true);
-          }
-        }
-      } catch {
-        if (mounted) {
-          setUser(null);
-          if (readGuestBrowsePreference()) setGuestBrowse(true);
-        }
-      } finally {
-        if (mounted) setIsLoading(false);
-      }
-    };
-
-    init();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    const unsubscribe = onAuthStateChanged(getFirebaseAuth(), (firebaseUser) => {
       if (!mounted) return;
-      if (event === "SIGNED_OUT") {
-        setUser(null);
+      if (firebaseUser) {
         clearGuestBrowse();
-        return;
-      }
-      if (session?.user) {
-        clearGuestBrowse();
-        setUser(mapAuthUser(session.user, null));
         setAuthError(null);
-        void (async () => {
-          try {
-            await upsertProfile(session.user);
-            const profile = await fetchProfile(session.user.id);
-            if (!mounted) return;
-            setUser(mapAuthUser(session.user, profile));
-          } catch {
-            // keep metadata-based user
-          }
-        })();
+        void hydrateUserFromFirebase(isMounted, setUser);
       } else {
         setUser(null);
         if (readGuestBrowsePreference()) setGuestBrowse(true);
       }
+      setIsLoading(false);
     });
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      unsubscribe();
     };
   }, [clearGuestBrowse]);
 
-  useEffect(() => {
-    if (!isSupabaseConfigured()) return;
-    if (!Capacitor.isNativePlatform()) return;
-
-    let cancelled = false;
-    let listener: PluginListenerHandle | undefined;
-
-    void (async () => {
-      listener = await App.addListener("appUrlOpen", async ({ url }) => {
-        if (!looksLikeOAuthCallbackUrl(url)) return;
-        try {
-          await completeSupabaseOAuthFromUrl(supabase, url);
-        } catch {
-          // user can retry sign-in
-        } finally {
-          await Browser.close().catch(() => undefined);
-        }
-      });
-      if (cancelled) {
-        void listener.remove();
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      void listener?.remove();
-    };
-  }, []);
-
-  const loginWithProvider = async (provider: Provider, errorLabel: string) => {
+  const runProviderSignIn = async (
+    action: () => Promise<unknown>,
+    providerLabel: string,
+  ) => {
+    if (!isFirebaseConfigured()) {
+      setAuthError("Sign-in is not configured.");
+      return;
+    }
     setIsLoading(true);
     setAuthError(null);
     try {
-      const redirectTo = getOAuthRedirectUrl();
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo,
-          skipBrowserRedirect: Capacitor.isNativePlatform(),
-        },
-      });
-      if (error) throw error;
-      if (Capacitor.isNativePlatform() && data?.url) {
-        await Browser.open({ url: data.url });
-      } else if (!Capacitor.isNativePlatform() && data?.url) {
-        window.location.assign(data.url);
-      }
+      await action();
+      await getFirebaseIdToken(true);
     } catch (error) {
-      const message = formatProviderAuthError(error, errorLabel);
-      setAuthError(message);
+      setAuthError(formatProviderAuthError(error, providerLabel));
     } finally {
       setIsLoading(false);
     }
   };
 
   const loginWithGoogle = async () => {
-    await loginWithProvider("google", "Google");
+    await runProviderSignIn(signInWithGoogle, "Google");
   };
 
   const loginWithApple = async () => {
-    await loginWithProvider("apple", "Apple");
+    await runProviderSignIn(signInWithAppleFirebase, "Apple");
+  };
+
+  const loginWithEmail = async (email: string, password: string) => {
+    if (!isFirebaseConfigured()) {
+      throw new Error("Sign-in is not configured.");
+    }
+    setAuthError(null);
+    try {
+      await signInWithEmail(email, password);
+      await getFirebaseIdToken(true);
+    } catch (error) {
+      const message = getAuthErrorMessage(error);
+      setAuthError(message);
+      throw new Error(message);
+    }
+  };
+
+  const registerWithEmail = async (
+    name: string,
+    email: string,
+    password: string,
+  ) => {
+    if (!isFirebaseConfigured()) {
+      throw new Error("Sign-in is not configured.");
+    }
+    setAuthError(null);
+    try {
+      // createUser fires onAuthStateChanged before displayName is set; sync
+      // profile again after registerWithEmailFirebase finishes updateProfile.
+      const firebaseUser = await registerWithEmailFirebase(
+        name,
+        email,
+        password,
+      );
+      await upsertProfile(firebaseUser);
+      const profile = await fetchProfile(firebaseUser.uid);
+      setUser(mapFirebaseUser(firebaseUser, profile));
+      await getFirebaseIdToken(true);
+    } catch (error) {
+      const message = getAuthErrorMessage(error);
+      setAuthError(message);
+      throw new Error(message);
+    }
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    if (!isFirebaseConfigured()) {
+      throw new Error("Sign-in is not configured.");
+    }
+    setAuthError(null);
+    try {
+      await sendPasswordResetFirebase(email);
+    } catch (error) {
+      const message = getAuthErrorMessage(error);
+      setAuthError(message);
+      throw new Error(message);
+    }
   };
 
   const logout = async () => {
-    // Clear UI first so we don’t stay on tabs while sign-out network runs.
     setUser(null);
     clearGuestBrowse();
-    await supabase.auth.signOut();
+    await signOutGoogleNative();
+    await signOutAppleNative();
+    await signOut(getFirebaseAuth());
   };
 
-  const deleteAccount = useCallback(async () => {
-    if (!isSupabaseConfigured()) {
-      throw new Error("Sign-in is not configured.");
+  const deleteAccount = useCallback(
+    async (password?: string) => {
+      if (!isBackendConfigured()) {
+        throw new Error("Sign-in is not configured.");
+      }
+      await deleteFirebaseAccount(password);
+      setUser(null);
+      clearGuestBrowse();
+    },
+    [clearGuestBrowse],
+  );
+
+  const updateUser = async (
+    updates: Partial<User> & { avatarFile?: File | null },
+  ) => {
+    if (!user) return;
+    const { avatarFile, ...rest } = updates;
+    let nextAvatarUrl = rest.avatarUrl;
+
+    if (avatarFile) {
+      nextAvatarUrl = await uploadProfileAvatar(user.id, avatarFile);
     }
-    const { data, error: invokeError } = await supabase.functions.invoke(
-      "delete-account",
-      { method: "POST" },
-    );
-    if (invokeError) {
-      let message = invokeError.message || "Could not delete account.";
-      if (invokeError instanceof FunctionsHttpError) {
+
+    const authUser = getFirebaseAuth().currentUser;
+    if (authUser) {
+      let authPhotoURL = nextAvatarUrl;
+      if (authPhotoURL) {
         try {
-          const body = (await invokeError.context.json()) as {
-            error?: string;
-          };
-          if (body?.error) message = body.error;
+          const parsed = new URL(authPhotoURL);
+          parsed.searchParams.delete("v");
+          authPhotoURL = parsed.toString();
         } catch {
-          // response body wasn’t JSON
+          // Keep original URL if it is not parseable.
         }
       }
-      throw new Error(message);
+      await syncAuthProfile(authUser, {
+        displayName: rest.name,
+        photoURL: authPhotoURL,
+      });
     }
-    if (
-      data &&
-      typeof data === "object" &&
-      "error" in data &&
-      (data as { error?: string }).error
-    ) {
-      throw new Error(String((data as { error: string }).error));
-    }
-    setUser(null);
-    clearGuestBrowse();
-    try {
-      await supabase.auth.signOut();
-    } catch {
-      // Session may already be invalid after user deletion.
-    }
-  }, [clearGuestBrowse]);
 
-  const updateUser = async (updates: Partial<User>) => {
-    if (!user) return;
-    setUser((prev) => (prev ? { ...prev, ...updates } : null));
+    await updateProfileFields(user.id, {
+      displayName: rest.name,
+      avatarUrl: nextAvatarUrl,
+    });
 
-    const { id } = user;
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        display_name: updates.name,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id);
-    if (error) throw error;
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            ...rest,
+            ...(nextAvatarUrl !== undefined
+              ? { avatarUrl: nextAvatarUrl }
+              : {}),
+          }
+        : null,
+    );
+
+    return {
+      name: rest.name,
+      avatarUrl: nextAvatarUrl,
+    };
   };
 
   const isGuest = Boolean(!user && guestBrowse);
@@ -367,12 +315,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       authError,
       loginWithGoogle,
       loginWithApple,
+      loginWithEmail,
+      registerWithEmail,
+      sendPasswordReset,
       continueWithoutSignIn,
       logout,
       deleteAccount,
       updateUser,
     }),
-    [user, isGuest, isLoading, authError, deleteAccount]
+    [user, isGuest, isLoading, authError, deleteAccount],
   );
 
   return (

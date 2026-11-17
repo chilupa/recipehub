@@ -4,7 +4,7 @@ import {
   IonList,
   IonSkeletonText,
 } from "@ionic/react";
-import "../../pages/RecipeDetail/RecipeDetail.css";
+import "../../features/recipes/RecipeDetail/RecipeDetail.css";
 import "./RecipeDetailSkeleton.css";
 
 const RecipeDetailSkeleton: React.FC = () => (

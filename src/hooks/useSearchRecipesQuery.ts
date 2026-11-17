@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { searchRecipesByQuery } from "../lib/recipeSupabase";
+import { searchRecipesByQuery } from "../lib/recipeFirebase";
 import type { Recipe } from "../types/Recipe";
 
 type Options = {

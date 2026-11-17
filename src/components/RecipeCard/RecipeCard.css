@@ -1,6 +1,13 @@
-/* Feed / favorites list cards — tokens from theme/variables.css */
+/**
+ * Recipe card type hierarchy:
+ * 1. Title       → body1 + semibold
+ * 2. Description → body2 + regular + secondary
+ * 3. Chips       → caption + medium
+ * 4. Byline/meta → caption + medium|regular
+ */
 
 ion-card.recipe-card {
+  position: relative;
   margin: 0 var(--recipe-card-margin-x) var(--recipe-card-stack-gap);
   border-radius: var(--recipe-card-radius);
   box-shadow: var(--recipe-card-shadow);
@@ -83,8 +90,8 @@ ion-card.recipe-card.recipe-card-skeleton {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 8px;
-  gap: 8px;
+  margin-bottom: var(--space-2);
+  gap: var(--space-2);
 }
 
 .recipe-card__text {
@@ -92,13 +99,13 @@ ion-card.recipe-card.recipe-card-skeleton {
   flex: 1;
 }
 
-.recipe-card__title {
-  margin: 0 0 4px;
-  color: var(--ion-color-dark);
-  font-size: 1.05rem;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+ion-card.recipe-card .recipe-card__title {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-body1);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+  letter-spacing: var(--letter-spacing-tight);
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -107,10 +114,11 @@ ion-card.recipe-card.recipe-card-skeleton {
 }
 
 .recipe-card__description {
-  margin: 8px 0 0;
-  color: var(--ion-color-medium);
-  font-size: 0.875rem;
-  line-height: 1.4;
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body2);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -119,26 +127,63 @@ ion-card.recipe-card.recipe-card-skeleton {
 }
 
 .recipe-card__menu-btn {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin: 0;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
   min-height: 32px;
   flex-shrink: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: rgba(var(--ion-color-light-rgb, 255, 255, 255), 0.88);
+  color: var(--color-text-secondary);
+  box-shadow: var(--elevation-1);
+  cursor: pointer;
+}
+
+.recipe-card--with-menu:not(:has(.recipe-card__media)) .recipe-card__menu-btn {
+  background: transparent;
+  box-shadow: none;
+}
+
+.recipe-card--with-menu:not(:has(.recipe-card__media)) .recipe-card__head {
+  padding-right: calc(32px + var(--space-1));
+}
+
+.recipe-card__menu-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .recipe-card__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 8px;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
   overflow: hidden;
 }
 
 .recipe-card__chip {
   height: 24px;
-  font-size: 12px;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+.recipe-card__chip ion-label {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
 }
 
 .recipe-card__chip-icon {
-  font-size: 14px;
+  font-size: var(--icon-size-xs);
 }
 
 .recipe-card__chip--tag {
@@ -155,7 +200,7 @@ ion-card.recipe-card.recipe-card-skeleton {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   min-width: 0;
 }
 
@@ -170,10 +215,13 @@ ion-card.recipe-card.recipe-card-skeleton {
 .recipe-card__byline-text {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   min-width: 0;
   flex: 1;
-  font-size: 12px;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-snug);
+  color: var(--color-text-secondary);
 }
 
 .recipe-card__author {
@@ -181,22 +229,25 @@ ion-card.recipe-card.recipe-card-skeleton {
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
 }
 
 .recipe-card__byline-sep {
   flex-shrink: 0;
-  color: var(--ion-color-medium);
+  color: var(--color-text-muted);
 }
 
 .recipe-card__age {
   flex-shrink: 0;
-  color: var(--ion-color-medium);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-regular);
 }
 
 .recipe-card__actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   flex-shrink: 0;
 }
 
@@ -205,7 +256,6 @@ ion-card.recipe-card.recipe-card-skeleton {
   min-height: 32px;
 }
 
-/* Match ListPageShell list width: cards use --recipe-card-margin-x only; no extra grid pad-x. */
 .recipe-favorites-grid {
   padding: var(--list-page-pad-top) 0 0;
 }

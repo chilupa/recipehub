@@ -1,0 +1,43 @@
+:root {
+  --font-family-base: 'Source Sans 3', 'Segoe UI', sans-serif;
+  --font-family-display: 'Source Sans 3', 'Segoe UI', sans-serif;
+  --font-family-mono: 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Text scale: body1 / body2 / caption only */
+  --font-size-body1: 1rem; /* 16px */
+  --font-size-body2: 0.875rem; /* 14px */
+  --font-size-caption: 0.75rem; /* 12px */
+
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.35;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.65;
+
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.04em;
+
+  /* Icon scale is separate from text (icons can be larger than type) */
+  --icon-size-xs: 0.875rem; /* 14px */
+  --icon-size-sm: 1rem; /* 16px */
+  --icon-size-md: 1.25rem; /* 20px */
+  --icon-size-lg: 1.5rem; /* 24px */
+  --icon-size-xl: 1.875rem; /* 30px */
+
+  --ion-font-family: var(--font-family-base);
+}
+
+body {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body1);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}

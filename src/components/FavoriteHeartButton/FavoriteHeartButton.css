@@ -99,11 +99,11 @@ ion-button.favorite-heart-btn.favorite-heart-btn--liked {
 .favorite-heart-count {
   position: relative;
   z-index: 1;
-  font-size: 0.8125rem;
+  font-size: var(--font-size-caption);
   line-height: 1;
-  font-weight: 500;
+  font-weight: var(--font-weight-regular);
   font-variant-numeric: tabular-nums;
-  color: var(--ion-color-medium);
+  color: var(--color-text-muted);
   flex-shrink: 0;
 }
 

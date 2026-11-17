@@ -1,28 +1,21 @@
 import React from "react";
-import {
-  IonItem,
-  IonLabel,
-  IonInput,
-  IonTextarea,
-  IonList,
-  IonText,
-  IonGrid,
-  IonRow,
-  IonCol,
-} from "@ionic/react";
-import {
-  type FormState,
-  formatOptionalNumber,
-  parseOptionalNumber,
-} from "./recipeFormModel";
-import RecipeFormBasics from "./RecipeFormBasics";
-import RecipeFormTagsBlock from "./RecipeFormTagsBlock";
+
+import { AppTextarea, TextHeading } from "../../design-system";
+import { capitalizeLines } from "../../utils/capitalizeFirstLetter";
 import RecipeFormCover from "../RecipeFormCover";
+import RecipeFormBasics from "./RecipeFormBasics";
+import RecipeFormMetaRow from "./RecipeFormMetaRow";
+import RecipeFormTagsBlock from "./RecipeFormTagsBlock";
+import type { FormState } from "./recipeFormModel";
+import type { RecipeFormFieldErrors } from "./recipeFormValidation";
+
 import "./RecipeForm.css";
 
 type Props = {
   formData: FormState;
+  errors: RecipeFormFieldErrors;
   setFormData: React.Dispatch<React.SetStateAction<FormState>>;
+  clearFieldError: (field: keyof RecipeFormFieldErrors) => void;
   newTag: string;
   onTagInput: (value: string) => void;
   onAddTag: () => void;
@@ -34,7 +27,9 @@ type Props = {
 
 const RecipeFormListContent: React.FC<Props> = ({
   formData,
+  errors,
   setFormData,
+  clearFieldError,
   newTag,
   onTagInput,
   onAddTag,
@@ -43,149 +38,100 @@ const RecipeFormListContent: React.FC<Props> = ({
   onPickCover,
   onRemoveCover,
 }) => (
-  <IonList className="recipe-form-list">
+  <div className="recipe-form-list">
     <RecipeFormCover
       displayUrl={coverDisplayUrl}
       onPick={onPickCover}
       onRemove={onRemoveCover}
     />
 
-    <RecipeFormBasics formData={formData} setFormData={setFormData} />
+    <RecipeFormBasics
+      formData={formData}
+      errors={errors}
+      onTitleChange={(title) => {
+        clearFieldError("title");
+        setFormData((prev) => ({ ...prev, title }));
+      }}
+      onDescriptionChange={(description) => {
+        clearFieldError("description");
+        setFormData((prev) => ({ ...prev, description }));
+      }}
+    />
 
-    <div className="recipe-form-section">
-      <h3 className="recipe-form-section-title">Ingredients</h3>
-      <IonText color="medium">
-        <p className="recipe-form-hint ion-padding-horizontal">
-          One ingredient per line (wrapping is ok).
-        </p>
-      </IonText>
-      <IonItem lines="none">
-        <IonTextarea
-          value={formData.ingredientsText}
-          onIonInput={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              ingredientsText: e.detail.value ?? "",
-            }))
-          }
-          placeholder={"2 cups flour\n1 tsp salt\n3 eggs"}
-          rows={4}
-          autoGrow
-        />
-      </IonItem>
-    </div>
+    <section className="recipe-form-section">
+      <TextHeading level={2} className="section-label">
+        Ingredients
+      </TextHeading>
+      <p className="section-subtitle recipe-form-hint">
+        One ingredient per line (wrapping is ok).
+      </p>
+      <AppTextarea
+        label="Ingredients"
+        hideLabel
+        name="recipe-ingredients"
+        value={formData.ingredientsText}
+        placeholder={"2 cups flour\n1 tsp salt\n3 eggs"}
+        rows={4}
+        autoGrow
+        errorText={errors.ingredientsText}
+        autocapitalize="sentences"
+        onIonInput={(e) => {
+          clearFieldError("ingredientsText");
+          setFormData((prev) => ({
+            ...prev,
+            ingredientsText: capitalizeLines(e.detail.value ?? ""),
+          }));
+        }}
+      />
+    </section>
 
-    <div className="recipe-form-section">
-      <h3 className="recipe-form-section-title">Instructions</h3>
-      <IonText color="medium">
-        <p className="recipe-form-hint ion-padding-horizontal">
-          One step per line (wrapping is ok).
-        </p>
-      </IonText>
-      <IonItem lines="none">
-        <IonTextarea
-          value={formData.instructionsText}
-          onIonInput={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              instructionsText: e.detail.value ?? "",
-            }))
-          }
-          placeholder={
-            "Preheat oven to 350°F\nMix dry ingredients\nBake 25 min"
-          }
-          rows={6}
-          autoGrow
-        />
-      </IonItem>
-    </div>
+    <section className="recipe-form-section">
+      <TextHeading level={2} className="section-label">
+        Instructions
+      </TextHeading>
+      <p className="section-subtitle recipe-form-hint">
+        One step per line (wrapping is ok).
+      </p>
+      <AppTextarea
+        label="Instructions"
+        hideLabel
+        name="recipe-instructions"
+        value={formData.instructionsText}
+        placeholder={
+          "Preheat oven to 350°F\nMix dry ingredients\nBake 25 min"
+        }
+        rows={6}
+        autoGrow
+        errorText={errors.instructionsText}
+        autocapitalize="sentences"
+        onIonInput={(e) => {
+          clearFieldError("instructionsText");
+          setFormData((prev) => ({
+            ...prev,
+            instructionsText: capitalizeLines(e.detail.value ?? ""),
+          }));
+        }}
+      />
+    </section>
 
-    <div className="recipe-form-section">
-      <h3 className="recipe-form-section-title">Time & servings</h3>
-      <IonText color="medium">
-        <p className="recipe-form-hint ion-padding-horizontal">
-          All optional. Leave blank if you don’t know yet.
-        </p>
-      </IonText>
-      <IonGrid className="recipe-form-meta-grid ion-no-padding">
-        <IonRow className="recipe-form-meta-row">
-          <IonCol size="4">
-            <IonItem lines="none" className="recipe-form-meta-item">
-              <IonLabel position="stacked">Prep (min)</IonLabel>
-              <IonInput
-                type="text"
-                inputMode="numeric"
-                autocomplete="off"
-                autocorrect="off"
-                spellcheck={false}
-                enterKeyHint="done"
-                name="recipehub-prep-minutes"
-                value={formatOptionalNumber(formData.prepTime)}
-                onIonInput={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    prepTime: parseOptionalNumber(e.detail.value),
-                  }))
-                }
-              />
-            </IonItem>
-          </IonCol>
-          <IonCol size="4">
-            <IonItem lines="none" className="recipe-form-meta-item">
-              <IonLabel position="stacked">Cook (min)</IonLabel>
-              <IonInput
-                type="text"
-                inputMode="numeric"
-                autocomplete="off"
-                autocorrect="off"
-                spellcheck={false}
-                enterKeyHint="done"
-                name="recipehub-cook-minutes"
-                value={formatOptionalNumber(formData.cookTime)}
-                onIonInput={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    cookTime: parseOptionalNumber(e.detail.value),
-                  }))
-                }
-              />
-            </IonItem>
-          </IonCol>
-          <IonCol size="4">
-            <IonItem lines="none" className="recipe-form-meta-item">
-              <IonLabel position="stacked">Servings</IonLabel>
-              <IonInput
-                type="text"
-                inputMode="numeric"
-                autocomplete="off"
-                autocorrect="off"
-                spellcheck={false}
-                enterKeyHint="done"
-                name="recipehub-servings"
-                value={formatOptionalNumber(formData.servings)}
-                onIonInput={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    servings: parseOptionalNumber(e.detail.value),
-                  }))
-                }
-              />
-            </IonItem>
-          </IonCol>
-        </IonRow>
-      </IonGrid>
-    </div>
+    <RecipeFormMetaRow
+      formData={formData}
+      errors={errors}
+      clearFieldError={clearFieldError}
+      setFormData={setFormData}
+    />
 
     <RecipeFormTagsBlock
       formData={formData}
       newTag={newTag}
+      tagError={errors.tag}
       onTagInput={onTagInput}
       onAddTag={onAddTag}
       onRemoveTag={onRemoveTag}
     />
 
     <div className="recipe-form-scroll-pad" aria-hidden="true" />
-  </IonList>
+  </div>
 );
 
 export default RecipeFormListContent;

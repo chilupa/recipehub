@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { FormState } from "./recipeFormModel";
 import {
@@ -43,6 +43,36 @@ function withoutCoverFile(formData: FormState): Omit<FormState, "coverFile"> {
   return rest;
 }
 
+function draftSnapshot(
+  formData: Omit<FormState, "coverFile">,
+  newTag: string,
+): string {
+  return JSON.stringify({
+    title: formData.title,
+    description: formData.description,
+    ingredientsText: formData.ingredientsText,
+    instructionsText: formData.instructionsText,
+    prepTime: formData.prepTime,
+    cookTime: formData.cookTime,
+    servings: formData.servings,
+    tags: formData.tags,
+    removeCover: formData.removeCover,
+    existingImageUrl: formData.existingImageUrl,
+    newTag,
+  });
+}
+
+function isSameAsBase(
+  formData: Omit<FormState, "coverFile">,
+  newTag: string,
+  baseFormData: FormState,
+): boolean {
+  return (
+    draftSnapshot(formData, newTag) ===
+    draftSnapshot(withoutCoverFile(baseFormData), "")
+  );
+}
+
 export function useRecipeFormDraft({
   draftKey,
   baseFormData,
@@ -54,11 +84,21 @@ export function useRecipeFormDraft({
   setNewTag,
   onDraftRestored,
 }: Params) {
+  const hydratedKeyRef = useRef<string | null>(null);
+  const onDraftRestoredRef = useRef(onDraftRestored);
+  onDraftRestoredRef.current = onDraftRestored;
+
   useEffect(() => {
     if (!draftKey) {
       setFormData(baseFormData);
+      hydratedKeyRef.current = null;
       return;
     }
+
+    // Only hydrate once per draft key so remounts/HMR don’t re-toast.
+    if (hydratedKeyRef.current === draftKey) return;
+    hydratedKeyRef.current = draftKey;
+
     const draft = loadRecipeDraft(draftKey);
     if (draft) {
       if (!hasMeaningfulDraftContent(draft.formData, draft.newTag ?? "")) {
@@ -67,18 +107,30 @@ export function useRecipeFormDraft({
         setNewTag("");
         return;
       }
+
+      // Stale edit autosave that matches the loaded recipe is not a real draft.
+      if (isSameAsBase(draft.formData, draft.newTag ?? "", baseFormData)) {
+        clearRecipeDraft(draftKey);
+        setFormData(baseFormData);
+        setNewTag("");
+        return;
+      }
+
       setFormData({
         ...baseFormData,
         ...draft.formData,
         coverFile: null,
+        existingImageUrl:
+          draft.formData.existingImageUrl ?? baseFormData.existingImageUrl,
       });
       setNewTag(draft.newTag ?? "");
-      onDraftRestored();
+      onDraftRestoredRef.current();
       return;
     }
+
     setFormData(baseFormData);
     setNewTag("");
-  }, [baseFormData, draftKey, onDraftRestored, setFormData, setNewTag]);
+  }, [baseFormData, draftKey, setFormData, setNewTag]);
 
   useEffect(() => {
     if (hasInitialData) return;
@@ -90,9 +142,17 @@ export function useRecipeFormDraft({
 
   useEffect(() => {
     if (!draftKey) return;
+    // Wait until this key has been hydrated so we don’t overwrite a real draft
+    // with the pristine base form on first paint.
+    if (hydratedKeyRef.current !== draftKey) return;
+
     const timeout = window.setTimeout(() => {
       const formWithoutCover = withoutCoverFile(formData);
-      if (!hasMeaningfulDraftContent(formWithoutCover, newTag)) {
+      // Don’t keep a draft that is identical to the starting recipe/empty form.
+      if (
+        !hasMeaningfulDraftContent(formWithoutCover, newTag) ||
+        isSameAsBase(formWithoutCover, newTag, baseFormData)
+      ) {
         clearRecipeDraft(draftKey);
         return;
       }
@@ -102,7 +162,7 @@ export function useRecipeFormDraft({
       });
     }, DRAFT_SAVE_DEBOUNCE_MS);
     return () => window.clearTimeout(timeout);
-  }, [draftKey, formData, newTag]);
+  }, [baseFormData, draftKey, formData, newTag]);
 }
 
 export function clearRecipeFormDraft(draftKey?: string) {

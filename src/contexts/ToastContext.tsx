@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { IonToast } from "@ionic/react";
+import { AppToast } from "../design-system";
 
 /** Shared toast visibility duration for success-style and error messages. */
 export const DEFAULT_TOAST_DURATION_MS = 3000;
@@ -63,13 +63,13 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <IonToast
+      <AppToast
         key={toast.key}
         isOpen={toast.isOpen}
         duration={DEFAULT_TOAST_DURATION_MS}
         message={toast.message}
         onDidDismiss={onDidDismiss}
-        {...(toast.color ? { color: toast.color } : {})}
+        color={toast.color ?? "primary"}
       />
     </ToastContext.Provider>
   );

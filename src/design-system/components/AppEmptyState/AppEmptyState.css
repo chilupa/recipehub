@@ -1,0 +1,36 @@
+.app-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+}
+
+.app-empty-state__icon {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-full);
+  display: grid;
+  place-items: center;
+  background: var(--color-surface-muted);
+  color: var(--color-primary);
+}
+
+.app-empty-state__title {
+  margin: 0;
+  font-size: var(--font-size-body1);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.app-empty-state__description {
+  margin: 0;
+  max-width: 28ch;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body2);
+}
+
+.app-empty-state__action {
+  margin-top: var(--space-2);
+}

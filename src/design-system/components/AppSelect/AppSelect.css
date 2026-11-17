@@ -1,0 +1,44 @@
+.app-select {
+  display: inline-flex;
+  align-items: center;
+}
+
+.app-select__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: var(--font-size-body2);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-snug);
+  cursor: pointer;
+}
+
+.app-select__trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.app-select__trigger:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.app-select__value {
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-select-alert {
+  --background: var(--color-surface-elevated);
+  --max-width: min(320px, 88vw);
+  --backdrop-opacity: 0.45;
+}

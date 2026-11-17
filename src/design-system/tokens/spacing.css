@@ -1,0 +1,29 @@
+:root {
+  --space-0: 0;
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-7: 2rem; /* 32px */
+  --space-8: 2.5rem; /* 40px */
+  --space-9: 3rem; /* 48px */
+  --space-10: 4rem; /* 64px */
+
+  --page-padding-x: var(--space-4);
+  --page-padding-y: var(--space-4);
+  --section-gap: var(--space-6);
+  --stack-gap: var(--space-3);
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+
+  /* Floating glass tab bar — keep FABs and list padding clear of it */
+  --tab-bar-height: 56px;
+  --tab-bar-width: min(21.5rem, calc(100% - var(--space-6)));
+  --fab-offset-bottom: calc(
+    var(--safe-area-bottom) + var(--tab-bar-height) + var(--space-4)
+  );
+}

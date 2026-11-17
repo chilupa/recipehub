@@ -1,0 +1,21 @@
+.page-intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--page-padding-x) var(--space-3);
+}
+
+.page-intro__copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.page-intro__description {
+  margin: var(--space-1) 0 0;
+}
+
+.page-intro__action {
+  flex-shrink: 0;
+  padding-top: 2px;
+}

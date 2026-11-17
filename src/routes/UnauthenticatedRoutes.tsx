@@ -1,7 +1,7 @@
 import React from "react";
 import { Redirect, Route } from "react-router-dom";
 import { IonRouterOutlet } from "@ionic/react";
-import Login from "../pages/Login";
+import { ForgotPassword, Login, Register } from "../features/auth";
 
 /**
  * Routes when the user is not signed in and not continuing as guest.
@@ -9,6 +9,8 @@ import Login from "../pages/Login";
 const UnauthenticatedRoutes: React.FC = () => (
   <IonRouterOutlet>
     <Route exact path="/login" component={Login} />
+    <Route exact path="/register" component={Register} />
+    <Route exact path="/forgot-password" component={ForgotPassword} />
     <Route exact path="/">
       <Redirect to="/login" />
     </Route>
