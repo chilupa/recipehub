@@ -1,5 +1,7 @@
 import React from "react";
-import { IonButton, IonContent, IonPage, IonText } from "@ionic/react";
+import { IonContent, IonPage } from "@ionic/react";
+
+import { AppButton, TextHeading } from "../../design-system";
 
 import "./ErrorBoundary.css";
 
@@ -47,20 +49,22 @@ class ErrorBoundary extends React.Component<
       <IonPage>
         <IonContent fullscreen className="ion-padding">
           <div className="error-boundary">
-            <IonText>
-              <p className="error-boundary__eyebrow">Something went sideways</p>
-              <h1>RecipeHub hit a snag.</h1>
-              <p className="error-boundary__message">
-                Your recipes are still safe. Try reloading the app, or head back
-                to the recipe feed.
-              </p>
-            </IonText>
+            <p className="error-boundary__eyebrow text-caption">
+              Something went sideways
+            </p>
+            <TextHeading level={1} className="page-hero-title">
+              RecipeHub hit a snag.
+            </TextHeading>
+            <p className="error-boundary__message text-body2">
+              Your recipes are still safe. Try reloading the app, or head back
+              to the recipe feed.
+            </p>
 
             <div className="error-boundary__actions">
-              <IonButton onClick={this.reloadApp}>Reload app</IonButton>
-              <IonButton fill="clear" onClick={this.goHome}>
+              <AppButton onClick={this.reloadApp}>Reload app</AppButton>
+              <AppButton variant="text" onClick={this.goHome}>
                 Go to feed
-              </IonButton>
+              </AppButton>
             </div>
 
             {import.meta.env.DEV && this.state.error ? (

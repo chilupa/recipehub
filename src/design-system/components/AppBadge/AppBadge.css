@@ -1,0 +1,8 @@
+.app-badge {
+  border-radius: var(--radius-badge);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-wide);
+  padding: 4px 8px;
+  text-transform: uppercase;
+}

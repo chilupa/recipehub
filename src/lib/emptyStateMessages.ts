@@ -90,7 +90,7 @@ export const invalidServingsLink: EmptyStateCopy = {
 
 export const emptyActivity: EmptyStateCopy = {
   title: "Nothing here yet",
-  description: "When folks favorite your recipes, you'll see it here.",
+  description: "When something happens with your recipes, you'll see it here.",
 };
 
 export const emptyShoppingList: EmptyStateCopy = {

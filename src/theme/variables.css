@@ -2,9 +2,7 @@
    http://ionicframework.com/docs/theming/ */
 
 :root {
-  --ion-font-family:
-    "Roboto", "Google Sans", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, sans-serif;
+  --ion-font-family: var(--font-family-base);
 
   /* Primary — warm tomato/clay (buttons, header, main actions) */
   --ion-color-primary: #b8451a;

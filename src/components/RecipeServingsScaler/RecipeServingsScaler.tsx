@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
+
 import {
-  IonButton,
-  IonIcon,
-  IonInput,
-  IonItem,
-  IonNote,
-  IonText,
-} from "@ionic/react";
-import { addOutline, removeOutline } from "ionicons/icons";
+  AppButton,
+  AppIcon,
+  AppInput,
+  TextHeading,
+} from "../../design-system";
+
 import "./RecipeServingsScaler.css";
 
 /** Enough for large events; keeps scaling math predictable on devices. */
@@ -56,29 +55,29 @@ const RecipeServingsScaler: React.FC<Props> = ({
       className="recipe-servings-scaler"
       aria-label="Scale recipe by servings"
     >
-      <IonText>
-        <h2 className="recipe-servings-scaler__title">Servings</h2>
-      </IonText>
-      <IonNote className="recipe-servings-scaler__hint">
+      <TextHeading level={2} className="recipe-servings-scaler__title">
+        Servings
+      </TextHeading>
+      <p className="recipe-servings-scaler__hint">
         Ingredients below update based on this number.
-      </IonNote>
-      <IonItem lines="none" className="recipe-servings-scaler__controls">
-        <IonButton
-          fill="outline"
-          size="small"
+      </p>
+      <div className="recipe-servings-scaler__controls">
+        <AppButton
+          variant="outline"
           aria-label="Decrease servings"
           disabled={scaledServings <= 1}
           onClick={() => bump(-1)}
         >
-          <IonIcon slot="icon-only" icon={removeOutline} />
-        </IonButton>
-        <IonInput
+          <AppIcon name="removeOutline" size="md" />
+        </AppButton>
+        <AppInput
           className="recipe-servings-scaler__input"
+          label="Number of servings"
+          hideLabel
           type="number"
           inputMode="numeric"
           min={1}
           max={RECIPE_SERVINGS_MAX}
-          aria-label="Number of servings"
           value={inputText}
           onIonInput={(e) => setInputText(String(e.detail.value ?? ""))}
           onIonBlur={() => commitInput()}
@@ -86,16 +85,15 @@ const RecipeServingsScaler: React.FC<Props> = ({
             if (e.key === "Enter") commitInput();
           }}
         />
-        <IonButton
-          fill="outline"
-          size="small"
+        <AppButton
+          variant="outline"
           aria-label="Increase servings"
           disabled={scaledServings >= RECIPE_SERVINGS_MAX}
           onClick={() => bump(1)}
         >
-          <IonIcon slot="icon-only" icon={addOutline} />
-        </IonButton>
-      </IonItem>
+          <AppIcon name="addOutline" size="md" />
+        </AppButton>
+      </div>
     </section>
   );
 };

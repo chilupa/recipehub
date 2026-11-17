@@ -1,0 +1,110 @@
+ion-content {
+  --background: var(--color-background);
+  --color: var(--color-text-primary);
+}
+
+ion-toolbar {
+  --background: var(--color-surface);
+  --color: var(--color-text-primary);
+  --border-color: var(--color-border);
+}
+
+ion-tab-bar {
+  --background: transparent;
+  --border: 0;
+}
+
+/* Sit FABs above the floating glass tab bar (not under it) */
+ion-fab[vertical="bottom"] {
+  bottom: var(--fab-offset-bottom);
+}
+
+ion-tabs {
+  position: relative;
+  background: transparent;
+}
+
+ion-tab-button {
+  --color: var(--color-text-primary);
+  --color-selected: var(--color-text-primary);
+}
+
+ion-card {
+  --background: var(--color-surface);
+  margin: 0;
+  border-radius: var(--radius-card);
+  box-shadow: none;
+}
+
+ion-item {
+  --background: transparent;
+  --border-color: var(--color-border);
+  --color: var(--color-text-primary);
+  --padding-start: var(--space-4);
+  --inner-padding-end: var(--space-4);
+}
+
+ion-searchbar {
+  --background: var(--color-surface-muted);
+  --border-radius: var(--radius-input);
+  --box-shadow: none;
+  --color: var(--color-text-primary);
+  --placeholder-color: var(--color-text-muted);
+  padding-inline: 0;
+}
+
+ion-modal {
+  --border-radius: var(--radius-modal);
+  --box-shadow: var(--elevation-4);
+}
+
+ion-badge {
+  border-radius: var(--radius-badge);
+}
+
+.ion-page {
+  background: var(--color-background);
+}
+
+/* Neutralize Ionic typography.css heading defaults. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: var(--font-size-body1);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+}
+
+small {
+  font-size: var(--font-size-caption);
+}
+
+/* Host-level Ionic type that still ships hardcoded rem sizes. */
+ion-title,
+ion-card-title {
+  font-size: var(--font-size-body1);
+  font-weight: var(--font-weight-semibold);
+}
+
+ion-card-subtitle,
+ion-note {
+  font-size: var(--font-size-body2);
+}
+
+ion-badge {
+  font-size: var(--font-size-caption);
+}
+
+ion-button {
+  font-size: var(--font-size-body1);
+}
+
+ion-searchbar {
+  font-size: var(--font-size-body1);
+}
+

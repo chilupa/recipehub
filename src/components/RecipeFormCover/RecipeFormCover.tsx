@@ -1,6 +1,11 @@
 import React, { useRef } from "react";
-import { IonButton, IonIcon, IonText } from "@ionic/react";
-import { imageOutline, trashOutline } from "ionicons/icons";
+
+import {
+  AppButton,
+  AppIcon,
+  TextHeading,
+} from "../../design-system";
+
 import "../RecipeForm/RecipeForm.css";
 import "./RecipeFormCover.css";
 
@@ -15,12 +20,12 @@ const RecipeFormCover: React.FC<Props> = ({ displayUrl, onPick, onRemove }) => {
 
   return (
     <div className="recipe-form-cover">
-      <h3 className="recipe-form-section-title">Cover photo</h3>
-      <IonText color="medium">
-        <p className="recipe-form-hint ion-padding-horizontal">
-          Optional. Shown on the feed and recipe page.
-        </p>
-      </IonText>
+      <TextHeading level={2} className="section-label">
+        Cover photo
+      </TextHeading>
+      <p className="section-subtitle recipe-form-hint">
+        Optional. Compressed before upload to keep things light.
+      </p>
 
       {displayUrl ? (
         <div className="recipe-form-cover__frame recipe-form-cover__frame--filled">
@@ -46,26 +51,24 @@ const RecipeFormCover: React.FC<Props> = ({ displayUrl, onPick, onRemove }) => {
       />
 
       <div className="recipe-form-cover__actions">
-        <IonButton
-          size="small"
-          fill="outline"
+        <AppButton
+          variant="outline"
           type="button"
           onClick={() => inputRef.current?.click()}
         >
-          <IonIcon slot="start" icon={imageOutline} />
+          <AppIcon name="imageOutline" size="sm" />
           {displayUrl ? "Replace photo" : "Choose photo"}
-        </IonButton>
+        </AppButton>
         {displayUrl ? (
-          <IonButton
-            size="small"
-            fill="clear"
+          <AppButton
+            variant="text"
             color="danger"
             type="button"
             onClick={onRemove}
           >
-            <IonIcon slot="start" icon={trashOutline} />
+            <AppIcon name="trashOutline" size="sm" />
             Remove
-          </IonButton>
+          </AppButton>
         ) : null}
       </div>
     </div>

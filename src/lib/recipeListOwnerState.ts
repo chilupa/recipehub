@@ -1,5 +1,6 @@
 export type RecipeMenuPopoverState = {
   isOpen: boolean;
+  /** Click event used to anchor the owner menu popover. */
   event: Event | undefined;
   recipeId: string;
 };

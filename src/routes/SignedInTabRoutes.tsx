@@ -1,10 +1,10 @@
 import React from "react";
 import { Redirect, Route } from "react-router-dom";
-import Favorites from "../pages/Favorites";
-import Profile from "../pages/Profile";
-import Activity from "../pages/Activity";
-import MyRecipes from "../pages/MyRecipes";
-import SearchRecipes from "../pages/SearchRecipes";
+import { Favorites } from "../features/favorites";
+import { Profile } from "../features/profile";
+import { Activity } from "../features/activity";
+import { MyRecipes } from "../features/my-recipes";
+import { SearchRecipes } from "../features/search";
 import { SignedInRecipesStack } from "./RecipesIonStack";
 
 /**
@@ -19,6 +19,12 @@ const SignedInTabRoutes: React.FC = () => (
     <Route exact path="/:tab(search)" component={SearchRecipes} />
     <Route exact path="/:tab(profile)" component={Profile} />
     <Route exact path="/login">
+      <Redirect to="/recipes" />
+    </Route>
+    <Route exact path="/register">
+      <Redirect to="/recipes" />
+    </Route>
+    <Route exact path="/forgot-password">
       <Redirect to="/recipes" />
     </Route>
     <Route exact path="/">

@@ -1,0 +1,9 @@
+.app-search-bar {
+  --background: var(--color-surface-muted);
+  --border-radius: var(--radius-input);
+  --box-shadow: none;
+  --placeholder-color: var(--color-text-muted);
+  font-size: var(--font-size-body1);
+  padding: 0;
+  min-height: 44px;
+}

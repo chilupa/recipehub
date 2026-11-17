@@ -1,17 +1,22 @@
 import React from "react";
 import {
   IonCard,
-  IonButton,
-  IonIcon,
   IonChip,
+  IonIcon,
   IonLabel,
   IonText,
 } from "@ionic/react";
-import { time, people, ellipsisVertical } from "ionicons/icons";
+import { time, people } from "ionicons/icons";
+
+import { AppIcon, TextHeading } from "../../design-system";
 import { Recipe } from "../../types/Recipe";
+import { formatTagLabel } from "../../utils/formatTag";
 import UserAvatar from "../UserAvatar";
 import FavoriteHeartButton from "../FavoriteHeartButton";
+
 import "./RecipeCard.css";
+
+const CARD_TAG_LIMIT = 3;
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -59,11 +64,30 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
 
   return (
     <IonCard
-      className="recipe-card"
+      className={
+        showMenu && onMenuClick
+          ? "recipe-card recipe-card--with-menu"
+          : "recipe-card"
+      }
       button
       routerLink={`/recipes/recipe/${recipe.id}`}
       aria-labelledby={titleId}
     >
+      {showMenu && onMenuClick ? (
+        <button
+          type="button"
+          className="recipe-card__menu-btn"
+          id={`trigger-${recipe.id}`}
+          aria-label="Recipe options"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            onMenuClick(e.nativeEvent, recipe.id);
+          }}
+        >
+          <AppIcon name="ellipsisVertical" size="sm" />
+        </button>
+      ) : null}
       {recipe.image ? (
         <div className="recipe-card__media">
           <img
@@ -77,29 +101,17 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
       <div className="recipe-card__body">
         <div className="recipe-card__head">
           <div className="recipe-card__text">
-            <h4 id={titleId} className="recipe-card__title">
+            <TextHeading
+              level={3}
+              className="recipe-card__title text-body1 weight-semibold"
+              id={titleId}
+            >
               {recipe.title}
-            </h4>
+            </TextHeading>
             {recipe.description ? (
               <p className="recipe-card__description">{recipe.description}</p>
             ) : null}
           </div>
-          {showMenu && onMenuClick && (
-            <IonButton
-              className="recipe-card__menu-btn"
-              fill="clear"
-              color="medium"
-              size="small"
-              id={`trigger-${recipe.id}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onMenuClick(e.nativeEvent, recipe.id);
-              }}
-            >
-              <IonIcon icon={ellipsisVertical} />
-            </IonButton>
-          )}
         </div>
 
         <div className="recipe-card__chips">
@@ -127,33 +139,42 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
               <IonLabel>{recipe.servings}</IonLabel>
             </IonChip>
           )}
-          {recipe.tags.slice(0, 1).map((tag, index) => (
-            <IonChip
-              key={index}
-              className="recipe-card__chip recipe-card__chip--tag"
-              color="tertiary"
-              aria-label={`Tag: ${tag}`}
-            >
-              <IonLabel className="recipe-card__chip-label--ellipsis">
-                {tag}
-              </IonLabel>
-            </IonChip>
-          ))}
-          {recipe.tags.length > 1 && (
+          {recipe.tags.slice(0, CARD_TAG_LIMIT).map((tag, index) => {
+            const label = formatTagLabel(tag);
+            if (!label) return null;
+            return (
+              <IonChip
+                key={`${label}-${index}`}
+                className="recipe-card__chip recipe-card__chip--tag"
+                color="tertiary"
+                aria-label={`Tag: ${label}`}
+              >
+                <IonLabel className="recipe-card__chip-label--ellipsis">
+                  {label}
+                </IonLabel>
+              </IonChip>
+            );
+          })}
+          {recipe.tags.length > CARD_TAG_LIMIT && (
             <IonChip
               className="recipe-card__chip"
               color="light"
-              title={`${recipe.tags.length - 1} more tags`}
-              aria-label={`${recipe.tags.length - 1} more tags`}
+              title={`${recipe.tags.length - CARD_TAG_LIMIT} more tags`}
+              aria-label={`${recipe.tags.length - CARD_TAG_LIMIT} more tags`}
             >
-              <IonLabel>+{recipe.tags.length - 1}</IonLabel>
+              <IonLabel>+{recipe.tags.length - CARD_TAG_LIMIT}</IonLabel>
             </IonChip>
           )}
         </div>
 
         <div className="recipe-card__footer">
           <div className="recipe-card__byline">
-            <UserAvatar name={recipe.author} size={20} color="primary" />
+            <UserAvatar
+              name={recipe.author}
+              src={recipe.authorAvatarUrl}
+              size={20}
+              color="primary"
+            />
             <IonText color="dark" className="recipe-card__byline-text">
               <span className="recipe-card__author">{recipe.author}</span>
               <span className="recipe-card__byline-sep" aria-hidden="true">

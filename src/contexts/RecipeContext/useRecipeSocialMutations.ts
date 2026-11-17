@@ -2,8 +2,12 @@ import type { Dispatch, RefObject, SetStateAction } from "react";
 import type { User } from "../AuthContext";
 import type { Recipe } from "../../types/Recipe";
 import { devLog, devWarn } from "../../lib/devLog";
-import { supabase } from "../../lib/supabase";
-import { fetchRecipeById } from "../../lib/recipeSupabase";
+import {
+  createFavoriteNotification,
+  fetchRecipeById,
+  recordShare,
+  setFavorite,
+} from "../../lib/recipeFirebase";
 import { playFavoriteToggleHaptics } from "../../lib/playFavoriteToggleHaptics";
 import { replaceRecipePreservingOrder } from "./recipeListHelpers";
 import { appDownloadUrl, getRecipeShareUrl } from "./recipeShare";
@@ -34,31 +38,21 @@ export function useRecipeSocialMutations(
       likes: !isFav ? recipe.likes + 1 : Math.max(0, recipe.likes - 1),
     };
 
-    // Optimistic UI: reflect heart/count immediately, then persist server-side.
     setRecipes((prev) => replaceRecipePreservingOrder(prev, optimisticRecipe));
 
     try {
       if (isFav) {
-        await supabase
-          .from("favorites")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("recipe_id", id);
+        await setFavorite(user.id, id, false);
       } else {
-        await supabase.from("favorites").insert({
-          user_id: user.id,
-          recipe_id: id,
-        });
+        await setFavorite(user.id, id, true);
         if (recipe.userId !== user.id) {
-          const { error: notifyErr } = await supabase
-            .from("notifications")
-            .insert({
-              user_id: recipe.userId,
-              actor_id: user.id,
-              recipe_id: id,
-              type: "favorite",
+          try {
+            await createFavoriteNotification({
+              ownerId: recipe.userId,
+              actorId: user.id,
+              recipeId: id,
             });
-          if (notifyErr) {
+          } catch (notifyErr) {
             devWarn("Could not create favorite notification:", notifyErr);
           }
         }
@@ -66,7 +60,6 @@ export function useRecipeSocialMutations(
       await loadFavorites({ withSpinner: false });
       void playFavoriteToggleHaptics();
     } catch (error) {
-      // Revert optimistic state if write fails.
       setRecipes((prev) => replaceRecipePreservingOrder(prev, recipe));
       console.error("Error toggling favorite:", error);
       throw error;
@@ -116,13 +109,10 @@ export function useRecipeSocialMutations(
 
     if (!completed || !user) return;
 
-    const { error } = await supabase.from("recipe_shares").insert({
-      user_id: user.id,
-      recipe_id: recipe.id,
-    });
-
-    if (error) {
-      if (error.code === "23505") return;
+    try {
+      const result = await recordShare(user.id, recipe.id);
+      if (result === "exists") return;
+    } catch (error) {
       devWarn("Could not record share:", error);
       return;
     }

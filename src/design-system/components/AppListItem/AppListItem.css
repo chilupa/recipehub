@@ -1,0 +1,46 @@
+.app-list-item {
+  --padding-start: var(--space-4);
+  --inner-padding-end: var(--space-4);
+  --min-height: 56px;
+}
+
+.app-list-item__leading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  color: var(--color-primary);
+}
+
+.app-list-item__title {
+  margin: 0;
+  font-size: var(--font-size-body1);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-snug);
+  color: var(--color-text-primary);
+}
+
+.app-list-item__subtitle {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-body2);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-secondary);
+}
+
+/* Beat Ionic ion-label ::slotted(p) muted defaults if markup changes back to p */
+.app-list-item ion-label .app-list-item__title {
+  color: var(--color-text-primary);
+}
+
+.app-list-item ion-label .app-list-item__subtitle {
+  color: var(--color-text-secondary);
+}
+
+.app-list-item__trailing {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-body2);
+}

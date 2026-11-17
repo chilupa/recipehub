@@ -1,5 +1,7 @@
 import React from "react";
-import { IonAlert } from "@ionic/react";
+
+import { AppConfirm } from "../../design-system";
+
 type Props = {
   isOpen: boolean;
   onDismiss: () => void;
@@ -11,21 +13,18 @@ const SignInPromptAlert: React.FC<Props> = ({
   onDismiss,
   onSignIn,
 }) => (
-  <IonAlert
+  <AppConfirm
     isOpen={isOpen}
     onDidDismiss={onDismiss}
-    header="Keep going"
+    title="Keep going"
     message="It only takes a moment to sign in."
-    buttons={[
-      { text: "Cancel", role: "cancel" },
-      {
-        text: "Sign in",
-        handler: () => {
-          onSignIn();
-          return true;
-        },
-      },
-    ]}
+    cancelText="Cancel"
+    confirmText="Sign in"
+    onCancel={onDismiss}
+    onConfirm={() => {
+      onSignIn();
+      onDismiss();
+    }}
   />
 );
 

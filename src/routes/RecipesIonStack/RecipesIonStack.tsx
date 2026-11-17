@@ -1,15 +1,17 @@
 import React from "react";
 import { Route } from "react-router-dom";
 import { IonRouterOutlet } from "@ionic/react";
-import RecipeList from "../../pages/RecipeList";
-import RecipeDetail from "../../pages/RecipeDetail";
-import ShoppingList from "../../pages/ShoppingList";
-import SignInGatePage from "../../pages/SignInGatePage";
-import AddRecipe from "../../pages/AddRecipe";
-import EditRecipe from "../../pages/EditRecipe";
-import TagRecipeList from "../../pages/TagRecipeList";
-import ServingsRecipeList from "../../pages/ServingsRecipeList";
-import TotalTimeRecipeList from "../../pages/TotalTimeRecipeList";
+import { RecipeList } from "../../features/feed";
+import {
+  AddRecipe,
+  EditRecipe,
+  RecipeDetail,
+  ServingsRecipeList,
+  TagRecipeList,
+  TotalTimeRecipeList,
+} from "../../features/recipes";
+import { ShoppingList } from "../../features/shopping";
+import { SignInGatePage } from "../../features/auth";
 
 /**
  * Nested stack for `/recipes` so IonRouterOutlet can track push depth (enables

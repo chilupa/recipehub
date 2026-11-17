@@ -1,38 +1,24 @@
-import React, { useEffect, useState } from "react";
-import { IonIcon, IonText } from "@ionic/react";
-import { cloudOfflineOutline } from "ionicons/icons";
+import React from "react";
+import { AppBanner } from "../../design-system";
+import { useNetworkStatus } from "../../hooks";
 import "./OfflineBanner.css";
 
+
 /**
- * Sticky notice when the browser reports offline. aria-live so assistive tech
- * announces connectivity changes.
+ * Sticky notice when the device reports offline.
  */
 const OfflineBanner: React.FC = () => {
-  const [offline, setOffline] = useState(
-    typeof navigator !== "undefined" ? !navigator.onLine : false,
-  );
+  const { isOffline } = useNetworkStatus();
 
-  useEffect(() => {
-    const onOff = () => setOffline(!navigator.onLine);
-    window.addEventListener("online", onOff);
-    window.addEventListener("offline", onOff);
-    return () => {
-      window.removeEventListener("online", onOff);
-      window.removeEventListener("offline", onOff);
-    };
-  }, []);
-
-  if (!offline) return null;
+  if (!isOffline) return null;
 
   return (
-    <div
-      className="offline-banner"
-      role="status"
-      aria-live="polite"
-      aria-relevant="additions text"
-    >
-      <IonIcon icon={cloudOfflineOutline} className="offline-banner__icon" />
-      <IonText>You are offline. Check your connection and try again.</IonText>
+    <div className="offline-banner-wrap" role="status" aria-live="polite">
+      <AppBanner
+        title="You are offline"
+        message="Check your connection and try again."
+        tone="warning"
+      />
     </div>
   );
 };

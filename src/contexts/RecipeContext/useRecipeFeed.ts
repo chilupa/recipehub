@@ -11,7 +11,7 @@ import {
   fetchRecipeById,
   fetchVisibleRecipeCount,
   fetchFeedRecipesPage,
-} from "../../lib/recipeSupabase";
+} from "../../lib/recipeFirebase";
 import { GUEST_VIEWER_ID } from "../../lib/guestBrowse";
 import { upsertRecipeSorted } from "./recipeListHelpers";
 import { PAGE_SIZE } from "./constants";

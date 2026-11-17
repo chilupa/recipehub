@@ -4,35 +4,75 @@ import {
   useImperativeHandle,
   useCallback,
   useMemo,
+  useRef,
+  useEffect,
 } from "react";
 import { useToast } from "../../contexts/ToastContext";
 import RecipeFormListContent from "./RecipeFormListContent";
 import {
   emptyFormState,
   toFormState,
-  linesFromText,
   toSubmitPayload,
-  MAX_TAGS,
-  MAX_TAG_LENGTH,
+  RECIPE_FORM_ID,
+  type FormState,
   type RecipeFormHandle,
   type RecipeFormProps,
 } from "./recipeFormModel";
+import { formatTagLabel } from "../../utils/formatTag";
+import {
+  firstFieldErrorKey,
+  getTagInputError,
+  validateRecipeForm,
+  type RecipeFormFieldErrors,
+} from "./recipeFormValidation";
 import "./RecipeForm.css";
 import { useCoverDisplayUrl } from "./useCoverDisplayUrl";
 import {
   clearRecipeFormDraft,
   useRecipeFormDraft,
 } from "./useRecipeFormDraft";
+import { useRecipeFormTags } from "./useRecipeFormTags";
+
+function scrollToFieldError(field: keyof RecipeFormFieldErrors) {
+  const nameByField: Record<keyof RecipeFormFieldErrors, string> = {
+    title: "recipe-title",
+    description: "recipe-description",
+    ingredientsText: "recipe-ingredients",
+    instructionsText: "recipe-instructions",
+    prepTime: "recipehub-prep-minutes",
+    cookTime: "recipehub-cook-minutes",
+    servings: "recipehub-servings",
+    tag: "recipe-tag",
+  };
+  const name = nameByField[field];
+  const el =
+    document.getElementById(`app-input-${name}`) ??
+    document.getElementById(`app-textarea-${name}`) ??
+    document.querySelector(`[name="${name}"]`);
+  el?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
 
 const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
-  ({ initialData, formResetKey = 0, draftKey, onSubmit }, ref) => {
+  (
+    {
+      initialData,
+      formResetKey = 0,
+      draftKey,
+      submitRequestKey = 0,
+      onSubmit,
+    },
+    ref,
+  ) => {
     const { showToast, showErrorToast } = useToast();
     const [formData, setFormData] = useState(() =>
       initialData ? toFormState(initialData) : emptyFormState(),
     );
-    const [newTag, setNewTag] = useState("");
+    const [errors, setErrors] = useState<RecipeFormFieldErrors>({});
+    const submitLockRef = useRef(false);
     const { coverDisplayUrl, onPickCover, onRemoveCover } =
       useCoverDisplayUrl(formData, setFormData);
+    const { newTag, setNewTag, addTag, removeTag, handleTagInput } =
+      useRecipeFormTags({ formData, setFormData, setErrors });
 
     const baseFormData = useMemo(
       () => (initialData ? toFormState(initialData) : emptyFormState()),
@@ -53,34 +93,71 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
       onDraftRestored: handleDraftRestored,
     });
 
+    const clearFieldError = useCallback((field: keyof RecipeFormFieldErrors) => {
+      setErrors((prev) => {
+        if (!prev[field]) return prev;
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }, []);
+
+    const commitPendingTag = useCallback(
+      (data: FormState): FormState => {
+        const trimmed = formatTagLabel(newTag);
+        if (!trimmed) return data;
+        if (getTagInputError(trimmed, data.tags)) {
+          setNewTag("");
+          return data;
+        }
+        setNewTag("");
+        return { ...data, tags: [...data.tags, trimmed] };
+      },
+      [newTag, setNewTag],
+    );
+
     const handleSubmit = useCallback(async () => {
-      if (!formData.title.trim()) {
-        showToast("Please enter a title.");
-        return;
-      }
-      const ing = linesFromText(formData.ingredientsText);
-      const steps = linesFromText(formData.instructionsText);
-      if (ing.length === 0) {
-        showToast("Add ingredients (one per line).");
-        return;
-      }
-      if (steps.length === 0) {
-        showToast("Add steps (one per line).");
-        return;
-      }
+      if (submitLockRef.current) return;
+      submitLockRef.current = true;
+
       try {
-        await onSubmit(toSubmitPayload(formData));
-        clearRecipeFormDraft(draftKey);
-      } catch {
-        showErrorToast("Could not save recipe. Please try again.");
+        const dataToSave = commitPendingTag(formData);
+        if (dataToSave !== formData) {
+          setFormData(dataToSave);
+        }
+
+        const nextErrors = validateRecipeForm(dataToSave);
+        setErrors(nextErrors);
+        const firstError = firstFieldErrorKey(nextErrors);
+        if (firstError) {
+          showToast("Fix the highlighted fields, then try again.");
+          scrollToFieldError(firstError);
+          return;
+        }
+        try {
+          await onSubmit(toSubmitPayload(dataToSave));
+          clearRecipeFormDraft(draftKey);
+        } catch {
+          showErrorToast("Could not save recipe. Please try again.");
+        }
+      } finally {
+        submitLockRef.current = false;
       }
-    }, [draftKey, formData, onSubmit, showToast, showErrorToast]);
+    }, [
+      commitPendingTag,
+      draftKey,
+      formData,
+      onSubmit,
+      showToast,
+      showErrorToast,
+    ]);
 
     const resetForm = useCallback(() => {
       setFormData(baseFormData);
       setNewTag("");
+      setErrors({});
       clearRecipeFormDraft(draftKey);
-    }, [baseFormData, draftKey]);
+    }, [baseFormData, draftKey, setNewTag]);
 
     useImperativeHandle(
       ref,
@@ -91,74 +168,28 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
       [handleSubmit, resetForm],
     );
 
-    const addTag = () => {
-      const tag = newTag.trim();
-      if (!tag) {
-        showToast("Type a tag first.");
-        return;
-      }
-      if (tag.length > MAX_TAG_LENGTH) {
-        showToast(`Tag is too long (max ${MAX_TAG_LENGTH} characters).`);
-        return;
-      }
-      if (formData.tags.length >= MAX_TAGS) {
-        showToast(`Max ${MAX_TAGS} tags.`);
-        return;
-      }
-      if (formData.tags.includes(tag)) {
-        showToast("Tag already added.");
-        return;
-      }
-
-      setFormData((prev) => ({ ...prev, tags: [...prev.tags, tag] }));
-      setNewTag("");
-    };
-
-    const removeTag = (tag: string) => {
-      setFormData((prev) => ({
-        ...prev,
-        tags: prev.tags.filter((t) => t !== tag),
-      }));
-    };
-
-    const handleTagInput = (value: string) => {
-      if (value && [",", " "].includes(value.slice(-1))) {
-        const tag = value.slice(0, -1).trim();
-        if (!tag) {
-          setNewTag("");
-          return;
-        }
-
-        if (tag.length > MAX_TAG_LENGTH) {
-          showToast(`Tag is too long (max ${MAX_TAG_LENGTH} characters).`);
-          setNewTag("");
-          return;
-        }
-
-        if (formData.tags.length >= MAX_TAGS) {
-          showToast(`Max ${MAX_TAGS} tags.`);
-          setNewTag("");
-          return;
-        }
-
-        if (formData.tags.includes(tag)) {
-          showToast("Tag already added.");
-          setNewTag("");
-          return;
-        }
-
-        setFormData((prev) => ({ ...prev, tags: [...prev.tags, tag] }));
-        setNewTag("");
-        return;
-      }
-      setNewTag(value);
-    };
+    const handleSubmitRef = useRef(handleSubmit);
+    handleSubmitRef.current = handleSubmit;
+    useEffect(() => {
+      if (submitRequestKey < 1) return;
+      void handleSubmitRef.current();
+    }, [submitRequestKey]);
 
     return (
-      <>
+      <form
+        id={RECIPE_FORM_ID}
+        className="recipe-form"
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault();
+          void handleSubmit();
+        }}
+      >
         <RecipeFormListContent
           formData={formData}
+          errors={errors}
           setFormData={setFormData}
+          clearFieldError={clearFieldError}
           newTag={newTag}
           onTagInput={handleTagInput}
           onAddTag={addTag}
@@ -167,7 +198,7 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
           onPickCover={onPickCover}
           onRemoveCover={onRemoveCover}
         />
-      </>
+      </form>
     );
   },
 );

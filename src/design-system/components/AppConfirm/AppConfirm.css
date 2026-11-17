@@ -1,0 +1,5 @@
+.app-confirm {
+  --background: var(--color-surface-elevated);
+  --max-width: min(320px, 88vw);
+  --backdrop-opacity: 0.45;
+}

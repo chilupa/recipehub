@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-background);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+}
+
+.page-container {
+  padding: var(--page-padding-y) var(--page-padding-x);
+  /* Extra space so content clears the floating glass tab bar */
+  padding-bottom: calc(var(--page-padding-y) + var(--safe-area-bottom) + 72px);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-gap);
+}
+
+.stack-lg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+}
+
+/* Typography utilities — use these instead of h1–h6 */
+.text-body1 {
+  margin: 0;
+  font-size: var(--font-size-body1);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+}
+
+.text-body2 {
+  margin: 0;
+  font-size: var(--font-size-body2);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-secondary);
+}
+
+.text-caption {
+  margin: 0;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-snug);
+  color: var(--color-text-muted);
+}
+
+.text-body1.weight-medium,
+.text-body2.weight-medium,
+.text-caption.weight-medium {
+  font-weight: var(--font-weight-medium);
+}
+
+.text-body1.weight-semibold,
+.text-body2.weight-semibold,
+.text-caption.weight-semibold {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Role helpers built on the type scale */
+.section-title,
+.page-hero-title,
+.section-label {
+  margin: 0;
+  font-size: var(--font-size-body1);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-snug);
+  color: var(--color-text-primary);
+}
+
+.section-subtitle {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-body2);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-secondary);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

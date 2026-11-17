@@ -1,0 +1,101 @@
+.shopping-list-page {
+  --background: var(--color-background);
+}
+
+.shopping-list-content {
+  --background: var(--color-background);
+  --padding-bottom: var(--list-page-pad-bottom);
+}
+
+.shopping-list-body {
+  padding: var(--space-3) var(--page-padding-x) var(--space-4);
+  box-sizing: border-box;
+}
+
+.shopping-list-clear-all {
+  font-size: var(--font-size-body2);
+  font-weight: var(--font-weight-medium);
+  min-height: 40px;
+}
+
+.shopping-list-add-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.shopping-list-add-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.shopping-list-add-input .app-input__field {
+  background: var(--color-surface);
+  min-height: 48px;
+}
+
+.shopping-list-add-btn {
+  flex-shrink: 0;
+  align-self: stretch;
+  margin: 0;
+  min-height: 48px;
+}
+
+.shopping-list-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.shopping-list-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.shopping-list-group__list {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.shopping-list-line {
+  --background: var(--color-surface);
+  --background-activated: var(--color-surface-muted);
+  --background-hover: var(--color-surface-muted);
+  --border-radius: var(--radius-md);
+  --padding-start: var(--space-3);
+  --inner-padding-end: var(--space-3);
+  --min-height: 48px;
+  margin-bottom: var(--space-2);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.shopping-list-line ion-checkbox {
+  margin-inline-end: var(--space-3);
+}
+
+.shopping-line__text {
+  display: block;
+  font-size: var(--font-size-body1);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+}
+
+.shopping-line__text--done {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.shopping-list-footer {
+  margin-top: var(--space-4);
+  padding-bottom: var(--space-2);
+}
+
+.shopping-list-empty {
+  padding-top: var(--list-page-empty-pad-top);
+  padding-bottom: var(--list-page-pad-bottom);
+}
